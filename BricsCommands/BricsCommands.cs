@@ -74,17 +74,16 @@ namespace commands
             insertCircle(ptPos, smallCircleRadius);
 
             double dir = getDirectionVector(ptStart, ptEnd, rotation);
-
-            success = insertFormSide(ptPos, dir, rotation);
-            if (!success) { return; }
-
-            insertLine(ptPos, dir, rotation);
-
             Point3d ptBiggerCircle = getBigCirclePoint(ptPos, dir, rotation);
+
             success = insertNumber(ptBiggerCircle, rotation);
             if (!success) { return; }
 
             insertCircle(ptBiggerCircle, bigCircleRadius);
+            insertLine(ptPos, dir, rotation);
+
+            success = insertFormSide(ptPos, dir, rotation);
+            if (!success) { return; }
 
             return;
         }
