@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "datum", "datum\datum.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadCommands", "CadCommands\CadCommands.csproj", "{C0CF0C05-BD6F-4EBD-A0A5-954CCEC1326B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BricsCommands", "BricsCommands\BricsCommands.csproj", "{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HillsCommands", "BricsCommands\HillsCommands.csproj", "{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

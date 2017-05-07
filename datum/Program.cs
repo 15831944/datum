@@ -16,10 +16,10 @@ namespace datum
             {
                 string run = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";
 
-                string netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Debug\BricsCommands.dll";
+                string netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Debug\HillsCommands.dll";
                 if (!File.Exists(netload))
                 {
-                    netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Release\BricsCommands.dll";
+                    netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Release\HillsCommands.dll";
                 }
                 string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\Brics_testimine\training5.dwg";
                 string script = "script2.scr";

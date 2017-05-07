@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Text;
-using System.Collections;
-using System.Linq;
-using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 //ODA
 using Teigha.Runtime;
@@ -16,29 +14,37 @@ using Bricscad.ApplicationServices;
 using Bricscad.Runtime;
 using Bricscad.EditorInput;
 
-[assembly: CommandClass(typeof(commands.CadCommands))]
-namespace commands
+namespace HillsCommands
 {
-
-    public class CadCommands
+    class QWE
     {
-        static double smallCircleRadius = 15.0;
-        static double bigCircleRadius = 50.0;
-        static double bigCircleOffset = 180.0;
-        static double textHeight = 60.0;
-        static double textOffset = 20.0;
+        double smallCircleRadius = 15.0;
+        double bigCircleRadius = 50.0;
+        double bigCircleOffset = 180.0;
+        double textHeight = 60.0;
+        double textOffset = 20.0;
 
-        [CommandMethod("te")]
-        public void testing()
+        bool success;
+        Point3d ptStart;
+        Point3d ptEnd;
+        Point3d ptPos;
+        Point3d ptNext;
+
+        double rotation;
+
+        public QWE()
         {
-            bool success = false;
-            Point3d ptStart = new Point3d();
-            Point3d ptEnd = new Point3d();
-            Point3d ptPos = new Point3d();
-            Point3d ptNext = new Point3d();
+            success = false;
+            ptStart = new Point3d();
+            ptEnd = new Point3d();
+            ptPos = new Point3d();
+            ptNext = new Point3d();
 
-            double rotation = 0.0;
-
+            rotation = 0.0;
+        }
+        
+        public void run()
+        {
             success = getInitPoint("\nStart: ", ref ptStart);
             if (!success) { return; }
 
@@ -88,7 +94,7 @@ namespace commands
             return;
         }
 
-        private static bool getInitPoint(string prompt, ref Point3d pt)
+        private bool getInitPoint(string prompt, ref Point3d pt)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -106,7 +112,7 @@ namespace commands
             return true;
         }
 
-        private static bool getPositionPoint(string prompt, Point3d ptStart, Point3d ptEnd, ref Point3d ptPos, ref double rotation)
+        private bool getPositionPoint(string prompt, Point3d ptStart, Point3d ptEnd, ref Point3d ptPos, ref double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -147,7 +153,7 @@ namespace commands
             return true;
         }
 
-        private static bool getPoint(string prompt, Point3d ptBase, ref Point3d pt, ref bool finish)
+        private bool getPoint(string prompt, Point3d ptBase, ref Point3d pt, ref bool finish)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -184,7 +190,7 @@ namespace commands
         }
 
 
-        private static void insertDimLine(Point3d ptStart, Point3d ptEnd, Point3d ptPos, double rotation)
+        private void insertDimLine(Point3d ptStart, Point3d ptEnd, Point3d ptPos, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -206,7 +212,7 @@ namespace commands
                     acRotDim.Rotation = rotation;
                     acRotDim.DimLinePoint = ptPos;
                     acRotDim.DimensionStyle = acCurDb.Dimstyle;
-                    
+
                     acBlkTblRec.AppendEntity(acRotDim);
                     acTrans.AddNewlyCreatedDBObject(acRotDim, true);
                 }
@@ -215,7 +221,7 @@ namespace commands
             }
         }
 
-        private static void insertCircle(Point3d center, double radius)
+        private void insertCircle(Point3d center, double radius)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -243,7 +249,7 @@ namespace commands
             }
         }
 
-        private static double getDirectionVector(Point3d ptStart, Point3d ptEnd, double rotation)
+        private double getDirectionVector(Point3d ptStart, Point3d ptEnd, double rotation)
         {
             double dir = 0.0;
 
@@ -261,7 +267,7 @@ namespace commands
             return dir;
         }
 
-        private static Point3d getBigCirclePoint(Point3d ptPos, double dir, double rotation)
+        private Point3d getBigCirclePoint(Point3d ptPos, double dir, double rotation)
         {
             Point3d ptNew = new Point3d();
             if (rotation == 0.0)
@@ -277,10 +283,10 @@ namespace commands
                 ptNew = new Point3d(newX, newY, ptPos.Z);
             }
 
-            return ptNew;  
+            return ptNew;
         }
 
-        private static void insertLine(Point3d ptPos, double dir, double rotation)
+        private void insertLine(Point3d ptPos, double dir, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -321,7 +327,7 @@ namespace commands
             }
         }
 
-        public static bool insertNumber(Point3d center, double rotation)
+        private bool insertNumber(Point3d center, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
 
@@ -364,7 +370,7 @@ namespace commands
             }
         }
 
-        private static void insertText(Point3d ptInsert, AttachmentPoint a, string txt, double rotation)
+        private void insertText(Point3d ptInsert, AttachmentPoint a, string txt, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
             Database acCurDb = acDoc.Database;
@@ -395,7 +401,7 @@ namespace commands
             }
         }
 
-        private static bool insertFormSide(Point3d ptPos, double dir, double rotation)
+        private bool insertFormSide(Point3d ptPos, double dir, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
 
