@@ -22,10 +22,10 @@ namespace HillsCommands
 {
     public class HillsCommands
     {
-        [CommandMethod("AEINFO")]
+        [CommandMethod("HLS_INFO")]
         public void info()
         {
-            SW.MessageBox.Show("Versioon: 07.05.2017\n");
+            SW.MessageBox.Show("AE Hills Versioon: 13.05.2017\n");
         }
 
         [CommandMethod("QWE")]
@@ -33,7 +33,7 @@ namespace HillsCommands
         {
             try
             {
-                QWE program = new QWE();
+                QWE_command program = new QWE_command();
                 program.run();
             }
             catch (System.Exception ex)
@@ -42,12 +42,43 @@ namespace HillsCommands
             }
         }
 
-        [CommandMethod("TEE")]
+        [CommandMethod("aaa")]
+        public void arm_table_sum()
+        {
+            try
+            {
+                SUM_command program = new SUM_command();
+                program.run();
+                program.output_local();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+        [CommandMethod("CSV_SUM_MARKS")]
+        public void csv_sum()
+        {
+            try
+            {
+                SUM_command program = new SUM_command();
+                program.run();
+                program.dump_csv();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+
+        [CommandMethod("tee")]
         public void testing()
         {
             try
             {
-                testing program = new testing();
+                XML_testing program = new XML_testing();
                 program.run();
             }
             catch (System.Exception ex)
@@ -55,6 +86,5 @@ namespace HillsCommands
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
         }
-
     }
 }

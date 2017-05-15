@@ -47,11 +47,13 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Mark.cs" />
     <Compile Include="Area.cs" />
     <Compile Include="HillsCommands.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="QWE.cs" />
-    <Compile Include="testing.cs" />
+    <Compile Include="QWE_command.cs" />
+    <Compile Include="SUM_command.cs" />
+    <Compile Include="XML_testing.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
