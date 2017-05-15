@@ -30,12 +30,12 @@ namespace datum
             else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe"))
             {
                 string run = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
-                string netload = @"C:\Users\Alex\Documents\GitHub\habile\CadCommands\bin\Debug\CadCommands.dll";
+                string netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Debug\CadCommands.dll";
                 if (!File.Exists(netload))
                 {
-                    netload = @"C:\Users\Alex\Documents\GitHub\habile\CadCommands\bin\Release\CadCommands.dll";
+                    netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Release\CadCommands.dll";
                 }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\Brics_testimine\training5.dwg";
+                string dwg = @"C:\Users\Alex\Dropbox\DMT\Brics_testimine\XML\5\training1.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
