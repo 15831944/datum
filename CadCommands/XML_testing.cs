@@ -70,8 +70,9 @@ namespace commands
             xmlDoc.Load(xml_full);
 
             List<Mark> marks = getSelectedMarks();
+            List<Mark> filteredMarks = filterSelectedMarks(marks);
             List<XmlNode> rebars = getAllRebar(xmlDoc);
-            List<Mark> undefined = findMarksInXML(rebars, marks);
+            List<Mark> undefined = findMarksInXML(rebars, filteredMarks);
 
             if (undefined.Count != 0)
             {
@@ -150,6 +151,39 @@ namespace commands
             return parse;
         }
 
+
+        private List<Mark> filterSelectedMarks(List<Mark> marks)
+        {
+            List<Mark> unique = new List<Mark>();
+
+            foreach (Mark m in marks)
+            {
+                if (unique.Contains(m))
+                {
+                    continue;
+                }
+                else
+                {
+                    unique.Add(m);
+                }
+            }
+
+            unique = unique.OrderBy(b => b.Diameter).ToList();
+
+            List<Mark> rows_num = unique.FindAll(x => x.Position_Shape == "A").ToList();
+            List<Mark> rows_char = unique.FindAll(x => x.Position_Shape != "A").ToList();
+
+            rows_num = rows_num.OrderBy(b => b.Position_Nr).ToList();
+            rows_char = rows_char.OrderBy(b => b.Position_Nr).ToList();
+
+            unique = new List<Mark>();
+            unique.AddRange(rows_num);
+            unique.AddRange(rows_char);
+
+            return unique;
+        }
+
+
         private List<MText> getSelectedText(Document doc, Transaction trans)
         {
             List<MText> txt = new List<MText>();
@@ -216,15 +250,19 @@ namespace commands
         {
             foreach (XmlNode rebar in rebars)
             {
-                string type = rebar.ChildNodes[0].InnerText;
-                string pos_nr = rebar.ChildNodes[1].InnerText;
-                string diam = rebar.ChildNodes[3].InnerText;
+                XmlNodeList children = rebar.ChildNodes;
+
+                string type = emptyXMLhandle(rebar, "Type");
+                string pos_nr = emptyXMLhandle(rebar, "Litt");
+                string diam = emptyXMLhandle(rebar, "Dim");
 
                 if (m.Position_Shape == "A")
                 {
                     if (m.Position_Shape == type && m.Position_Nr.ToString() == pos_nr && m.Diameter.ToString() == diam)
                     {
-                        writeCadMessage("+++ Found in XML: " + m.ToString());
+                        writeCadMessage("Found in XML: " + m.ToString());
+                        printXMLNodeRebar(rebar);
+                        writeCadMessage("");
                         return true;
                     }
                 }
@@ -232,7 +270,9 @@ namespace commands
                 {
                     if (m.Position_Shape == type && m.Position_Nr.ToString() == pos_nr)
                     {
-                        writeCadMessage("+++ Found in XML: " + m.ToString());
+                        writeCadMessage("Found in XML: " + m.ToString());
+                        printXMLNodeRebar(rebar);
+                        writeCadMessage("");
                         return true;
                     }
                 }
@@ -240,7 +280,6 @@ namespace commands
 
             return false;
         }
-
 
         private List<XmlNode> getAllRebar(XmlDocument file)
         {
@@ -270,6 +309,136 @@ namespace commands
         private void writeCadMessage(string errorMessage)
         {
             ed.WriteMessage("\n" + errorMessage);
+        }
+
+        private void printXMLNodeRebar(XmlNode rebar)
+        {
+            string result = "";
+
+            string type = emptyXMLhandle(rebar, "Type");
+
+            string pos_nr = "Pos: [" + emptyXMLhandle(rebar, "Litt") + "]";
+            string diam = "Diameter: [" + emptyXMLhandle(rebar, "Dim") + "]";
+            string length = "Length: [" + emptyXMLhandle(rebar, "Length") + "]";
+            XmlNode geometry = rebar["B2aGeometry"];
+
+            if (type == "A")
+            {
+                type = "Type [" + type + "]";
+
+                result = type + " - " + pos_nr + " - " + diam + " - " + length;
+            }
+            else if (type == "B")
+            {
+
+            }
+            else if (type == "C")
+            {
+                type = "Type [" + type + "]";
+
+                if (geometry == null)
+                {
+                    result = type + " - " + pos_nr + " - " + diam + " - " + length + " - [NO GEOMETRY]";
+                }
+                else
+                {
+                    string a = "A: [" + emptyXMLhandle(geometry, "A") + "]";
+                    string b = "B: [" + emptyXMLhandle(geometry, "B") + "]";
+                    string c = "C: [" + emptyXMLhandle(geometry, "C") + "]";
+                    string r = "R: [" + emptyXMLhandle(geometry, "R") + "]";
+
+                    result =  type + " - " + pos_nr + " - " + diam + " - " + length + " - " + a + " - " + b + " - " + c + " - " + r;
+                }
+            }
+            else if (type == "D")
+            {
+
+            }
+            else if (type == "E")
+            {
+
+            }
+            else if (type == "F")
+            {
+                type = "Type [" + type + "]";
+
+                if (geometry == null)
+                {
+                    result = type + " - " + pos_nr + " - " + diam + " - " + length + " - [NO GEOMETRY]";
+                }
+                else
+                {
+                    string a = "A: [" + emptyXMLhandle(geometry, "A") + "]";
+                    string b = "B: [" + emptyXMLhandle(geometry, "B") + "]";
+                    string v = "V: [" + emptyXMLhandle(geometry, "V") + "]";
+                    string r = "R: [" + emptyXMLhandle(geometry, "R") + "]";
+
+                    result = type + " - " + pos_nr + " - " + diam + " - " + length + " - " + a + " - " + b + " - " + v + " - " + r;
+                }
+            }
+            else if (type == "G")
+            {
+
+            }
+            else if (type == "H")
+            {
+
+            }
+            else if (type == "I")
+            {
+
+            }
+            else if (type == "J")
+            {
+
+            }
+            else if (type == "K")
+            {
+
+            }
+            else if (type == "L")
+            {
+
+            }
+            else if (type == "M")
+            {
+
+            }
+            else if (type == "N")
+            {
+                type = "Type: [" + type + "]";
+
+                if (geometry == null)
+                {
+                    result = type + " - " + pos_nr + " - " + diam + " - " + length + " - [NO GEOMETRY]";
+                }
+                else
+                {
+                    string end1 = "End1: [" + emptyXMLhandle(geometry, "End1") + "]";
+                    string a = "A: [" + emptyXMLhandle(geometry, "A") + "]";
+                    string b = "B: [" + emptyXMLhandle(geometry, "B") + "]";
+                    string end2 = "End2: [" + emptyXMLhandle(geometry, "End2") + "]";
+                    string r = "R: [" + emptyXMLhandle(geometry, "R") + "]";
+
+                    result = type + " - " + pos_nr + " - " + diam + " - " + length + " - " + end1 + " - " + a + " - " + b + " - " + end2 + " - " + r;
+                }
+            }
+
+            writeCadMessage(result);
+        }
+
+        private string emptyXMLhandle(XmlNode node, string search)
+        {
+            XmlNode result = node[search];
+            if (result == null)
+            {
+                return "???";
+            }
+            else
+            {
+                return result.InnerText;
+            }
+
         }
     }
 }

@@ -39,12 +39,27 @@ namespace commands
         }
 
         [CommandMethod("aaa")]
-        public void arm_table_sum()
+        public void arm_table_sum_all()
         {
             try
             {
                 SUM_command program = new SUM_command();
-                program.run();
+                program.run(true);
+                program.output_local();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+        [CommandMethod("bbb")]
+        public void arm_table_sum_selected()
+        {
+            try
+            {
+                SUM_command program = new SUM_command();
+                program.run(false);
                 program.output_local();
             }
             catch (System.Exception ex)
@@ -59,7 +74,7 @@ namespace commands
             try
             {
                 SUM_command program = new SUM_command();
-                program.run();
+                program.run(true);
                 program.dump_csv();
             }
             catch (System.Exception ex)

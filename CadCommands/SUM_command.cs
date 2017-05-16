@@ -17,36 +17,58 @@ namespace commands
     class SUM_command
     {
         static string boxName = "KN-A";
-        static string boxNameSecond = "001";
         static string markLayerName = "K60";
 
         List<Mark> total_stats;
         Dictionary<Area, List<Mark>> local_stats;
 
+        Document doc;
+        Database db;
+        Editor ed;
 
         public SUM_command()
         {
             total_stats = new List<Mark>();
             local_stats = new Dictionary<Area, List<Mark>>();
+
+            doc = Application.DocumentManager.MdiActiveDocument;
+            db = doc.Database;
+            ed = doc.Editor;
         }
 
 
-        public void run()
+        public void run(bool multy)
         {
             writeCadMessage("START");
 
-            List<Area> areas = getAllAreas(boxName);
+            List<Area> areas = new List<Area>();
+
+            PromptStringOptions promptOptions = new PromptStringOptions("");
+            promptOptions.Message = "\nKirjanurga blocki nimi: ";
+            promptOptions.DefaultValue = boxName;
+            PromptResult promptResult = ed.GetString(promptOptions);
+
+            if (promptResult.Status == PromptStatus.OK)
+            {
+                boxName = promptResult.StringResult;
+            }
+            else
+            {
+                return;
+            }
+
+            if (multy == true)
+            {
+                areas = getAllAreas(boxName);
+            }
+            else
+            {
+                areas = getSelectedAreas(boxName);
+            }
+
             if (areas.Count < 1)
             {
                 writeCadMessage("ERROR - " + boxName + " not found");
-
-                areas = getAllAreas(boxNameSecond);
-
-                if (areas.Count < 1)
-                {
-                    writeCadMessage("ERROR - " + boxNameSecond + " not found");
-                    return;
-                }
             }
 
             List<Mark> allMarks = getAllMarks(markLayerName);
@@ -182,7 +204,6 @@ namespace commands
 
             sumMarks.AddRange(rows_char);
             
-
             return sumMarks;
         }
 
@@ -190,9 +211,6 @@ namespace commands
         private List<Mark> getAllMarks(string layer)
         {
             List<Mark> marks = new List<Mark>();
-
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -235,13 +253,22 @@ namespace commands
             return parse;
         }
 
+        private List<Area> getSelectedAreas(string blockName)
+        {
+            List<Area> areas = new List<Area>();
+
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                List<BlockReference> blocks = getSelectedBlockReference(blockName, trans);
+                areas = getBoxAreas(blocks, trans);
+            }
+
+            return areas;
+        }
 
         private List<Area> getAllAreas(string blockName)
         {
             List<Area> areas = new List<Area>();
-
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -270,12 +297,39 @@ namespace commands
         }
 
 
-        private List<BlockReference> getAllBlockReference(string blockName, Transaction trans)
+        private List<BlockReference> getSelectedBlockReference(string blockName, Transaction trans)
         {
             List<BlockReference> refs = new List<BlockReference>();
 
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
+            TypedValue[] filterlist = new TypedValue[2];
+            filterlist[0] = new TypedValue(0, "INSERT");
+            filterlist[1] = new TypedValue(2, blockName);
+
+            SelectionFilter filter = new SelectionFilter(filterlist);
+
+            PromptSelectionOptions opts = new PromptSelectionOptions();
+            opts.MessageForAdding = "\nSelect " + boxName + " BLOCK: ";
+
+            PromptSelectionResult selection = ed.GetSelection(opts, filter);
+
+            if (selection.Status == PromptStatus.OK)
+            {
+                ObjectId[] selectionIds = selection.Value.GetObjectIds();
+
+                foreach (ObjectId id in selectionIds)
+                {
+                    BlockReference blockRef = trans.GetObject(id, OpenMode.ForWrite) as BlockReference;
+                    refs.Add(blockRef);
+                }
+            }
+
+            return refs;
+        }
+
+
+        private List<BlockReference> getAllBlockReference(string blockName, Transaction trans)
+        {
+            List<BlockReference> refs = new List<BlockReference>();
 
             BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
 
@@ -324,9 +378,6 @@ namespace commands
         private List<MText> getAllText(string layer, Transaction trans)
         {
             List<MText> txt = new List<MText>();
-
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Database db = doc.Database;
 
             BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
 
@@ -378,13 +429,10 @@ namespace commands
 
         private void insertText(string value, Point3d position, string layer)
         {
-            Document acDoc = Application.DocumentManager.MdiActiveDocument;
-            Database acCurDb = acDoc.Database;
-
-            using (Transaction acTrans = acCurDb.TransactionManager.StartTransaction())
+            using (Transaction trans = db.TransactionManager.StartTransaction())
             {
-                BlockTable acBlkTbl = acTrans.GetObject(acCurDb.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord acBlkTblRec = acTrans.GetObject(acBlkTbl[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+                BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
 
                 using (DBText acText = new DBText())
                 {
@@ -394,27 +442,23 @@ namespace commands
                     acText.Height = 60;
                     acText.TextString = value;
 
-                    acBlkTblRec.AppendEntity(acText);
-                    acTrans.AddNewlyCreatedDBObject(acText, true);
+                    btr.AppendEntity(acText);
+                    trans.AddNewlyCreatedDBObject(acText, true);
                 }
 
-                acTrans.Commit();
+                trans.Commit();
             }
         }
 
 
         private void writeCadMessage(string errorMessage)
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
-            Editor ed = doc.Editor;
-
             ed.WriteMessage("\n" + errorMessage);
         }
         
 
         private void dump()
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
             HostApplicationServices hs = HostApplicationServices.Current;
             string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
             string dwg_dir = Path.GetDirectoryName(dwg_path);
