@@ -16,11 +16,11 @@ namespace commands
         {
             string result = "";
 
-            string type = emptyXMLhandle(rebar, "Type");
+            string type = emptyNodehandle(rebar, "Type");
 
-            string pos_nr = "Pos: [" + emptyXMLhandle(rebar, "Litt") + "]";
-            string diam = "Diameter: [" + emptyXMLhandle(rebar, "Dim") + "]";
-            string length = "Length: [" + emptyXMLhandle(rebar, "Length") + "]";
+            string pos_nr = "Pos: [" + emptyNodehandle(rebar, "Litt") + "]";
+            string diam = "Diameter: [" + emptyNodehandle(rebar, "Dim") + "]";
+            string length = "Length: [" + emptyNodehandle(rebar, "Length") + "]";
             XmlNode geometry = rebar["B2aGeometry"];
 
             result = "Type [" + type + "]" + " - " + pos_nr + " - " + diam + " - " + length;
@@ -29,11 +29,7 @@ namespace commands
             {
 
             }
-            else if (type == "B") // TODO
-            {
-
-            }
-            else if (type == "C")
+            else
             {
                 if (geometry == null)
                 {
@@ -41,149 +37,185 @@ namespace commands
                 }
                 else
                 {
-                    string a = "A: [" + emptyXMLhandle(geometry, "A") + "]";
-                    string b = "B: [" + emptyXMLhandle(geometry, "B") + "]";
-                    string c = "C: [" + emptyXMLhandle(geometry, "C") + "]";
-                    string r = "R: [" + emptyXMLhandle(geometry, "R") + "]";
+                    if (type == "B")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
 
-                    result = result + " - " + a + " - " + b + " - " + c + " - " + r;
+                        result = result + " - " + a + " - " + b + " - " + r;
+                    }
+                    else if (type == "C")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string c = "C: [" + emptyNodehandle(geometry, "C") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + c + " - " + r;
+                    }
+                    else if (type == "D")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + v + " - " + r;
+                    }
+                    else if (type == "E")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string c = "C: [" + emptyNodehandle(geometry, "C") + "]";
+                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
+                        string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + c + " - " + v + " - " + u + " - " + r;
+                    }
+                    else if (type == "EX")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string c = "C: [" + emptyNodehandle(geometry, "C") + "]";
+                        string y = "Y: [" + emptyNodehandle(geometry, "Y") + "]";
+                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
+                        string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + c + " - " + y + " - " + v + " - " + u + " - " + r;
+                    }
+                    else if (type == "F")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + v + " - " + r;
+                    }
+                    else if (type == "G")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string c = "C: [" + emptyNodehandle(geometry, "C") + "]";
+                        string x = "x: [" + emptyNodehandle(geometry, "X") + "]";
+                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
+                        string s = "S: [" + emptyNodehandle(geometry, "S") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + c + " - " + x + " - " + v + " - " + s + " - " + r;
+                    }
+                    else if (type == "H")
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string c = "C: [" + emptyNodehandle(geometry, "C") + "]";
+                        string d = "D: [" + emptyNodehandle(geometry, "D") + "]";
+                        string e = "E: [" + emptyNodehandle(geometry, "E") + "]";
+                        string x = "x: [" + emptyNodehandle(geometry, "X") + "]";
+                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
+                        string s = "S: [" + emptyNodehandle(geometry, "S") + "]";
+                        string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + c + " - " + x + " - " + v + " - " + s + " - " + r;
+                    }
+                    else if (type == "J") // TODO
+                    {
+
+                    }
+                    else if (type == "K") // TODO
+                    {
+
+                    }
+                    else if (type == "L") // TODO
+                    {
+
+                    }
+                    else if (type == "LX") // TODO
+                    {
+
+                    }
+                    else if (type == "M") // TODO
+                    {
+
+                    }
+                    else if (type == "N") // TODO
+                    {
+                        string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
+                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
+                        string end1 = "End1: [" + emptyNodehandle(geometry, "End1") + "]";
+                        string end2 = "End2: [" + emptyNodehandle(geometry, "End2") + "]";
+
+                        result = result + " - " + a + " - " + b + " - " + r + " - " + end1 + " - " + end2;
+
+                    }
+                    else if (type == "NX") // TODO
+                    {
+
+                    }
+                    else if (type == "O") // TODO
+                    {
+
+                    }
+                    else if (type == "Q") // TODO
+                    {
+
+                    }
+                    else if (type == "R") // TODO
+                    {
+
+                    }
+                    else if (type == "S") // TODO
+                    {
+
+                    }
+                    else if (type == "SH") // TODO
+                    {
+
+                    }
+                    else if (type == "SX") // TODO
+                    {
+
+                    }
+                    else if (type == "T") // TODO
+                    {
+
+                    }
+                    else if (type == "U") // TODO
+                    {
+
+                    }
+                    else if (type == "V") // TODO
+                    {
+
+                    }
+                    else if (type == "W") // TODO
+                    {
+
+                    }
+                    else if (type == "X") // TODO
+                    {
+
+                    }
+                    else if (type == "XX") // TODO
+                    {
+
+                    }
+                    else if (type == "Z") // TODO
+                    {
+
+                    }
                 }
-            }
-            else if (type == "D") // TODO
-            {
-
-            }
-            else if (type == "E") // TODO
-            {
-
-            }
-            else if (type == "EX") // TODO
-            {
-
-            }
-            else if (type == "F") // TODO
-            {
-
-                if (geometry == null)
-                {
-                    result = result + " - [NO GEOMETRY]";
-                }
-                else
-                {
-                    string a = "A: [" + emptyXMLhandle(geometry, "A") + "]";
-                    string b = "B: [" + emptyXMLhandle(geometry, "B") + "]";
-                    string v = "V: [" + emptyXMLhandle(geometry, "V") + "]";
-                    string r = "R: [" + emptyXMLhandle(geometry, "R") + "]";
-
-                    result = result + " - " + a + " - " + b + " - " + v + " - " + r;
-                }
-            }
-            else if (type == "G") // TODO
-            {
-
-            }
-            else if (type == "H") // TODO
-            {
-
-            }
-            else if (type == "J") // TODO
-            {
-
-            }
-            else if (type == "K") // TODO
-            {
-
-            }
-            else if (type == "L") // TODO
-            {
-
-            }
-            else if (type == "LX") // TODO
-            {
-
-            }
-            else if (type == "M") // TODO
-            {
-
-            }
-            else if (type == "N") // TODO
-            {
-                if (geometry == null)
-                {
-                    result = result + " - [NO GEOMETRY]";
-                }
-                else
-                {
-                    string a = "A: [" + emptyXMLhandle(geometry, "A") + "]";
-                    string b = "B: [" + emptyXMLhandle(geometry, "B") + "]";
-                    string r = "R: [" + emptyXMLhandle(geometry, "R") + "]";
-                    string end1 = "End1: [" + emptyXMLhandle(geometry, "End1") + "]";
-                    string end2 = "End2: [" + emptyXMLhandle(geometry, "End2") + "]";
-
-                    result = result + " - " + a + " - " + b + " - " + r + " - " + end1 + " - " + end2;
-                }
-            }
-            else if (type == "NX") // TODO
-            {
-
-            }
-            else if (type == "O") // TODO
-            {
-
-            }
-            else if (type == "Q") // TODO
-            {
-
-            }
-            else if (type == "R") // TODO
-            {
-
-            }
-            else if (type == "S") // TODO
-            {
-
-            }
-            else if (type == "SH") // TODO
-            {
-
-            }
-            else if (type == "SX") // TODO
-            {
-
-            }
-            else if (type == "T") // TODO
-            {
-
-            }
-            else if (type == "U") // TODO
-            {
-
-            }
-            else if (type == "V") // TODO
-            {
-
-            }
-            else if (type == "W") // TODO
-            {
-
-            }
-            else if (type == "X") // TODO
-            {
-
-            }
-            else if (type == "XX") // TODO
-            {
-
-            }
-            else if (type == "Z") // TODO
-            {
-
             }
 
             return result;
         }
 
-        public static string emptyXMLhandle(XmlNode rebar, string search)
+        public static string emptyNodehandle(XmlNode rebar, string search)
         {
             XmlNode result = rebar[search];
             if (result == null)

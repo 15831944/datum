@@ -108,6 +108,8 @@ namespace commands
                 writeCadMessage("--- Not found: " + u.ToString());
             }
 
+            string materjal = "";
+
             foreach (Mark u in undefined)
             {
                 PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
@@ -121,7 +123,20 @@ namespace commands
                 {
                     if (promptResult.StringResult == "Yes")
                     {
-                        XmlNode newNode = newNodeHandle(u, ref xmlDoc);
+                        if (materjal == "")
+                        {
+                            PromptStringOptions promptOptions = new PromptStringOptions("");
+                            promptOptions.Message = "\nArmatuuri teras: ";
+                            promptOptions.DefaultValue = "K500C-T";
+                            PromptResult promptResult = ed.GetString(promptOptions);
+
+                            if (promptResult.Status == PromptStatus.OK)
+                            {
+                                materjal = promptResult.StringResult;
+                            }
+                        }
+
+                        XmlNode newNode = newNodeHandle(u, materjal, ref xmlDoc);
                         writeCadMessage("Yep");
                     }
                     else
@@ -133,7 +148,7 @@ namespace commands
         }
 
 
-        private XmlNode newNodeHandle(Mark u, ref XmlDocument xmlDoc)
+        private XmlNode newNodeHandle(Mark u, string materjal, ref XmlDocument xmlDoc)
         {
             List<XmlNode> pages = XML_Handle.getAllPages(xmlDoc);
             XmlNode lastPage = pages[pages.Count - 1];
@@ -154,7 +169,7 @@ namespace commands
             XmlNode pos = xmlDoc.CreateElement("Litt");
             pos.InnerText = u.Position_Nr.ToString();
             XmlNode material = xmlDoc.CreateElement("fu01:B2aStlSorts");
-            material.InnerText = "K500C-T";
+            material.InnerText = materjal;
             XmlNode dim = xmlDoc.CreateElement("Dim");
             dim.InnerText = u.Diameter.ToString();
 
@@ -294,9 +309,9 @@ namespace commands
 
                 if (rebar == null) return false;
 
-                string type = XML_Handle.emptyXMLhandle(rebar, "Type");
-                string pos_nr = XML_Handle.emptyXMLhandle(rebar, "Litt");
-                string diam = XML_Handle.emptyXMLhandle(rebar, "Dim");
+                string type = XML_Handle.emptyNodehandle(rebar, "Type");
+                string pos_nr = XML_Handle.emptyNodehandle(rebar, "Litt");
+                string diam = XML_Handle.emptyNodehandle(rebar, "Dim");
 
                 if (m.Position_Shape == "A")
                 {
