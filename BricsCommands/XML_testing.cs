@@ -35,7 +35,11 @@ namespace commands
 
         public XML_testing()
         {
-            Document doc = Application.DocumentManager.MdiActiveDocument;
+            doc = Application.DocumentManager.MdiActiveDocument;
+            db = doc.Database;
+            ed = doc.Editor;
+
+
             HostApplicationServices hs = HostApplicationServices.Current;
             string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
 
@@ -45,16 +49,20 @@ namespace commands
             xml_full = dwg_dir + name + ".xml";
             xml_lock_full = dwg_dir + name + ".LCK";
             xml_output_full = dwg_dir + "gg" + ".xml";
-
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
         }
+
+
+        public void unlock_after_crash()
+        {
+            if (File.Exists(xml_lock_full))
+            {
+                File.Delete(xml_lock_full);
+            }
+        }
+
 
         public void run()
         {
-            writeCadMessage("start");
-
             if (!File.Exists(xml_full))
             {
                 writeCadMessage("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
@@ -80,110 +88,269 @@ namespace commands
             List<XmlNode> pages = XML_Handle.getAllPages(xmlDoc);
             List<XmlNode> rebars = XML_Handle.getAllRebar(xmlDoc);
 
-            List<Mark> undefined = findMarksInXML(rebars, filteredMarks);
+            Dictionary<Mark ,XmlNode> warning = new Dictionary<Mark, XmlNode>();
+            List<Mark> undefined = findMarksInXML(rebars, filteredMarks, ref warning);
 
             if (undefined.Count != 0)
             {
-                handleUndefined(undefined, ref xmlDoc);
-                //filtreeri
+                List<XmlNode> newRebars = handleUndefined(undefined, xmlDoc);
+                rebars.AddRange(newRebars); //TODO
+                filtreeri(pages, rebars, xmlDoc);
+                xmlDoc.Save(xml_output_full);
 
-                using (XmlTextWriter wr = new XmlTextWriter(xml_output_full, Encoding.UTF8))
-                {
-                    wr.Formatting = Formatting.Indented; // here's the trick !
-                    xmlDoc.Save(wr);
-                }
+            }
+
+            foreach (Mark m in warning.Keys)
+            {
+                writeCadMessage("--- WARINING DIAMETER: " + m.ToString());
+                string rebarString = XML_Handle.getXMLRebarString(warning[m]);
+                writeCadMessage("--- WARINING DIAMETER: " + rebarString);
+                writeCadMessage("");
             }
 
             File.Delete(xml_lock_full);
             writeCadMessage("LOCK OFF");
-            writeCadMessage("end");
         }
 
 
-        private void handleUndefined(List<Mark> undefined, ref XmlDocument xmlDoc)
+        private void filtreeri (List<XmlNode> pages, List<XmlNode> rebars, XmlDocument xmlDoc)
         {
+            List<XmlNode> sortedRebars= sortRebars(rebars);
+
+            foreach (XmlNode page in pages)
+            {
+                XmlNodeList rows = page.ChildNodes;
+
+                for (int k = rows.Count - 1; k > 0; k--)
+                { 
+                    if (rows[k].Name != "B2aPageRow") continue;
+
+                    page.RemoveChild(rows[k]);
+                }
+            }
+
+            int rebarTotIndex = 0;
+            int rebarPageIndex = 1;
+            int pageIndex = 0;
+
+            XmlNode lastReb = null;
+
+            while(true)
+            {
+                XmlNode page;
+                if (pageIndex < pages.Count)
+                {
+                    page = pages[pageIndex];
+                }
+                else
+                {
+                    page = XML_Handle.newPageHandle(pages, xmlDoc);
+                    pages.Add(page);
+                    xmlDoc.DocumentElement.AppendChild(page);
+                }                
+
+                while(true)
+                {
+                    XmlNode reb = sortedRebars[rebarTotIndex];
+
+                    if (lastReb != null)
+                    {
+                        if (reb != null)
+                        {
+                            XmlNode aa = reb["B2aBar"];
+                            if (aa != null)
+                            {
+                                XmlNode ab = aa["Type"];
+
+                                if (ab != null)
+                                {
+                                    XmlNode ba = lastReb["B2aBar"];
+
+                                    if (ba != null)
+                                    {
+                                        XmlNode bb = ba["Type"];
+
+                                        if (bb != null)
+                                        {
+                                            if (ab.InnerText == "A" && bb.InnerText != "A")
+                                            {
+                                                lastReb = null;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+                    reb.Attributes["RowId"].Value = rebarPageIndex.ToString();
+                    page.AppendChild(reb);
+                    lastReb = reb;
+
+                    rebarTotIndex++;
+                    rebarPageIndex++;
+
+                    if (rebarTotIndex >= rebars.Count) break;
+                    if (rebarPageIndex > 20) break;
+                }
+
+                if (rebarTotIndex >= rebars.Count) break;
+
+                rebarPageIndex = 1;
+                pageIndex++;
+            }
+        }
+
+
+        private List<XmlNode> sortRebars(List<XmlNode> rebars)
+        {
+            List<XmlNode> a = new List<XmlNode>();
+            List<XmlNode> others = new List<XmlNode>();
+            List<XmlNode> undef = new List<XmlNode>();
+
+            List<XmlNode> sortedRebars = new List<XmlNode>();
+            sortedRebars.AddRange(others);
+            sortedRebars.AddRange(a);
+
+            foreach (XmlNode rebar in rebars)
+            {
+                XmlNode temp_reb = rebar["B2aBar"];
+
+                if (temp_reb == null)
+                {
+                    undef.Add(rebar);
+                    continue;
+                }
+
+                XmlNode temp_type = temp_reb["Type"];
+
+                if (temp_type == null)
+                {
+                    undef.Add(rebar);
+                    continue;
+                }
+
+                if (temp_type.InnerText == "A")
+                {
+                    XmlNode temp_litt = temp_reb["Litt"];
+                    if (temp_litt == null)
+                    {
+                        undef.Add(rebar);
+                        continue;
+                    }
+                    else
+                    {
+                        a.Add(rebar);
+                    }
+                }
+                else
+                {
+                    XmlNode temp_litt = temp_reb["Litt"];
+                    if (temp_litt == null)
+                    {
+                        undef.Add(rebar);
+                        continue;
+                    }
+                    else
+                    {
+                        others.Add(rebar);
+                    }
+                }
+            }
+
+            try
+            {
+                a = a.OrderBy(b => Int32.Parse(b["B2aBar"]["Litt"].InnerText)).ToList();
+            }
+            catch
+            {
+                a = a.OrderBy(b => b["B2aBar"]["Litt"].InnerText).ToList();
+            }
+
+            try
+            {
+                others = others.OrderBy(b => Int32.Parse(b["B2aBar"]["Litt"].InnerText)).ToList();
+            }
+            catch
+            {
+                others = others.OrderBy(b => b["B2aBar"]["Litt"].InnerText).ToList();
+            }            
+
+            List<XmlNode> sorted = new List<XmlNode>();
+            sorted.AddRange(others);
+            sorted.AddRange(a);
+            sorted.AddRange(undef);
+
+            return sorted;
+        }
+
+        private List<XmlNode> handleUndefined(List<Mark> undefined, XmlDocument xmlDoc)
+        {
+            List<XmlNode> newRebar = new List<XmlNode>();
+
             writeCadMessage(" ");
             foreach (Mark u in undefined)
             {
                 writeCadMessage("--- Not found: " + u.ToString());
             }
 
-            string materjal = "";
+            string materjal = promptGetMaterial();
 
             foreach (Mark u in undefined)
             {
-                PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
-                promptOptions.Message = "\nAdd to XML: " + u.ToString();
-                promptOptions.Keywords.Add("Yes");
-                promptOptions.Keywords.Add("No");
-                promptOptions.AllowNone = false;
-                PromptResult promptResult = ed.GetKeywords(promptOptions);
-
-                if (promptResult.Status == PromptStatus.OK)
+                bool add = promptAddRebarToXml(u);
+                if (add)
                 {
-                    if (promptResult.StringResult == "Yes")
-                    {
-                        if (materjal == "")
-                        {
-                            PromptStringOptions promptOptions = new PromptStringOptions("");
-                            promptOptions.Message = "\nArmatuuri teras: ";
-                            promptOptions.DefaultValue = "K500C-T";
-                            PromptResult promptResult = ed.GetString(promptOptions);
-
-                            if (promptResult.Status == PromptStatus.OK)
-                            {
-                                materjal = promptResult.StringResult;
-                            }
-                        }
-
-                        XmlNode newNode = newNodeHandle(u, materjal, ref xmlDoc);
-                        writeCadMessage("Yep");
-                    }
-                    else
-                    {
-                        writeCadMessage("Skip: " + u.ToString());
-                    }
+                    XmlNode newNode = XML_Handle.newNodeHandle(u, materjal, xmlDoc, ed);
+                    newRebar.Add(newNode);
+                }
+                else
+                {
+                    writeCadMessage("Skip: " + u.ToString());
                 }
             }
+
+            return newRebar;
         }
 
 
-        private XmlNode newNodeHandle(Mark u, string materjal, ref XmlDocument xmlDoc)
+        private bool promptAddRebarToXml(Mark u)
         {
-            List<XmlNode> pages = XML_Handle.getAllPages(xmlDoc);
-            XmlNode lastPage = pages[pages.Count - 1];
+            PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
+            promptOptions.Message = "\nAdd to XML: " + u.ToString();
+            promptOptions.Keywords.Add("Yes");
+            promptOptions.Keywords.Add("No");
+            promptOptions.AllowNone = false;
+            PromptResult promptResult = ed.GetKeywords(promptOptions);
 
-            XmlNode row = xmlDoc.CreateElement("B2aPageRow");
-            XmlAttribute attribute = xmlDoc.CreateAttribute("RowId");
-            attribute.Value = "10";
-            row.Attributes.Append(attribute);
+            if (promptResult.Status == PromptStatus.OK)
+            {
+                if (promptResult.StringResult == "Yes")
+                {
+                    return true;
+                }
+            }
 
-            XmlNode group = xmlDoc.CreateElement("NoGrps");
-            group.InnerText = "1";
-            XmlNode count = xmlDoc.CreateElement("NoStpGrp");
-            count.InnerText = "1";
-            XmlNode bar = xmlDoc.CreateElement("B2aBar");
+            return false;
+        }
 
-            XmlNode type = xmlDoc.CreateElement("Type");
-            type.InnerText = u.Position_Shape;
-            XmlNode pos = xmlDoc.CreateElement("Litt");
-            pos.InnerText = u.Position_Nr.ToString();
-            XmlNode material = xmlDoc.CreateElement("fu01:B2aStlSorts");
-            material.InnerText = materjal;
-            XmlNode dim = xmlDoc.CreateElement("Dim");
-            dim.InnerText = u.Diameter.ToString();
+        private string promptGetMaterial()
+        {
+            string materjal = "K500C-T";
 
-            bar.AppendChild(type);
-            bar.AppendChild(pos);
-            bar.AppendChild(material);
-            bar.AppendChild(dim);
+            PromptStringOptions promptOptions2 = new PromptStringOptions("");
+            promptOptions2.Message = "\nArmatuuri teras: ";
+            promptOptions2.DefaultValue = "K500C-T";
+            PromptResult promptResult2 = ed.GetString(promptOptions2);
 
-            row.AppendChild(group);
-            row.AppendChild(count);
-            row.AppendChild(bar);
+            if (promptResult2.Status == PromptStatus.OK)
+            {
+                    materjal = promptResult2.StringResult;
+            }
 
-            lastPage.AppendChild(row);
-            return row;
+            return materjal;
         }
 
 
@@ -287,13 +454,13 @@ namespace commands
         }
 
 
-        private List<Mark> findMarksInXML(List<XmlNode> rebars, List<Mark> marks)
+        private List<Mark> findMarksInXML(List<XmlNode> rebars, List<Mark> marks, ref Dictionary<Mark, XmlNode> warning)
         {
             List<Mark> undefined = new List<Mark>();
 
             foreach (Mark m in marks)
             {
-                bool found = matchMarkToXML(m, rebars);
+                bool found = matchMarkToXML(m, rebars, ref warning);
                 if (found == false) { undefined.Add(m); }
             }
 
@@ -301,7 +468,7 @@ namespace commands
         }
 
 
-        private bool matchMarkToXML(Mark m, List<XmlNode> rows)
+        private bool matchMarkToXML(Mark m, List<XmlNode> rows, ref Dictionary<Mark, XmlNode> warning)
         {
             foreach (XmlNode row in rows)
             {
@@ -328,6 +495,11 @@ namespace commands
                 {
                     if (m.Position_Shape == type && m.Position_Nr.ToString() == pos_nr)
                     {
+                        if (m.Diameter.ToString() != diam)
+                        {
+                            warning[m] = rebar;
+                        }
+
                         writeCadMessage("Found in XML: " + m.ToString());
                         string rebarString = XML_Handle.getXMLRebarString(rebar);
                         writeCadMessage(rebarString);

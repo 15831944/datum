@@ -90,15 +90,17 @@ namespace commands
         [CommandMethod("tee")]
         public void testing()
         {
-            //try
-            //{
-                XML_testing program = new XML_testing();
+            XML_testing program = new XML_testing();
+
+            try
+            {
                 program.run();
-            //}
-            //catch (System.Exception ex)
-            //{
-            //    SW.MessageBox.Show("Viga\n" + ex.Message);
-            //}
+            }
+            catch (System.Exception ex)
+            {
+                program.unlock_after_crash();
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
         }
 
         [CommandMethod("XMLP")]
