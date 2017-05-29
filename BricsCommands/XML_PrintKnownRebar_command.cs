@@ -47,6 +47,16 @@ namespace commands
             xml_full = dwg_dir + name + ".xml";
             xml_lock_full = dwg_dir + name + ".LCK";
         }
+        
+
+        public void unlock_after_crash()
+        {
+            if (File.Exists(xml_lock_full))
+            {
+                File.Delete(xml_lock_full);
+            }
+        }
+
 
         public void run()
         {
@@ -71,7 +81,7 @@ namespace commands
             List<XmlNode> rows = XML_Handle.getAllRebar(xmlDoc);
 
             string userFilter = promptFilter();
-            List<XmlNode> filteredRows = filter(rows, userFilter);
+            List<XmlNode> filteredRows = XML_Handle.filter(rows, userFilter);
 
             foreach (XmlNode row in filteredRows)
             {
@@ -93,99 +103,6 @@ namespace commands
         private void writeCadMessage(string errorMessage)
         {
             ed.WriteMessage("\n" + errorMessage);
-        }
-
-        private List<XmlNode> filter(List<XmlNode> rows, string userFilter)
-        {
-            writeCadMessage(userFilter);
-            List<XmlNode> filtered = new List<XmlNode>();
-            if (userFilter == "ALL")
-            {
-                filtered = rows;
-            }
-            else if (userFilter == "SPEC")
-            {                
-                foreach (XmlNode row in rows)
-                {
-                    XmlNode temp_reb = row["B2aBar"];
-                    if (temp_reb == null)
-                    {
-                        filtered.Add(row);
-                        continue;
-                    }
-
-                    XmlNode temp_type = temp_reb["Type"];
-
-                    if (temp_type == null)
-                    {
-                        filtered.Add(row);
-                        continue;
-                    }
-
-                    if (temp_type.InnerText == "A")
-                    {
-                        continue;
-                    }
-
-                    filtered.Add(row);
-                }
-            }
-            else if (userFilter == "LAST")
-            {
-                foreach (XmlNode row in rows)
-                {
-                    XmlNode temp_reb = row["B2aBar"];
-                    if (temp_reb == null)
-                    {
-                        filtered.Add(row);
-                        continue;
-                    }
-
-                    XmlNode temp_type = temp_reb["Type"];
-
-                    if (temp_type == null)
-                    {
-                        filtered.Add(row);
-                        continue;
-                    }
-
-                    if (temp_type.InnerText == "A")
-                    {
-                        continue;
-                    }
-
-                    filtered.Add(row);
-                }
-
-                XmlNode last = filtered[filtered.Count - 1];
-                filtered = new List<XmlNode>();
-                filtered.Add(last);
-            }
-            else
-            {
-                foreach (XmlNode row in rows)
-                {
-                    XmlNode temp_reb = row["B2aBar"];
-                    if (temp_reb == null)
-                    {
-                        continue;
-                    }
-
-                    XmlNode temp_type = temp_reb["Type"];
-
-                    if (temp_type == null)
-                    {
-                        continue;
-                    }
-
-                    if (temp_type.InnerText == userFilter)
-                    {
-                        filtered.Add(row);
-                    }
-                }
-            }
-
-            return filtered;
         }
 
         private string promptFilter()

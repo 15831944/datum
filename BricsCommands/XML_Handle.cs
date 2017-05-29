@@ -543,6 +543,441 @@ namespace commands
         }
 
 
+        public static XmlNode compare(XmlNode newReb, XmlNode rebar)
+        {
+            XmlNode old_bar = rebar["B2aBar"];
+            XmlNode new_bar = newReb["B2aBar"];
+            
+            if (old_bar == null) return null;
+            if (new_bar == null) return null;
+
+            string new_type = new_bar["Type"].InnerText;
+
+            XmlNode old_geometry = old_bar["B2aGeometry"];
+            XmlNode new_geometry = new_bar["B2aGeometry"];
+
+            if (new_type == "A")
+            {
+                return null;
+            }
+            else
+            {
+                if (old_geometry == null) return null;
+                if (new_geometry == null) return null;
+
+                string old_dim = emptyNodehandle(old_bar, "Dim");
+                string new_dim = emptyNodehandle(new_bar, "Dim");
+
+                if (old_dim == "???") return null;
+                if (new_dim == "???") return null;
+                if (old_dim != new_dim) return null;
+
+                if (new_type == "B")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+
+                    if (old_a == "???" || old_b == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a && 
+                        old_b == new_b && 
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "C")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_c = emptyNodehandle(old_geometry, "C");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_c = emptyNodehandle(new_geometry, "C");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a && 
+                        old_b == new_b && 
+                        old_c == new_c && 
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "D")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_v = emptyNodehandle(old_geometry, "V");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_v = emptyNodehandle(new_geometry, "V");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+                    if (old_a == "???" || old_b == "???" || old_v == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_v == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a && 
+                        old_b == new_b &&
+                        old_v == new_v &&
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "E")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_c = emptyNodehandle(old_geometry, "C");
+                    string old_v = emptyNodehandle(old_geometry, "V");
+                    string old_u = emptyNodehandle(old_geometry, "U");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_c = emptyNodehandle(new_geometry, "C");
+                    string new_v = emptyNodehandle(new_geometry, "V");
+                    string new_u = emptyNodehandle(new_geometry, "U");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_v == "???" || old_u == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_v == "???" || new_u == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a &&
+                        old_b == new_b &&
+                        old_c == new_c &&
+                        old_v == new_v &&
+                        old_u == new_u &&
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "EX")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_c = emptyNodehandle(old_geometry, "C");
+                    string old_y = emptyNodehandle(old_geometry, "Y");
+                    string old_v = emptyNodehandle(old_geometry, "V");
+                    string old_u = emptyNodehandle(old_geometry, "U");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_c = emptyNodehandle(new_geometry, "C");
+                    string new_y = emptyNodehandle(new_geometry, "Y");
+                    string new_v = emptyNodehandle(new_geometry, "V");
+                    string new_u = emptyNodehandle(new_geometry, "U");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_y == "???" || old_v == "???" || old_u == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_y == "???" || new_v == "???" || new_u == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a &&
+                        old_b == new_b &&
+                        old_c == new_c &&
+                        old_y == new_y &&
+                        old_v == new_v &&
+                        old_u == new_u &&
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "F")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_v = emptyNodehandle(old_geometry, "V");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_v = emptyNodehandle(new_geometry, "V");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+                    if (old_a == "???" || old_b == "???" || old_v == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_v == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a &&
+                        old_b == new_b &&
+                        old_v == new_v &&
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "G")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_c = emptyNodehandle(old_geometry, "C");
+                    string old_x = emptyNodehandle(old_geometry, "X");
+                    string old_v = emptyNodehandle(old_geometry, "V");
+                    string old_s = emptyNodehandle(old_geometry, "S");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_c = emptyNodehandle(new_geometry, "C");
+                    string new_x = emptyNodehandle(new_geometry, "X");
+                    string new_v = emptyNodehandle(new_geometry, "V");
+                    string new_s = emptyNodehandle(new_geometry, "S");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+
+                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_x == "???" || old_v == "???" || old_s == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_x == "???" || new_v == "???" || new_s == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a &&
+                        old_b == new_b &&
+                        old_c == new_c &&
+                        old_x == new_x &&
+                        old_v == new_v &&
+                        old_s == new_s &&
+                        old_r == new_r) return rebar;
+
+                }
+                else if (new_type == "H")
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_c = emptyNodehandle(old_geometry, "C");
+                    string old_d = emptyNodehandle(old_geometry, "D");
+                    string old_e = emptyNodehandle(old_geometry, "E");
+                    string old_x = emptyNodehandle(old_geometry, "X");
+                    string old_v = emptyNodehandle(old_geometry, "V");
+                    string old_s = emptyNodehandle(old_geometry, "S");
+                    string old_u = emptyNodehandle(old_geometry, "U");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_c = emptyNodehandle(new_geometry, "C");
+                    string new_d = emptyNodehandle(new_geometry, "D");
+                    string new_e = emptyNodehandle(new_geometry, "E");
+                    string new_x = emptyNodehandle(new_geometry, "X");
+                    string new_v = emptyNodehandle(new_geometry, "V");
+                    string new_s = emptyNodehandle(new_geometry, "S");
+                    string new_u = emptyNodehandle(new_geometry, "U");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+                    
+                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_d == "???" || old_e == "???" || old_x == "???" || old_v == "???" || old_s == "???" || old_u == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_d == "???" || new_e == "???" || new_x == "???" || new_v == "???" || new_s == "???" || new_u == "???" || new_r == "???") return null;
+
+                    if (old_a == new_a &&
+                        old_b == new_b &&
+                        old_c == new_c &&
+                        old_d == new_d &&
+                        old_e == new_e &&
+                        old_x == new_x &&
+                        old_v == new_v &&
+                        old_s == new_s &&
+                        old_u == new_u &&
+                        old_r == new_r) return rebar;
+                }
+                else if (new_type == "J") // TODO
+                {
+
+                }
+                else if (new_type == "K") // TODO
+                {
+
+                }
+                else if (new_type == "L") // TODO
+                {
+
+                }
+                else if (new_type == "LX") // TODO
+                {
+
+                }
+                else if (new_type == "M") // TODO
+                {
+
+                }
+                else if (new_type == "N") // TODO
+                {
+                    string old_a = emptyNodehandle(old_geometry, "A");
+                    string old_b = emptyNodehandle(old_geometry, "B");
+                    string old_r = emptyNodehandle(old_geometry, "R");
+                    string old_e1 = emptyNodehandle(old_geometry, "End1");
+                    string old_e2 = emptyNodehandle(old_geometry, "End2");
+
+                    string new_a = emptyNodehandle(new_geometry, "A");
+                    string new_b = emptyNodehandle(new_geometry, "B");
+                    string new_r = emptyNodehandle(new_geometry, "R");
+                    string new_e1 = emptyNodehandle(new_geometry, "End1");
+                    string new_e2 = emptyNodehandle(new_geometry, "End2");
+
+                    if (old_a == "???" || old_b == "???" || old_r == "???" || old_e1 == "???" || old_e2 == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_r == "???" || new_e1 == "???" || new_e2 == "???") return null;
+
+                    if (old_a == new_a &&
+                        old_b == new_b &&
+                        old_r == new_r &&
+                        old_e1 == new_e1 &&
+                        old_e2 == new_e2) return rebar;
+
+                }
+                else if (new_type == "NX") // TODO
+                {
+
+                }
+                else if (new_type == "O") // TODO
+                {
+
+                }
+                else if (new_type == "Q") // TODO
+                {
+
+                }
+                else if (new_type == "R") // TODO
+                {
+
+                }
+                else if (new_type == "S") // TODO
+                {
+
+                }
+                else if (new_type == "SH") // TODO
+                {
+
+                }
+                else if (new_type == "SX") // TODO
+                {
+
+                }
+                else if (new_type == "T") // TODO
+                {
+
+                }
+                else if (new_type == "U") // TODO
+                {
+
+                }
+                else if (new_type == "V") // TODO
+                {
+
+                }
+                else if (new_type == "W") // TODO
+                {
+
+                }
+                else if (new_type == "X") // TODO
+                {
+
+                }
+                else if (new_type == "XX") // TODO
+                {
+
+                }
+                else if (new_type == "Z") // TODO
+                {
+
+                }
+            }
+
+            return null;
+        }
+
+
+        public static List<XmlNode> filter(List<XmlNode> rows, string userFilter)
+        {
+            List<XmlNode> filtered = new List<XmlNode>();
+            if (userFilter == "ALL")
+            {
+                filtered = rows;
+            }
+            else if (userFilter == "SPEC")
+            {
+                foreach (XmlNode row in rows)
+                {
+                    XmlNode temp_reb = row["B2aBar"];
+                    if (temp_reb == null)
+                    {
+                        filtered.Add(row);
+                        continue;
+                    }
+
+                    XmlNode temp_type = temp_reb["Type"];
+
+                    if (temp_type == null)
+                    {
+                        filtered.Add(row);
+                        continue;
+                    }
+
+                    if (temp_type.InnerText == "A")
+                    {
+                        continue;
+                    }
+
+                    filtered.Add(row);
+                }
+            }
+            else if (userFilter == "LAST")
+            {
+                foreach (XmlNode row in rows)
+                {
+                    XmlNode temp_reb = row["B2aBar"];
+                    if (temp_reb == null)
+                    {
+                        filtered.Add(row);
+                        continue;
+                    }
+
+                    XmlNode temp_type = temp_reb["Type"];
+
+                    if (temp_type == null)
+                    {
+                        filtered.Add(row);
+                        continue;
+                    }
+
+                    if (temp_type.InnerText == "A")
+                    {
+                        continue;
+                    }
+
+                    filtered.Add(row);
+                }
+
+                XmlNode last = filtered[filtered.Count - 1];
+                filtered = new List<XmlNode>();
+                filtered.Add(last);
+            }
+            else
+            {
+                foreach (XmlNode row in rows)
+                {
+                    XmlNode temp_reb = row["B2aBar"];
+                    if (temp_reb == null)
+                    {
+                        continue;
+                    }
+
+                    XmlNode temp_type = temp_reb["Type"];
+
+                    if (temp_type == null)
+                    {
+                        continue;
+                    }
+
+                    if (temp_type.InnerText == userFilter)
+                    {
+                        filtered.Add(row);
+                    }
+                }
+            }
+
+            return filtered;
+        }
+
+
         private static string prompt(string suurus, Editor ed)
         {
             string res = "";

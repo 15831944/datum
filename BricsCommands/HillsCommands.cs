@@ -25,7 +25,7 @@ namespace commands
         [CommandMethod("HLS_INFO")]
         public void info()
         {
-            SW.MessageBox.Show("AE Hills Versioon: 17.05.2017\n");
+            SW.MessageBox.Show("AE Hills Versioon: 23.05.2017\n");
         }
 
         [CommandMethod("QWE")]
@@ -72,6 +72,40 @@ namespace commands
             }
         }
 
+        [CommandMethod("ccc")]
+        public void arm_weights_selected()
+        {
+            WEIGHT_command program = new WEIGHT_command();
+
+            try
+            {
+                program.run(false);
+                program.output_local();
+            }
+            catch (System.Exception ex)
+            {
+                program.unlock_after_crash();
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+        [CommandMethod("ddd")]
+        public void arm_weights_all()
+        {
+            WEIGHT_command program = new WEIGHT_command();
+
+            try
+            {
+                program.run(true);
+                program.output_local();
+            }
+            catch (System.Exception ex)
+            {
+                program.unlock_after_crash();
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
         [CommandMethod("CSV_SUM_MARKS")]
         public void csv_sum()
         {
@@ -87,7 +121,7 @@ namespace commands
             }
         }
 
-        [CommandMethod("tee")]
+        [CommandMethod("XMLA")]
         public void testing()
         {
             XML_testing program = new XML_testing();
@@ -106,13 +140,15 @@ namespace commands
         [CommandMethod("XMLP")]
         public void printXMLall()
         {
+            XML_PrintKnownRebar_command program = new XML_PrintKnownRebar_command();
+
             try
             {
-                XML_PrintKnownRebar_command program = new XML_PrintKnownRebar_command();
                 program.run();
             }
             catch (System.Exception ex)
             {
+                program.unlock_after_crash();
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
         }

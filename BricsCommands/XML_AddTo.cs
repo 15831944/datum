@@ -48,7 +48,7 @@ namespace commands
 
             xml_full = dwg_dir + name + ".xml";
             xml_lock_full = dwg_dir + name + ".LCK";
-            xml_output_full = dwg_dir + "gg" + ".xml";
+            xml_output_full = dwg_dir + name + ".xml";
         }
 
 
@@ -93,8 +93,8 @@ namespace commands
 
             if (undefined.Count != 0)
             {
-                List<XmlNode> newRebars = handleUndefined(undefined, xmlDoc);
-                rebars.AddRange(newRebars); //TODO
+                List<XmlNode> newRebars = handleUndefined(undefined, rebars, xmlDoc);
+                rebars.AddRange(newRebars);
                 filtreeri(pages, rebars, xmlDoc);
                 xmlDoc.Save(xml_output_full);
 
@@ -286,7 +286,7 @@ namespace commands
             return sorted;
         }
 
-        private List<XmlNode> handleUndefined(List<Mark> undefined, XmlDocument xmlDoc)
+        private List<XmlNode> handleUndefined(List<Mark> undefined, List<XmlNode> rebars, XmlDocument xmlDoc)
         {
             List<XmlNode> newRebar = new List<XmlNode>();
 
@@ -304,7 +304,18 @@ namespace commands
                 if (add)
                 {
                     XmlNode newNode = XML_Handle.newNodeHandle(u, materjal, xmlDoc, ed);
-                    newRebar.Add(newNode);
+                    XmlNode dublicate = checkIfRebarExists(newNode, rebars);
+                    if (dublicate == null)
+                    {
+                        newRebar.Add(newNode);
+                    }
+                    else
+                    {
+                        writeCadMessage("Sama kujuga raud on juba olemas!");
+                        XmlNode rebar = dublicate["B2aBar"];
+                        string rebarString = XML_Handle.getXMLRebarString(rebar);
+                        writeCadMessage(rebarString);
+                    }
                 }
                 else
                 {
@@ -313,6 +324,21 @@ namespace commands
             }
 
             return newRebar;
+        }
+
+
+        private XmlNode checkIfRebarExists(XmlNode newNode, List<XmlNode> rebars)
+        {
+            string filter = newNode["B2aBar"]["Type"].InnerText;
+            List<XmlNode> filtered = XML_Handle.filter(rebars, filter);
+
+            foreach (XmlNode rebar in filtered)
+            {
+                XmlNode dublicate = XML_Handle.compare(newNode, rebar);
+                if (dublicate != null) return dublicate;
+            }
+
+            return null;
         }
 
 

@@ -20,18 +20,22 @@ namespace commands
     {
         Point3d start;
         Point3d end;
-        Point3d insert;
+        Point3d reinf;
+        Point3d weight;
 
         public Point3d Start { get { return start; } }
         public Point3d End { get { return end; } }
-        public Point3d IP { get { return insert; } }
+        public Point3d IP_reinf { get { return reinf; } }
+        public Point3d IP_weight { get { return weight; } }
+
 
         public Area(Point3d s, Point3d e)
         {
             start = s;
             end = e;
 
-            insert = new Point3d(e.X - 2180, e.Y - 1460, e.Z);
+            reinf = new Point3d(e.X - 2180, e.Y - 1460, e.Z);
+            weight = new Point3d(e.X - 780, e.Y - 5062, e.Z);
         }
 
         internal bool isPointInArea(Point3d point)

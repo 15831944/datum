@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using System.IO;
+using System.Xml;
 
 //ODA
 using Teigha.Runtime;
@@ -18,26 +19,50 @@ using Bricscad.EditorInput;
 
 namespace commands
 {
-    class SUM_command
+    class WEIGHT_command
     {
         static string boxName = "KN-A";
         static string markLayerName = "K60";
+        static string weightLayerName = "K62";
 
-        List<Mark> total_stats;
-        Dictionary<Area, List<Mark>> local_stats;
+        Dictionary<Area, int> local_stats;
+
+        static string name = "alfa";
+
+        string dwg_dir;
+
+        string xml_full;
+        string xml_lock_full;
 
         Document doc;
         Database db;
         Editor ed;
-
-        public SUM_command()
+        
+        public WEIGHT_command()
         {
-            total_stats = new List<Mark>();
-            local_stats = new Dictionary<Area, List<Mark>>();
-
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
             ed = doc.Editor;
+
+            local_stats = new Dictionary<Area, int>();
+
+            HostApplicationServices hs = HostApplicationServices.Current;
+            string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
+
+            dwg_dir = Path.GetDirectoryName(dwg_path);
+            if (!dwg_dir.EndsWith(@"\")) { dwg_dir = dwg_dir + @"\"; }
+
+            xml_full = dwg_dir + name + ".xml";
+            xml_lock_full = dwg_dir + name + ".LCK";
+        }
+
+
+        public void unlock_after_crash()
+        {
+            if (File.Exists(xml_lock_full))
+            {
+                File.Delete(xml_lock_full);
+            }
         }
 
 
@@ -81,30 +106,42 @@ namespace commands
                 writeCadMessage("ERROR - " + "Reinforcement marks" + " not found");
                 return;
             }
+            
+            if (!File.Exists(xml_full))
+            {
+                writeCadMessage("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
+                return;
+            }
 
-            local_stats = matchMarkArea(areas, allMarks);
+            if (File.Exists(xml_lock_full))
+            {
+                writeCadMessage("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
+                return;
+            }
+
+            File.Create(xml_lock_full).Dispose();
+            writeCadMessage("LOCK ON");
+
+            XmlDocument xmlDoc = new XmlDocument();
+            xmlDoc.Load(xml_full);
+            List<XmlNode> bending = XML_Handle.getAllRebar(xmlDoc);
+
+            File.Delete(xml_lock_full);
+            writeCadMessage("LOCK OFF");
+
+            Dictionary<Area, List<Mark>> local_reinforcement = matchMarkArea(areas, allMarks);
+            local_stats = generateAllWeights(local_reinforcement, bending);
 
             return;
         }
-
-
-        public void dump_csv()
-        {
-            total_stats = getGlobalSummary(local_stats);
-
-            dump();
-
-            writeCadMessage("DONE");
-
-            return;
-        }
-
+        
 
         public void output_local()
         {
             foreach (Area current in local_stats.Keys)
             {
-                outputTable(current, local_stats[current]);
+                outputWeight(current, local_stats[current]);
+                writeCadMessage(local_stats[current].ToString());
             }
 
             writeCadMessage("DONE");
@@ -113,41 +150,159 @@ namespace commands
         }
 
 
-        private List<Mark> getGlobalSummary(Dictionary<Area, List<Mark>> sorted)
+        private void outputWeight(Area a, int weight)
         {
-            List<Mark> allValidMarks = new List<Mark>();
+            Point3d currentPoint = a.IP_weight;
 
-            foreach (Area area in sorted.Keys)
+            if (weight != 0)
             {
-                allValidMarks.AddRange(sorted[area]);
+                insertText(weight.ToString(), currentPoint, weightLayerName);
             }
-
-            List<Mark> summary = getSummary(allValidMarks);
-
-            return summary;
         }
 
 
-        private void outputTable(Area a, List<Mark> rows)
+        private Dictionary<Area, int> generateAllWeights(Dictionary<Area, List<Mark>> reinf, List<XmlNode> bending)
         {
-            Point3d currentPoint = a.IP_reinf;
+            Dictionary<Area, int> stats = new Dictionary<Area, int>();
 
-            foreach (Mark r in rows)
+            foreach (Area current in reinf.Keys)
             {
-                if (r.Position != "emptyrow")
-                {
-                    Point3d position_IP = new Point3d(currentPoint.X + 40, currentPoint.Y + 45, currentPoint.Z);
-                    Point3d diameter_IP = new Point3d(currentPoint.X + 30 + 244, currentPoint.Y + 45, currentPoint.Z);
-                    Point3d number_IP = new Point3d(currentPoint.X + 60 + 390, currentPoint.Y + 45, currentPoint.Z);
+                List<Mark> currentReinf = reinf[current];
 
-                    insertText(r.Position, position_IP, markLayerName);
-                    insertText(r.Diameter.ToString(), diameter_IP, markLayerName);
-                    insertText(r.Number.ToString(), number_IP, markLayerName);
+                int currentWeight = calculateWeight(currentReinf, bending);
+                if (currentWeight != 0)
+                {
+                    stats[current] = currentWeight;
+                }
+            }
+
+            return stats;
+        }
+
+
+        private int calculateWeight(List<Mark> reinf, List<XmlNode> bending)
+        {
+            Dictionary<Mark, XmlNode> matches = new Dictionary<Mark, XmlNode>();
+            Dictionary<Mark, double> weights = new Dictionary<Mark, double>();
+            matches = findMarksInXML(reinf, bending);
+
+            double currentWeight = 0;
+
+            List<Mark> emptyMarks = new List<Mark>();
+
+            foreach (Mark m in matches.Keys)
+            {
+                if (matches[m] == null)
+                {
+                    emptyMarks.Add(m);
+                }
+            }
+
+            if (emptyMarks.Count == 0)
+            {
+                foreach (Mark m in matches.Keys)
+                {
+                    double weight = getRebarWeights(matches[m]);
+                    weights[m] = weight;
+                }
+            }
+            else
+            {
+                foreach (Mark m in emptyMarks)
+                {
+                    writeCadMessage("[ERROR] Can not find match for [" + m.ToString() + "] in XML");
                 }
 
-                currentPoint = new Point3d(currentPoint.X, currentPoint.Y - 160, currentPoint.Z);
+                return 0;
             }
+
+            foreach (Mark m in weights.Keys)
+            {
+                if (weights[m] == 0)
+                {
+                    emptyMarks.Add(m);
+                }
+            }
+
+            if (emptyMarks.Count == 0)
+            {
+                foreach (Mark m in weights.Keys)
+                {
+                    currentWeight = currentWeight + (m.Number * weights[m]);
+                }
+            }
+            else
+            {
+                foreach (Mark m in emptyMarks)
+                {
+                    writeCadMessage("[ERROR] Not enought information for [" + m.ToString() + "] in XML");
+                }
+
+                return 0;
+            }
+
+            return (int)Math.Round(currentWeight, MidpointRounding.AwayFromZero);
         }
+
+
+        private double getRebarWeights(XmlNode row)
+        {
+            XmlNode rebar = row["B2aBar"];
+
+            if (rebar == null) return 0;
+
+            string weightString = XML_Handle.emptyNodehandle(rebar, "Weight");
+
+            double weight = 0.0;
+
+            try
+            {
+                weight = Double.Parse(weightString, System.Globalization.CultureInfo.InvariantCulture);
+            }
+            catch
+            {
+
+            }            
+            
+            return weight;
+        }
+
+
+        private Dictionary<Mark, XmlNode> findMarksInXML(List<Mark> marks, List<XmlNode> bending)
+        {
+            Dictionary<Mark, XmlNode> markMatch = new Dictionary<Mark, XmlNode>();
+
+            foreach (Mark m in marks)
+            {
+                markMatch[m] = matchMarkToXML(m, bending);                                
+            }
+
+            return markMatch;
+        }
+
+
+        private XmlNode matchMarkToXML(Mark m, List<XmlNode> rows)
+        {
+            foreach (XmlNode row in rows)
+            {
+                XmlNode rebar = row["B2aBar"];
+
+                if (rebar == null) return null;
+
+                string type = XML_Handle.emptyNodehandle(rebar, "Type");
+                string pos_nr = XML_Handle.emptyNodehandle(rebar, "Litt");
+                string diam = XML_Handle.emptyNodehandle(rebar, "Dim");
+
+                if (m.Position_Shape == type && m.Position_Nr.ToString() == pos_nr && m.Diameter.ToString() == diam)
+                {
+                    return row;
+                }
+            }
+        
+            return null;
+        }
+
+
 
 
         private Dictionary<Area, List<Mark>> matchMarkArea(List<Area> areas, List<Mark> allMarks)
@@ -190,23 +345,6 @@ namespace commands
                     sumMarks.Add(nm);
                 }
             }
-
-            sumMarks = sumMarks.OrderBy(b => b.Diameter).ToList();
-
-            List<Mark> rows_num = sumMarks.FindAll(x => x.Position_Shape == "A").ToList();
-            List<Mark> rows_char = sumMarks.FindAll(x => x.Position_Shape != "A").ToList();
-
-            rows_num = rows_num.OrderBy(b => b.Position_Nr).ToList();
-            rows_char = rows_char.OrderBy(b => b.Position_Nr).ToList();
-
-            sumMarks = new List<Mark>();
-            sumMarks.AddRange(rows_num);
-
-            Mark emptyRow = new Mark(0, 0, "emptyrow", "", 0);
-            sumMarks.Add(emptyRow);
-            sumMarks.Add(emptyRow);
-
-            sumMarks.AddRange(rows_char);
 
             return sumMarks;
         }
@@ -443,7 +581,7 @@ namespace commands
                     acText.Layer = layer;
 
                     acText.Position = position;
-                    acText.Height = 60;
+                    acText.Height = 120;
                     acText.TextString = value;
 
                     btr.AppendEntity(acText);
@@ -458,70 +596,6 @@ namespace commands
         private void writeCadMessage(string errorMessage)
         {
             ed.WriteMessage("\n" + errorMessage);
-        }
-
-
-        private void dump()
-        {
-            HostApplicationServices hs = HostApplicationServices.Current;
-            string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
-            string dwg_dir = Path.GetDirectoryName(dwg_path);
-            string dwg_name = Path.GetFileNameWithoutExtension(dwg_path);
-
-            if (!dwg_dir.EndsWith(@"\")) { dwg_dir = dwg_dir + @"\"; }
-            string csv_dir = dwg_dir + @"temp\";
-            string csv_path = csv_dir + dwg_name + ".csv";
-
-            if (total_stats == null || total_stats.Count == 0) return;
-
-            if (!Directory.Exists(Path.GetDirectoryName(csv_path))) Directory.CreateDirectory(Path.GetDirectoryName(csv_path));
-            if (File.Exists(csv_path)) { File.Delete(csv_path); }
-
-            StringBuilder txt = new StringBuilder();
-
-            writeCadMessage(csv_path);
-            txt.AppendLine("alexi programmi ajutine file");
-            txt.AppendLine("shape; positsioon; kogus; diameter");
-            txt.AppendLine("");
-            txt.AppendLine("SUMMARY");
-            txt.AppendLine("");
-
-            foreach (Mark u in total_stats)
-            {
-                if (u.Number == 0 && u.Diameter == 0) continue;
-                txt.AppendLine(u.Position_Shape.ToString() + ";" + u.Position_Nr.ToString() + ";" + u.Number.ToString() + ";" + u.Diameter.ToString());
-            }
-
-            txt.AppendLine("");
-            txt.AppendLine("---SUMMARY");
-
-            int i = 1;
-            foreach (Area a in local_stats.Keys)
-            {
-                txt.AppendLine("");
-                txt.AppendLine("");
-                txt.AppendLine("drawing nr: " + i.ToString());
-                txt.AppendLine("");
-                List<Mark> stats = local_stats[a];
-
-                if (stats.Count == 0)
-                {
-                    txt.AppendLine("empty");
-                }
-                else
-                {
-                    foreach (Mark u in stats)
-                    {
-                        if (u.Number == 0 && u.Diameter == 0) continue;
-                        txt.AppendLine(u.Position_Shape.ToString() + ";" + u.Position_Nr.ToString() + ";" + u.Number.ToString() + ";" + u.Diameter.ToString());
-                    }
-                }
-                i++;
-            }
-
-            string csvText = txt.ToString();
-
-            File.AppendAllText(csv_path, csvText);
         }
     }
 }
