@@ -65,15 +65,17 @@ namespace xml_armering_gen
                 generateUnique(file_rows, ref unique_rows);
             }
 
+            unique_rows = unique_rows.OrderBy(b => b.Diameter).ToList();
+
             List<Row> rows_num = unique_rows.FindAll(x => x.Position_Shape == "A").ToList();
             List<Row> rows_char = unique_rows.FindAll(x => x.Position_Shape != "A").ToList();
 
-            rows_num = rows_num.OrderBy(b => b.Position_Nr).ToList();
             rows_char = rows_char.OrderBy(b => b.Position_Nr).ToList();
+            rows_num = rows_num.OrderBy(b => b.Position_Nr).ToList();
 
             unique_rows = new List<Row>();
-            unique_rows.AddRange(rows_num);
             unique_rows.AddRange(rows_char);
+            unique_rows.AddRange(rows_num);
 
             return unique_rows;
         }
@@ -165,14 +167,16 @@ namespace xml_armering_gen
         {
             StringBuilder txt = new StringBuilder();
 
+            txt.AppendLine("NETLOAD \"" + netload + "\"");
+
             foreach (string dwg in dwgs)
             {
                 txt.AppendLine("_.open \"" + dwg + "\"");
-                txt.AppendLine("NETLOAD \"" + netload + "\"");
                 txt.AppendLine("CSV_SUM_MARKS");
+                txt.AppendLine("");
             }
 
-            txt.AppendLine("_.quit");
+            //txt.AppendLine("_.quit");
 
             string scriptText = txt.ToString();
 

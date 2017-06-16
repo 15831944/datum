@@ -262,6 +262,15 @@ namespace commands
 
             try
             {
+                a = a.OrderBy(b => Int32.Parse(b["B2aBar"]["Dim"].InnerText)).ToList();
+            }
+            catch
+            {
+
+            }
+
+            try
+            {
                 a = a.OrderBy(b => Int32.Parse(b["B2aBar"]["Litt"].InnerText)).ToList();
             }
             catch

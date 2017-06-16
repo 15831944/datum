@@ -141,7 +141,6 @@ namespace commands
             foreach (Area current in local_stats.Keys)
             {
                 outputWeight(current, local_stats[current]);
-                writeCadMessage(local_stats[current].ToString());
             }
 
             writeCadMessage("DONE");
@@ -156,7 +155,13 @@ namespace commands
 
             if (weight != 0)
             {
+
+                writeCadMessage("[OK] " + weight.ToString());
                 insertText(weight.ToString(), currentPoint, weightLayerName);
+            }
+            else
+            {
+                writeCadMessage("[SKIP]");
             }
         }
 
@@ -170,10 +175,7 @@ namespace commands
                 List<Mark> currentReinf = reinf[current];
 
                 int currentWeight = calculateWeight(currentReinf, bending);
-                if (currentWeight != 0)
-                {
-                    stats[current] = currentWeight;
-                }
+                stats[current] = currentWeight;
             }
 
             return stats;
@@ -241,7 +243,7 @@ namespace commands
                 return 0;
             }
 
-            return (int)Math.Round(currentWeight, MidpointRounding.AwayFromZero);
+            return (int)Math.Ceiling(currentWeight);
         }
 
 

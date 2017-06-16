@@ -21,7 +21,7 @@ namespace datum
                 {
                     netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Release\HillsCommands.dll";
                 }
-                string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\Brics_testimine\XML\5\training1.dwg";
+                string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
