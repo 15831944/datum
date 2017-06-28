@@ -173,7 +173,6 @@ namespace xml_armering_gen
             {
                 txt.AppendLine("_.open \"" + dwg + "\"");
                 txt.AppendLine("CSV_SUM_MARKS");
-                txt.AppendLine("");
             }
 
             //txt.AppendLine("_.quit");

@@ -298,18 +298,9 @@ namespace commands
         {
             List<BlockReference> refs = new List<BlockReference>();
 
-            TypedValue[] filterlist = new TypedValue[4];
-            filterlist[0] = new TypedValue(0, "INSERT");
-            filterlist[1] = new TypedValue(2, blockNames[0]);
-            //filterlist[2] = new TypedValue(2, blockNames[1]);
-            //filterlist[3] = new TypedValue(2, blockNames[2]);
-
-            SelectionFilter filter = new SelectionFilter(filterlist);
-
             PromptSelectionOptions opts = new PromptSelectionOptions();
             opts.MessageForAdding = "\nSelect BLOCK " + blockNames[0] + " / " + blockNames[1] + " / " + blockNames[2];
-
-            PromptSelectionResult selection = ed.GetSelection(opts, filter);
+            PromptSelectionResult selection = ed.GetSelection(opts);
 
             if (selection.Status == PromptStatus.OK)
             {
@@ -317,8 +308,35 @@ namespace commands
 
                 foreach (ObjectId id in selectionIds)
                 {
-                    BlockReference blockRef = trans.GetObject(id, OpenMode.ForWrite) as BlockReference;
-                    refs.Add(blockRef);
+                    DBObject currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as DBObject;
+
+                    if (currentEntity == null)
+                    {
+                        continue;
+                    }
+
+                    else if (currentEntity is BlockReference)
+                    {
+                        BlockReference blockRef = currentEntity as BlockReference;
+
+                        BlockTableRecord block = null;
+                        if (blockRef.IsDynamicBlock)
+                        {
+                            block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                        }
+                        else
+                        {
+                            block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                        }
+
+                        if (block != null)
+                        {
+                            if (blockNames.Contains(block.Name))
+                            {
+                                refs.Add(blockRef);
+                            }
+                        }
+                    }
                 }
             }
 

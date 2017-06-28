@@ -21,7 +21,7 @@ namespace commands
 {
     class WEIGHT_command
     {
-        static string boxName = "KN-A";
+        static string[] boxNames = { "KN-A", "KN-C", "KN-V27" };
         static string markLayerName = "K60";
         static string weightLayerName = "K62";
 
@@ -72,32 +72,18 @@ namespace commands
 
             List<Area> areas = new List<Area>();
 
-            PromptStringOptions promptOptions = new PromptStringOptions("");
-            promptOptions.Message = "\nKirjanurga blocki nimi: ";
-            promptOptions.DefaultValue = boxName;
-            PromptResult promptResult = ed.GetString(promptOptions);
-
-            if (promptResult.Status == PromptStatus.OK)
-            {
-                boxName = promptResult.StringResult;
-            }
-            else
-            {
-                return;
-            }
-
             if (multy == true)
             {
-                areas = getAllAreas(boxName);
+                areas = getAllAreas(boxNames);
             }
             else
             {
-                areas = getSelectedAreas(boxName);
+                areas = getSelectedAreas(boxNames);
             }
 
             if (areas.Count < 1)
             {
-                writeCadMessage("ERROR - " + boxName + " not found");
+                writeCadMessage("ERROR - " + boxNames[0] + " / " + boxNames[1] + " / " + boxNames[2] + " not found");
             }
 
             List<Mark> allMarks = getAllMarks(markLayerName);
@@ -397,26 +383,33 @@ namespace commands
             return parse;
         }
 
-        private List<Area> getSelectedAreas(string blockName)
+        private List<Area> getSelectedAreas(string[] blockNames)
         {
             List<Area> areas = new List<Area>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
-                List<BlockReference> blocks = getSelectedBlockReference(blockName, trans);
+                List<BlockReference> blocks = getSelectedBlockReference(blockNames, trans);
                 areas = getBoxAreas(blocks, trans);
             }
 
             return areas;
         }
 
-        private List<Area> getAllAreas(string blockName)
+        private List<Area> getAllAreas(string[] blockNames)
         {
             List<Area> areas = new List<Area>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
-                List<BlockReference> blocks = getAllBlockReference(blockName, trans);
+                List<BlockReference> blocks = new List<BlockReference>();
+
+                foreach (string name in blockNames)
+                {
+                    List<BlockReference> temp = getAllBlockReference(name, trans);
+                    blocks.AddRange(temp);
+                }
+
                 areas = getBoxAreas(blocks, trans);
             }
 
@@ -441,20 +434,13 @@ namespace commands
         }
 
 
-        private List<BlockReference> getSelectedBlockReference(string blockName, Transaction trans)
+        private List<BlockReference> getSelectedBlockReference(string[] blockNames, Transaction trans)
         {
             List<BlockReference> refs = new List<BlockReference>();
-
-            TypedValue[] filterlist = new TypedValue[2];
-            filterlist[0] = new TypedValue(0, "INSERT");
-            filterlist[1] = new TypedValue(2, blockName);
-
-            SelectionFilter filter = new SelectionFilter(filterlist);
-
             PromptSelectionOptions opts = new PromptSelectionOptions();
-            opts.MessageForAdding = "\nSelect " + boxName + " BLOCK: ";
+            opts.MessageForAdding = "\nSelect BLOCK " + blockNames[0] + " / " + blockNames[1] + " / " + blockNames[2];
 
-            PromptSelectionResult selection = ed.GetSelection(opts, filter);
+            PromptSelectionResult selection = ed.GetSelection(opts);
 
             if (selection.Status == PromptStatus.OK)
             {
@@ -462,8 +448,35 @@ namespace commands
 
                 foreach (ObjectId id in selectionIds)
                 {
-                    BlockReference blockRef = trans.GetObject(id, OpenMode.ForWrite) as BlockReference;
-                    refs.Add(blockRef);
+                    DBObject currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as DBObject;
+
+                    if (currentEntity == null)
+                    {
+                        continue;
+                    }
+
+                    else if (currentEntity is BlockReference)
+                    {
+                        BlockReference blockRef = currentEntity as BlockReference;
+
+                        BlockTableRecord block = null;
+                        if (blockRef.IsDynamicBlock)
+                        {
+                            block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                        }
+                        else
+                        {
+                            block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                        }
+
+                        if (block != null)
+                        {
+                            if (blockNames.Contains(block.Name))
+                            {
+                                refs.Add(blockRef);
+                            }
+                        }
+                    }
                 }
             }
 
