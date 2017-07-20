@@ -180,7 +180,6 @@ namespace commands
             pPtOpts.BasePoint = ptBase;
             pPtRes = acDoc.Editor.GetPoint(pPtOpts);
 
-
             if (pPtRes.Status == PromptStatus.Keyword)
             {
                 PromptPointOptions lastPtOpts = new PromptPointOptions("");
