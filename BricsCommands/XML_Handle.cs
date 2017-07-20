@@ -129,7 +129,7 @@ namespace commands
                         string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
                         string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
 
-                        result = result + " - " + a + " - " + b + " - " + c + " - " + x + " - " + v + " - " + s + " - " + r;
+                        result = result + " - " + a + " - " + b + " - " + c + " - " + d + " - " + e + " - " + x + " - " + v + " - " + s + " - " + u + " - " + r;
                     }
                     else if (type == "J")
                     {
@@ -223,7 +223,7 @@ namespace commands
                         string c = "C: *[" + emptyNodehandle(geometry, "C") + "]*";
                         string d = "D: [" + emptyNodehandle(geometry, "D") + "]";
                         string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
-                        string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
+                        string u = "U: *[" + emptyNodehandle(geometry, "U") + "]*";
                         string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
 
                         string end1 = "End1: [" + emptyNodehandle(geometry, "End1") + "]";
@@ -302,12 +302,12 @@ namespace commands
                     else if (type == "U")
                     {
                         string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
-                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string b = "B: *[" + emptyNodehandle(geometry, "B") + "]*";
                         string c = "C: [" + emptyNodehandle(geometry, "C") + "]";
                         string x = "X: [" + emptyNodehandle(geometry, "X") + "]";
                         string y = "Y: [" + emptyNodehandle(geometry, "Y") + "]";
-                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
-                        string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
+                        string v = "V: *[" + emptyNodehandle(geometry, "V") + "]*";
+                        string u = "U: *[" + emptyNodehandle(geometry, "U") + "]*";
                         string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
 
                         string end1 = "End1: [" + emptyNodehandle(geometry, "End1") + "]";
@@ -318,11 +318,11 @@ namespace commands
                     else if (type == "V")
                     {
                         string a = "A: [" + emptyNodehandle(geometry, "A") + "]";
-                        string b = "B: [" + emptyNodehandle(geometry, "B") + "]";
+                        string b = "B: *[" + emptyNodehandle(geometry, "B") + "]*";
                         string x = "X: [" + emptyNodehandle(geometry, "X") + "]";
                         string y = "Y: [" + emptyNodehandle(geometry, "Y") + "]";
-                        string v = "V: [" + emptyNodehandle(geometry, "V") + "]";
-                        string u = "U: [" + emptyNodehandle(geometry, "U") + "]";
+                        string v = "V: *[" + emptyNodehandle(geometry, "V") + "]*";
+                        string u = "U: *[" + emptyNodehandle(geometry, "U") + "]*";
                         string r = "R: [" + emptyNodehandle(geometry, "R") + "]";
 
                         string end1 = "End1: [" + emptyNodehandle(geometry, "End1") + "]";
@@ -492,27 +492,21 @@ namespace commands
             else if (type == "EX")
             {
                 XmlNode a = xmlDoc.CreateElement("A");
-                XmlNode b = xmlDoc.CreateElement("B");
                 XmlNode c = xmlDoc.CreateElement("C");
                 XmlNode y = xmlDoc.CreateElement("Y");
                 XmlNode v = xmlDoc.CreateElement("V");
-                XmlNode u = xmlDoc.CreateElement("U");
                 XmlNode r = xmlDoc.CreateElement("R");
 
                 a.InnerText = prompt("A", ed);
-                b.InnerText = prompt("B", ed);
                 c.InnerText = prompt("C", ed);
-                b.InnerText = prompt("Y", ed);
+                y.InnerText = prompt("Y", ed);
                 v.InnerText = prompt("V", ed);
-                u.InnerText = prompt("U", ed);
                 r.InnerText = prompt("R", ed);
 
                 geo.AppendChild(a);
-                geo.AppendChild(b);
                 geo.AppendChild(c);
                 geo.AppendChild(y);
                 geo.AppendChild(v);
-                geo.AppendChild(u);
                 geo.AppendChild(r);
             }
             else if (type == "F")
@@ -535,7 +529,6 @@ namespace commands
             else if (type == "G")
             {
                 XmlNode a = xmlDoc.CreateElement("A");
-                XmlNode b = xmlDoc.CreateElement("B");
                 XmlNode c = xmlDoc.CreateElement("C");
                 XmlNode x = xmlDoc.CreateElement("X");
                 XmlNode v = xmlDoc.CreateElement("V");
@@ -543,7 +536,6 @@ namespace commands
                 XmlNode r = xmlDoc.CreateElement("R");
 
                 a.InnerText = prompt("A", ed);
-                b.InnerText = prompt("B", ed);
                 c.InnerText = prompt("C", ed);
                 x.InnerText = prompt("X", ed);
                 v.InnerText = prompt("V", ed);
@@ -551,7 +543,6 @@ namespace commands
                 r.InnerText = prompt("R", ed);
 
                 geo.AppendChild(a);
-                geo.AppendChild(b);
                 geo.AppendChild(c);
                 geo.AppendChild(x);
                 geo.AppendChild(v);
@@ -562,7 +553,6 @@ namespace commands
             {
                 XmlNode a = xmlDoc.CreateElement("A");
                 XmlNode b = xmlDoc.CreateElement("B");
-                XmlNode c = xmlDoc.CreateElement("C");
                 XmlNode d = xmlDoc.CreateElement("D");
                 XmlNode e = xmlDoc.CreateElement("E");
                 XmlNode x = xmlDoc.CreateElement("X");
@@ -573,7 +563,6 @@ namespace commands
 
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
-                c.InnerText = prompt("C", ed);
                 d.InnerText = prompt("D", ed);
                 e.InnerText = prompt("E", ed);
                 x.InnerText = prompt("X", ed);
@@ -584,7 +573,6 @@ namespace commands
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
-                geo.AppendChild(c);
                 geo.AppendChild(d);
                 geo.AppendChild(e);
                 geo.AppendChild(x);
@@ -755,11 +743,11 @@ namespace commands
                 XmlNode e1 = xmlDoc.CreateElement("End1");
                 XmlNode e2 = xmlDoc.CreateElement("End2");
 
-                e1.InnerText = "L";
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
-                e2.InnerText = "L";
                 r.InnerText = prompt("R", ed);
+                e1.InnerText = "L";
+                e2.InnerText = "L";
 
                 geo.AppendChild(e1);
                 geo.AppendChild(a);
@@ -776,18 +764,18 @@ namespace commands
                 XmlNode e1 = xmlDoc.CreateElement("End1");
                 XmlNode e2 = xmlDoc.CreateElement("End2");
 
-                e1.InnerText = "L";
                 a.InnerText = prompt("A", ed);
                 d.InnerText = prompt("D", ed);
                 v.InnerText = prompt("V", ed);
-                e2.InnerText = "L";
                 r.InnerText = prompt("R", ed);
+                e1.InnerText = "L";
+                e2.InnerText = "L";
 
                 geo.AppendChild(e1);
                 geo.AppendChild(a);
                 geo.AppendChild(d);
-                geo.AppendChild(v);
                 geo.AppendChild(e2);
+                geo.AppendChild(v);
                 geo.AppendChild(r);
             }
             else if (type == "O")
@@ -928,16 +916,21 @@ namespace commands
                 XmlNode x = xmlDoc.CreateElement("X");
                 XmlNode y = xmlDoc.CreateElement("Y");
                 XmlNode r = xmlDoc.CreateElement("R");
-
+                XmlNode e1 = xmlDoc.CreateElement("End1");
+                XmlNode e2 = xmlDoc.CreateElement("End2");
 
                 a.InnerText = prompt("A", ed);
                 c.InnerText = prompt("C", ed);
                 x.InnerText = prompt("X", ed);
                 y.InnerText = prompt("Y", ed);
                 r.InnerText = prompt("R", ed);
+                e1.InnerText = "L";
+                e2.InnerText = "L";
 
+                geo.AppendChild(e1);
                 geo.AppendChild(a);
                 geo.AppendChild(c);
+                geo.AppendChild(e2);
                 geo.AppendChild(x);
                 geo.AppendChild(y);
                 geo.AppendChild(r);
@@ -948,14 +941,19 @@ namespace commands
                 XmlNode x = xmlDoc.CreateElement("X");
                 XmlNode y = xmlDoc.CreateElement("Y");
                 XmlNode r = xmlDoc.CreateElement("R");
-
+                XmlNode e1 = xmlDoc.CreateElement("End1");
+                XmlNode e2 = xmlDoc.CreateElement("End2");
 
                 a.InnerText = prompt("A", ed);
                 x.InnerText = prompt("X", ed);
                 y.InnerText = prompt("Y", ed);
                 r.InnerText = prompt("R", ed);
+                e1.InnerText = "L";
+                e2.InnerText = "L";
 
+                geo.AppendChild(e1);
                 geo.AppendChild(a);
+                geo.AppendChild(e2);
                 geo.AppendChild(x);
                 geo.AppendChild(y);
                 geo.AppendChild(r);
@@ -1192,30 +1190,24 @@ namespace commands
                 else if (new_type == "EX")
                 {
                     string old_a = emptyNodehandle(old_geometry, "A");
-                    string old_b = emptyNodehandle(old_geometry, "B");
                     string old_c = emptyNodehandle(old_geometry, "C");
                     string old_y = emptyNodehandle(old_geometry, "Y");
                     string old_v = emptyNodehandle(old_geometry, "V");
-                    string old_u = emptyNodehandle(old_geometry, "U");
                     string old_r = emptyNodehandle(old_geometry, "R");
 
                     string new_a = emptyNodehandle(new_geometry, "A");
-                    string new_b = emptyNodehandle(new_geometry, "B");
                     string new_c = emptyNodehandle(new_geometry, "C");
                     string new_y = emptyNodehandle(new_geometry, "Y");
                     string new_v = emptyNodehandle(new_geometry, "V");
-                    string new_u = emptyNodehandle(new_geometry, "U");
                     string new_r = emptyNodehandle(new_geometry, "R");
 
-                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_y == "???" || old_v == "???" || old_u == "???" || old_r == "???") return null;
-                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_y == "???" || new_v == "???" || new_u == "???" || new_r == "???") return null;
+                    if (old_a == "???" || old_c == "???" || old_y == "???" || old_v == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_c == "???" || new_y == "???" || new_v == "???" || new_r == "???") return null;
 
                     if (old_a == new_a &&
-                        old_b == new_b &&
                         old_c == new_c &&
                         old_y == new_y &&
                         old_v == new_v &&
-                        old_u == new_u &&
                         old_r == new_r) return rebar;
                 }
                 else if (new_type == "F")
@@ -1241,7 +1233,6 @@ namespace commands
                 else if (new_type == "G")
                 {
                     string old_a = emptyNodehandle(old_geometry, "A");
-                    string old_b = emptyNodehandle(old_geometry, "B");
                     string old_c = emptyNodehandle(old_geometry, "C");
                     string old_x = emptyNodehandle(old_geometry, "X");
                     string old_v = emptyNodehandle(old_geometry, "V");
@@ -1249,18 +1240,16 @@ namespace commands
                     string old_r = emptyNodehandle(old_geometry, "R");
 
                     string new_a = emptyNodehandle(new_geometry, "A");
-                    string new_b = emptyNodehandle(new_geometry, "B");
                     string new_c = emptyNodehandle(new_geometry, "C");
                     string new_x = emptyNodehandle(new_geometry, "X");
                     string new_v = emptyNodehandle(new_geometry, "V");
                     string new_s = emptyNodehandle(new_geometry, "S");
                     string new_r = emptyNodehandle(new_geometry, "R");
 
-                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_x == "???" || old_v == "???" || old_s == "???" || old_r == "???") return null;
-                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_x == "???" || new_v == "???" || new_s == "???" || new_r == "???") return null;
+                    if (old_a == "???" || old_c == "???" || old_x == "???" || old_v == "???" || old_s == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_c == "???" || new_x == "???" || new_v == "???" || new_s == "???" || new_r == "???") return null;
 
                     if (old_a == new_a &&
-                        old_b == new_b &&
                         old_c == new_c &&
                         old_x == new_x &&
                         old_v == new_v &&
@@ -1271,7 +1260,6 @@ namespace commands
                 {
                     string old_a = emptyNodehandle(old_geometry, "A");
                     string old_b = emptyNodehandle(old_geometry, "B");
-                    string old_c = emptyNodehandle(old_geometry, "C");
                     string old_d = emptyNodehandle(old_geometry, "D");
                     string old_e = emptyNodehandle(old_geometry, "E");
                     string old_x = emptyNodehandle(old_geometry, "X");
@@ -1282,7 +1270,6 @@ namespace commands
 
                     string new_a = emptyNodehandle(new_geometry, "A");
                     string new_b = emptyNodehandle(new_geometry, "B");
-                    string new_c = emptyNodehandle(new_geometry, "C");
                     string new_d = emptyNodehandle(new_geometry, "D");
                     string new_e = emptyNodehandle(new_geometry, "E");
                     string new_x = emptyNodehandle(new_geometry, "X");
@@ -1291,12 +1278,11 @@ namespace commands
                     string new_u = emptyNodehandle(new_geometry, "U");
                     string new_r = emptyNodehandle(new_geometry, "R");
                     
-                    if (old_a == "???" || old_b == "???" || old_c == "???" || old_d == "???" || old_e == "???" || old_x == "???" || old_v == "???" || old_s == "???" || old_u == "???" || old_r == "???") return null;
-                    if (new_a == "???" || new_b == "???" || new_c == "???" || new_d == "???" || new_e == "???" || new_x == "???" || new_v == "???" || new_s == "???" || new_u == "???" || new_r == "???") return null;
+                    if (old_a == "???" || old_b == "???" || old_d == "???" || old_e == "???" || old_x == "???" || old_v == "???" || old_s == "???" || old_u == "???" || old_r == "???") return null;
+                    if (new_a == "???" || new_b == "???" || new_d == "???" || new_e == "???" || new_x == "???" || new_v == "???" || new_s == "???" || new_u == "???" || new_r == "???") return null;
 
                     if (old_a == new_a &&
                         old_b == new_b &&
-                        old_c == new_c &&
                         old_d == new_d &&
                         old_e == new_e &&
                         old_x == new_x &&
@@ -1682,21 +1668,27 @@ namespace commands
                     string old_x = emptyNodehandle(old_geometry, "X");
                     string old_y = emptyNodehandle(old_geometry, "Y");
                     string old_r = emptyNodehandle(old_geometry, "R");
+                    string old_e1 = emptyNodehandle(old_geometry, "End1");
+                    string old_e2 = emptyNodehandle(old_geometry, "End2");
 
                     string new_a = emptyNodehandle(new_geometry, "A");
                     string new_c = emptyNodehandle(new_geometry, "C");
                     string new_x = emptyNodehandle(new_geometry, "X");
                     string new_y = emptyNodehandle(new_geometry, "Y");
                     string new_r = emptyNodehandle(new_geometry, "R");
+                    string new_e1 = emptyNodehandle(new_geometry, "End1");
+                    string new_e2 = emptyNodehandle(new_geometry, "End2");
 
-                    if (old_a == "???" || old_c == "???" || old_x == "???" || old_y == "???" || old_r == "???") return null;
-                    if (new_a == "???" || new_c == "???" || new_x == "???" || new_y == "???" || new_r == "???") return null;
+                    if (old_a == "???" || old_c == "???" || old_x == "???" || old_y == "???" || old_r == "???" || old_e1 == "???" || old_e2 == "???") return null;
+                    if (new_a == "???" || new_c == "???" || new_x == "???" || new_y == "???" || new_r == "???" || new_e1 == "???" || new_e2 == "???") return null;
 
                     if (old_a == new_a &&
                         old_c == new_c &&
                         old_x == new_x &&
                         old_y == new_y &&
-                        old_r == new_r) return rebar;
+                        old_r == new_r &&
+                        old_e1 == new_e1 &&
+                        old_e2 == new_e2) return rebar;
                 }
                 else if (new_type == "V")
                 {
@@ -1704,19 +1696,25 @@ namespace commands
                     string old_x = emptyNodehandle(old_geometry, "X");
                     string old_y = emptyNodehandle(old_geometry, "Y");
                     string old_r = emptyNodehandle(old_geometry, "R");
+                    string old_e1 = emptyNodehandle(old_geometry, "End1");
+                    string old_e2 = emptyNodehandle(old_geometry, "End2");
 
                     string new_a = emptyNodehandle(new_geometry, "A");
                     string new_x = emptyNodehandle(new_geometry, "X");
                     string new_y = emptyNodehandle(new_geometry, "Y");
                     string new_r = emptyNodehandle(new_geometry, "R");
+                    string new_e1 = emptyNodehandle(new_geometry, "End1");
+                    string new_e2 = emptyNodehandle(new_geometry, "End2");
 
-                    if (old_a == "???" || old_x == "???" || old_y == "???" || old_r == "???") return null;
-                    if (new_a == "???" || new_x == "???" || new_y == "???" || new_r == "???") return null;
+                    if (old_a == "???" || old_x == "???" || old_y == "???" || old_r == "???" || old_e1 == "???" || old_e2 == "???") return null;
+                    if (new_a == "???" || new_x == "???" || new_y == "???" || new_r == "???" || new_e1 == "???" || new_e2 == "???") return null;
 
                     if (old_a == new_a &&
                         old_x == new_x &&
                         old_y == new_y &&
-                        old_r == new_r) return rebar;
+                        old_r == new_r &&
+                        old_e1 == new_e1 &&
+                        old_e2 == new_e2) return rebar;
                 }
                 else if (new_type == "W")
                 {

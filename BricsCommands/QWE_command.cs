@@ -32,6 +32,10 @@ namespace commands
 
         double rotation;
 
+        Document doc;
+        Database db;
+        Editor ed;
+
         public QWE_command()
         {
             success = false;
@@ -41,9 +45,19 @@ namespace commands
             ptNext = new Point3d();
 
             rotation = 0.0;
+
+            doc = Application.DocumentManager.MdiActiveDocument;
+            db = doc.Database;
+            ed = doc.Editor;
         }
 
         public void run()
+        {
+            main();
+            ed.WriteMessage("\n[Done]");
+        }
+
+        public void main()
         {
             success = getInitPoint("\nStart: ", ref ptStart);
             if (!success) { return; }
@@ -160,30 +174,32 @@ namespace commands
 
             PromptPointResult pPtRes;
             PromptPointOptions pPtOpts = new PromptPointOptions("");
-
             pPtOpts.Keywords.Add("F");
-
             pPtOpts.Message = prompt;
             pPtOpts.UseBasePoint = true;
             pPtOpts.BasePoint = ptBase;
             pPtRes = acDoc.Editor.GetPoint(pPtOpts);
 
-            while (true)
+
+            if (pPtRes.Status == PromptStatus.Keyword)
             {
-                if (pPtRes.Status == PromptStatus.Keyword)
-                {
-                    pPtRes = acDoc.Editor.GetPoint(pPtOpts);
-                    finish = true;
-                }
-                else if (pPtRes.Status == PromptStatus.OK)
-                {
-                    pt = pPtRes.Value;
-                    break;
-                }
-                else if (pPtRes.Status == PromptStatus.Cancel)
-                {
-                    return false;
-                }
+                PromptPointOptions lastPtOpts = new PromptPointOptions("");
+                pPtOpts.Message = "Last Point";
+                pPtOpts.UseBasePoint = true;
+                pPtOpts.BasePoint = ptBase;
+
+                pPtRes = acDoc.Editor.GetPoint(lastPtOpts);
+                pt = pPtRes.Value;
+
+                finish = true;
+            }
+            else if (pPtRes.Status == PromptStatus.OK)
+            {
+                pt = pPtRes.Value;
+            }
+            else if (pPtRes.Status == PromptStatus.Cancel)
+            {
+                return false;
             }
 
             return true;
