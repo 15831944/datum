@@ -25,7 +25,7 @@ namespace commands
         [CommandMethod("HLS_INFO")]
         public void info()
         {
-            SW.MessageBox.Show("AE Hills Versioon: 23.05.2017\n");
+            SW.MessageBox.Show("AE Hills Versioon: 20.07.2017\n");
         }
 
         [CommandMethod("QWE")]
