@@ -34,6 +34,7 @@ namespace xml_armering_gen
             List<Row> parsed = parseCSVs(csvs);
 
             dump(location, parsed);
+            dump2(location, parsed);
 
             Console.WriteLine("Done.");
             Console.ReadLine();
@@ -111,7 +112,7 @@ namespace xml_armering_gen
             while (!reader.EndOfStream)
             {
                 string line = reader.ReadLine();
-                if (line == "---SUMMARY") break;
+                if (line == "[/SUMMARY]") break;
 
                 line.Replace(" ", "");
                 string[] rowData = line.Split(';');

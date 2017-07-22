@@ -35,7 +35,7 @@ namespace datum
                 {
                     netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Release\CadCommands.dll";
                 }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\Brics_testimine\XML\5\training1.dwg";
+                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\7\training1.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
@@ -49,7 +49,7 @@ namespace datum
                 {
                     netload = @"C:\Users\Alex\Documents\GitHub\habile\CadCommands\bin\Release\CadCommands.dll";
                 }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\Brics_testimine\training5.dwg";
+                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
