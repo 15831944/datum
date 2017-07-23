@@ -15,7 +15,7 @@ using Autodesk.AutoCAD.EditorInput;
 
 namespace commands
 {
-    class XML_testing
+    class XML_AddTo_command
     {
         string dwg_dir;
 
@@ -29,7 +29,7 @@ namespace commands
         Database db;
         Editor ed;
 
-        public XML_testing()
+        public XML_AddTo_command()
         {
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;

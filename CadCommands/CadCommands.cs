@@ -29,7 +29,7 @@ namespace commands
         {
             try
             {
-                QWE_command program = new QWE_command();
+                DIM_command program = new DIM_command();
                 program.run();
             }
             catch (System.Exception ex)
@@ -43,7 +43,7 @@ namespace commands
         {
             try
             {
-                SUM_command_v2 program = new SUM_command_v2();
+                TABLE_command_v2 program = new TABLE_command_v2();
                 program.run(true);
                 program.output_local();
             }
@@ -58,7 +58,7 @@ namespace commands
         {
             try
             {
-                SUM_command_v2 program = new SUM_command_v2();
+                TABLE_command_v2 program = new TABLE_command_v2();
                 program.run(false);
                 program.output_local();
             }
@@ -103,12 +103,27 @@ namespace commands
         }
 
         [CommandMethod("CSV_SUM_MARKS")]
-        public void csv_sum()
+        public void csv_sum_marks()
+        {
+            try
+            {
+                TABLE_command_v2 program = new TABLE_command_v2();
+                program.run(true);
+                program.dump_csv();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+        [CommandMethod("CSV_SUM_WEIGHTS")]
+        public void csv_sum_weights()
         {
             try
             {
                 SUM_command_v2 program = new SUM_command_v2();
-                program.run(true);
+                program.run();
                 program.dump_csv();
             }
             catch (System.Exception ex)
@@ -120,7 +135,7 @@ namespace commands
         [CommandMethod("XMLA")]
         public void testing()
         {
-            XML_testing program = new XML_testing();
+            XML_AddTo_command program = new XML_AddTo_command();
 
             try
             {

@@ -12,7 +12,7 @@ using Autodesk.AutoCAD.EditorInput;
 
 namespace commands
 {
-    class QWE_command
+    class DIM_command
     {
         double smallCircleRadius = 15.0;
         double bigCircleRadius = 50.0;
@@ -32,7 +32,7 @@ namespace commands
         Database db;
         Editor ed;
 
-        public QWE_command()
+        public DIM_command()
         {
             success = false;
             ptStart = new Point3d();

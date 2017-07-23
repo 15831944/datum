@@ -14,22 +14,22 @@ using Autodesk.AutoCAD.EditorInput;
 
 namespace commands
 {
-    class SUM_command_v1
+    class TABLE_command_v2
     {
-        static string[] boxNames = { "KN-A", "KN-C", "KN-V27" };
+        static string[] newBoxNames = { "KN-C", "KN-V27" };
         static string markLayerName = "K60";
 
         List<Mark> total_stats;
-        Dictionary<Area_v1, List<Mark>> local_stats;
+        Dictionary<Area_v2, List<Mark>> local_stats;
 
         Document doc;
         Database db;
         Editor ed;
 
-        public SUM_command_v1()
+        public TABLE_command_v2()
         {
             total_stats = new List<Mark>();
-            local_stats = new Dictionary<Area_v1, List<Mark>>();
+            local_stats = new Dictionary<Area_v2, List<Mark>>();
 
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
@@ -41,30 +41,30 @@ namespace commands
         {
             writeCadMessage("START");
 
-            List<Area_v1> areas = new List<Area_v1>();
+            List<Area_v2> areas = new List<Area_v2>();
 
             if (multy == true)
             {
-                areas = getAllAreas(boxNames);
+                areas = getAllAreas(newBoxNames);
             }
             else
             {
-                areas = getSelectedAreas(boxNames);
+                areas = getSelectedAreas(newBoxNames);
             }
 
             if (areas.Count < 1)
             {
-                writeCadMessage("ERROR - " + boxNames[0] + " / " + boxNames[1] + " / " + boxNames[2] + " not found");
+                writeCadMessage("[ERROR] - (" + newBoxNames[0] + ") / (" + newBoxNames[1] + ") not found");
             }
 
             List<Mark> allMarks = getAllMarks(markLayerName);
             if (allMarks.Count < 1)
             {
-                writeCadMessage("ERROR - " + "Reinforcement marks" + " not found");
+                writeCadMessage("[ERROR] - " + "Reinforcement marks" + " not found");
                 return;
             }
 
-            local_stats = matchMarkArea(areas, allMarks);
+            local_stats = matchMarkToArea(areas, allMarks);
 
             return;
         }
@@ -84,7 +84,7 @@ namespace commands
 
         public void output_local()
         {
-            foreach (Area_v1 current in local_stats.Keys)
+            foreach (Area_v2 current in local_stats.Keys)
             {
                 outputTable(current, local_stats[current]);
             }
@@ -95,11 +95,11 @@ namespace commands
         }
 
 
-        private List<Mark> getGlobalSummary(Dictionary<Area_v1, List<Mark>> sorted)
+        private List<Mark> getGlobalSummary(Dictionary<Area_v2, List<Mark>> sorted)
         {
             List<Mark> allValidMarks = new List<Mark>();
 
-            foreach (Area_v1 area in sorted.Keys)
+            foreach (Area_v2 area in sorted.Keys)
             {
                 allValidMarks.AddRange(sorted[area]);
             }
@@ -110,33 +110,60 @@ namespace commands
         }
 
 
-        private void outputTable(Area_v1 a, List<Mark> rows)
+        private void outputTable(Area_v2 a, List<Mark> rows)
         {
-            Point3d currentPoint = a.IP_reinf;
-
-            foreach (Mark r in rows)
+            using (Transaction trans = db.TransactionManager.StartTransaction())
             {
-                if (r.Position != "emptyrow")
-                {
-                    Point3d position_IP = new Point3d(currentPoint.X + 40, currentPoint.Y + 45, currentPoint.Z);
-                    Point3d diameter_IP = new Point3d(currentPoint.X + 30 + 244, currentPoint.Y + 45, currentPoint.Z);
-                    Point3d number_IP = new Point3d(currentPoint.X + 60 + 390, currentPoint.Y + 45, currentPoint.Z);
+                DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
 
-                    insertText(r.Position, position_IP, markLayerName);
-                    insertText(r.Diameter.ToString(), diameter_IP, markLayerName);
-                    insertText(r.Number.ToString(), number_IP, markLayerName);
+                if (currentEntity is BlockReference)
+                {
+                    BlockReference blockRef = currentEntity as BlockReference;
+
+                    double scale = blockRef.ScaleFactors.X;
+                    string name = blockRef.Name;
+
+
+                    Point3d currentPoint = a.Start;
+
+                    if (name == newBoxNames[0])
+                    {
+                        currentPoint = new Point3d(a.Start.X + (366 * scale), a.Start.Y + (141.8 * scale), a.Start.Z);
+                    }
+                    else if (name == newBoxNames[1])
+                    {
+                        currentPoint = new Point3d(a.Start.X + (366 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
+                    }
+
+                    foreach (Mark r in rows)
+                    {
+                        if (r.Position != "emptyrow")
+                        {
+                            double txtHeight = 1.5 * scale;
+
+                            Point3d position_IP = new Point3d(currentPoint.X + (1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
+                            Point3d diameter_IP = new Point3d(currentPoint.X + (0.75 * scale) + (6.1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
+                            Point3d number_IP = new Point3d(currentPoint.X + (1.5 * scale) + (9.75 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
+
+                            insertText(r.Position, position_IP, markLayerName, txtHeight, trans);
+                            insertText(r.Diameter.ToString(), diameter_IP, markLayerName, txtHeight, trans);
+                            insertText(r.Number.ToString(), number_IP, markLayerName, txtHeight, trans);
+                        }
+
+                        currentPoint = new Point3d(currentPoint.X, currentPoint.Y - (4 * scale), currentPoint.Z);
+                    }
                 }
 
-                currentPoint = new Point3d(currentPoint.X, currentPoint.Y - 160, currentPoint.Z);
+                trans.Commit();
             }
         }
 
 
-        private Dictionary<Area_v1, List<Mark>> matchMarkArea(List<Area_v1> areas, List<Mark> allMarks)
+        private Dictionary<Area_v2, List<Mark>> matchMarkToArea(List<Area_v2> areas, List<Mark> allMarks)
         {
-            Dictionary<Area_v1, List<Mark>> sorted = new Dictionary<Area_v1, List<Mark>>();
+            Dictionary<Area_v2, List<Mark>> sorted = new Dictionary<Area_v2, List<Mark>>();
 
-            foreach (Area_v1 area in areas)
+            foreach (Area_v2 area in areas)
             {
                 List<Mark> marks = getMarksInArea(area, allMarks);
                 List<Mark> validMarks = new List<Mark>();
@@ -208,7 +235,7 @@ namespace commands
         }
 
 
-        private List<Mark> getMarksInArea(Area_v1 area, List<Mark> allmarks)
+        private List<Mark> getMarksInArea(Area_v2 area, List<Mark> allmarks)
         {
             List<Mark> marks = new List<Mark>();
 
@@ -239,9 +266,9 @@ namespace commands
             return parse;
         }
 
-        private List<Area_v1> getSelectedAreas(string[] blockNames)
+        private List<Area_v2> getSelectedAreas(string[] blockNames)
         {
-            List<Area_v1> areas = new List<Area_v1>();
+            List<Area_v2> areas = new List<Area_v2>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -252,9 +279,9 @@ namespace commands
             return areas;
         }
 
-        private List<Area_v1> getAllAreas(string[] blockNames)
+        private List<Area_v2> getAllAreas(string[] blockNames)
         {
-            List<Area_v1> areas = new List<Area_v1>();
+            List<Area_v2> areas = new List<Area_v2>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -273,14 +300,15 @@ namespace commands
         }
 
 
-        private List<Area_v1> getBoxAreas(List<BlockReference> blocks, Transaction trans)
+        private List<Area_v2> getBoxAreas(List<BlockReference> blocks, Transaction trans)
         {
-            List<Area_v1> parse = new List<Area_v1>();
+            List<Area_v2> parse = new List<Area_v2>();
 
             foreach (BlockReference block in blocks)
             {
                 Extents3d blockExtents = block.GeometricExtents;
-                Area_v1 area = new Area_v1(blockExtents.MinPoint, blockExtents.MaxPoint);
+
+                Area_v2 area = new Area_v2(block.ObjectId, blockExtents.MinPoint, blockExtents.MaxPoint);
                 parse.Add(area);
             }
 
@@ -295,7 +323,7 @@ namespace commands
             List<BlockReference> refs = new List<BlockReference>();
 
             PromptSelectionOptions opts = new PromptSelectionOptions();
-            opts.MessageForAdding = "\nSelect BLOCK " + blockNames[0] + " / " + blockNames[1] + " / " + blockNames[2];
+            opts.MessageForAdding = "\nSelect BLOCK " + blockNames[0] + " / " + blockNames[1];
             PromptSelectionResult selection = ed.GetSelection(opts);
 
             if (selection.Status == PromptStatus.OK)
@@ -440,29 +468,23 @@ namespace commands
         }
 
 
-        private void insertText(string value, Point3d position, string layer)
+        private void insertText(string value, Point3d position, string layer, double txtHeight, Transaction trans)
         {
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
+            BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+
+            using (DBText acText = new DBText())
             {
-                BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-                BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+                acText.Layer = layer;
 
-                using (DBText acText = new DBText())
-                {
-                    acText.Layer = layer;
+                acText.Position = position;
+                acText.Height = txtHeight;
+                acText.TextString = value;
 
-                    acText.Position = position;
-                    acText.Height = 60;
-                    acText.TextString = value;
-
-                    btr.AppendEntity(acText);
-                    trans.AddNewlyCreatedDBObject(acText, true);
-                }
-
-                trans.Commit();
+                btr.AppendEntity(acText);
+                trans.AddNewlyCreatedDBObject(acText, true);
             }
         }
-
 
         private void writeCadMessage(string errorMessage)
         {
@@ -492,8 +514,7 @@ namespace commands
             txt.AppendLine("alexi programmi ajutine file");
             txt.AppendLine("shape; positsioon; kogus; diameter");
             txt.AppendLine("");
-            txt.AppendLine("SUMMARY");
-            txt.AppendLine("");
+            txt.AppendLine("[SUMMARY]");
 
             foreach (Mark u in total_stats)
             {
@@ -501,16 +522,37 @@ namespace commands
                 txt.AppendLine(u.Position_Shape.ToString() + ";" + u.Position_Nr.ToString() + ";" + u.Number.ToString() + ";" + u.Diameter.ToString());
             }
 
-            txt.AppendLine("");
-            txt.AppendLine("---SUMMARY");
+            txt.AppendLine("[/SUMMARY]");
 
-            int i = 1;
-            foreach (Area_v1 a in local_stats.Keys)
+
+            // LOCAL
+
+
+            foreach (Area_v2 a in local_stats.Keys)
             {
+                string ritn_nr = "";
+                using (Transaction trans = db.TransactionManager.StartTransaction())
+                {
+                    DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
+
+                    if (currentEntity is BlockReference)
+                    {
+                        BlockReference blockRef = currentEntity as BlockReference;
+
+                        foreach (ObjectId arId in blockRef.AttributeCollection)
+                        {
+                            DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
+                            AttributeReference ar = obj as AttributeReference;
+                            if (ar != null)
+                            {
+                                if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
+                            }
+                        }
+                    }
+                }
+
                 txt.AppendLine("");
-                txt.AppendLine("");
-                txt.AppendLine("drawing nr: " + i.ToString());
-                txt.AppendLine("");
+                txt.AppendLine("[" + ritn_nr + "]");
                 List<Mark> stats = local_stats[a];
 
                 if (stats.Count == 0)
@@ -525,7 +567,6 @@ namespace commands
                         txt.AppendLine(u.Position_Shape.ToString() + ";" + u.Position_Nr.ToString() + ";" + u.Number.ToString() + ";" + u.Diameter.ToString());
                     }
                 }
-                i++;
             }
 
             string csvText = txt.ToString();
