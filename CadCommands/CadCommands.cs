@@ -38,20 +38,20 @@ namespace commands
             }
         }
 
-        [CommandMethod("aaa")]
-        public void arm_table_sum_all()
-        {
-            try
-            {
-                TABLE_command_v2 program = new TABLE_command_v2();
-                program.run(true);
-                program.output_local();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
-        }
+        //[CommandMethod("aaa")]
+        //public void arm_table_sum_all()
+        //{
+        //    try
+        //    {
+        //        TABLE_command_v2 program = new TABLE_command_v2();
+        //        program.run(true);
+        //        program.output_local();
+        //    }
+        //    catch (System.Exception ex)
+        //    {
+        //        SW.MessageBox.Show("Viga\n" + ex.Message);
+        //    }
+        //}
 
         [CommandMethod("bbb")]
         public void arm_table_sum_selected()
@@ -85,22 +85,22 @@ namespace commands
             }
         }
 
-        [CommandMethod("ddd")]
-        public void arm_weights_all()
-        {
-            WEIGHT_command_v2 program = new WEIGHT_command_v2();
+        //[CommandMethod("ddd")]
+        //public void arm_weights_all()
+        //{
+        //    WEIGHT_command_v2 program = new WEIGHT_command_v2();
 
-            try
-            {
-                program.run(true);
-                program.output_local();
-            }
-            catch (System.Exception ex)
-            {
-                program.unlock_after_crash();
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
-        }
+        //    try
+        //    {
+        //        program.run(true);
+        //        program.output_local();
+        //    }
+        //    catch (System.Exception ex)
+        //    {
+        //        program.unlock_after_crash();
+        //        SW.MessageBox.Show("Viga\n" + ex.Message);
+        //    }
+        //}
 
         [CommandMethod("CSV_SUM_MARKS")]
         public void csv_sum_marks()

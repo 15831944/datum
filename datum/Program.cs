@@ -35,21 +35,8 @@ namespace datum
                 {
                     netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Release\CadCommands.dll";
                 }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\7\training1.dwg";
-                string script = "script2.scr";
-
-                createScriptFile(script, netload, dwg);
-                runAutocad(run, script);
-            }
-            else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2014\acad.exe"))
-            {
-                string run = @"C:\Program Files\Autodesk\AutoCAD 2014\acad.exe";
-                string netload = @"C:\Users\Alex\Documents\GitHub\habile\CadCommands\bin\Debug\CadCommands.dll";
-                if (!File.Exists(netload))
-                {
-                    netload = @"C:\Users\Alex\Documents\GitHub\habile\CadCommands\bin\Release\CadCommands.dll";
-                }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
+                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\6\V-066_078.dwg";
+                //string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
@@ -68,6 +55,7 @@ namespace datum
 
             scriptText.AppendLine("_.open \"" + dwg + "\"");
             scriptText.AppendLine("NETLOAD \"" + netload + "\"");
+            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\Alex\Documents\GitHub\datum\KontrollCommands\bin\Debug\KontrollCommands.dll" + "\"");
 
             if (File.Exists(script))
             {
