@@ -65,11 +65,13 @@ namespace commands
                 }
                 else if (dim.Dimlfac == 0.5)
                 {
-                    createCircle(100, 2, dim.TextPosition, dims[dim]);
+                    createCircle(2000, 2, dim.TextPosition, dims[dim]);
+                    createCircle(200, 2, dim.TextPosition, dims[dim]);
                     scale_05.Add(dim);
                 }
                 else
                 {
+                    createCircle(2000, 1, dim.TextPosition, dims[dim]);
                     createCircle(200, 1, dim.TextPosition, dims[dim]);
                     scale_other.Add(dim);
                 }                                

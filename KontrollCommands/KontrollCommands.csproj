@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CORNER_command.cs" />
     <Compile Include="KontrollCommands.cs" />
     <Compile Include="OVERRIDE_command.cs" />
     <Compile Include="SCALE_command.cs" />

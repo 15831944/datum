@@ -48,5 +48,21 @@ namespace commands
             }
         }
 
+
+        [CommandMethod("kontroll_corner")]
+        public void kontroll_corner()
+        {
+            try
+            {
+                CORNER_command program = new CORNER_command();
+                program.run();
+                program.close();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
     }
 }
