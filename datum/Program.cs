@@ -55,7 +55,7 @@ namespace datum
 
             scriptText.AppendLine("_.open \"" + dwg + "\"");
             scriptText.AppendLine("NETLOAD \"" + netload + "\"");
-            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\Alex\Documents\GitHub\datum\KontrollCommands\bin\Debug\KontrollCommands.dll" + "\"");
+            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\aleksandr.ess\Documents\GitHub\datum\KontrollCommands\bin\Release\KontrollCommands.dll" + "\"");
 
             if (File.Exists(script))
             {

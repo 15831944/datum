@@ -1,47 +1,47 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿//using System;
+//using System.Collections.Generic;
+//using System.Linq;
+//using System.Text;
+//using System.Threading.Tasks;
 
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
 
-namespace commands
-{
-    class Area_v2
-    {
-        ObjectId _id;
+//namespace commands
+//{
+//    class Area_v2
+//    {
+//        ObjectId _id;
 
-        Point3d _start;
-        Point3d _end;
+//        Point3d _start;
+//        Point3d _end;
 
-        public ObjectId ID { get { return _id; } }
+//        public ObjectId ID { get { return _id; } }
 
-        public Point3d Start { get { return _start; } } // for sorting
-
-
-        public Area_v2(ObjectId id, Point3d s, Point3d e)
-        {
-            _id = id;
-
-            _start = s;
-            _end = e;
-        }
+//        public Point3d Start { get { return _start; } } // for sorting
 
 
-        internal bool isPointInArea(Point3d point)
-        {
-            if (point.X <= _start.X) return false;
-            if (point.X >= _end.X) return false;
+//        public Area_v2(ObjectId id, Point3d s, Point3d e)
+//        {
+//            _id = id;
 
-            if (point.Y <= _start.Y) return false;
-            if (point.Y >= _end.Y) return false;
+//            _start = s;
+//            _end = e;
+//        }
 
-            return true;
-        }
-    }
-}
+
+//        internal bool isPointInArea(Point3d point)
+//        {
+//            if (point.X <= _start.X) return false;
+//            if (point.X >= _end.X) return false;
+
+//            if (point.Y <= _start.Y) return false;
+//            if (point.Y >= _end.Y) return false;
+
+//            return true;
+//        }
+//    }
+//}

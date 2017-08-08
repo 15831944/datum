@@ -6,22 +6,22 @@ using System.Threading.Tasks;
 
 using DR = System.Drawing;
 
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
-using AAC = Autodesk.AutoCAD.Colors;
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
+//using AAC = Autodesk.AutoCAD.Colors;
 
-////ODA
-//using Teigha.Runtime;
-//using Teigha.DatabaseServices;
-//using Teigha.Geometry;
+//ODA
+using Teigha.Runtime;
+using Teigha.DatabaseServices;
+using Teigha.Geometry;
 
-////Bricsys
-//using Bricscad.ApplicationServices;
-//using Bricscad.Runtime;
-//using Bricscad.EditorInput;
+//Bricsys
+using Bricscad.ApplicationServices;
+using Bricscad.Runtime;
+using Bricscad.EditorInput;
 
 namespace commands
 {
@@ -48,8 +48,12 @@ namespace commands
 
         internal void run()
         {
+            writeCadMessage("START");
+
             getAllDims();
             setColorToDims();
+
+            writeCadMessage("END");
         }
 
         private void setColorToDims()
@@ -61,7 +65,7 @@ namespace commands
             {
                 if (dim.Dimlfac == 1.0)
                 {
-                    //createCircle(100, 3, dim.TextPosition, dims[dim]);
+
                 }
                 else if (dim.Dimlfac == 0.5)
                 {
@@ -79,7 +83,6 @@ namespace commands
 
             writeCadMessage("Scale 0.5: " + scale_05.Count.ToString());
             writeCadMessage("Scale other: " + scale_other.Count.ToString());
-            writeCadMessage("");
         }
         
         private void getAllDims()

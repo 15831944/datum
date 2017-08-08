@@ -7,11 +7,21 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using SW = System.Windows.Forms;
 
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
+
+//ODA
+using Teigha.Runtime;
+using Teigha.DatabaseServices;
+using Teigha.Geometry;
+
+//Bricsys
+using Bricscad.ApplicationServices;
+using Bricscad.Runtime;
+using Bricscad.EditorInput;
 
 [assembly: CommandClass(typeof(commands.KontrollCommands))]
 namespace commands
@@ -55,6 +65,24 @@ namespace commands
             try
             {
                 CORNER_command program = new CORNER_command();
+                program.run();
+                program.close();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+
+
+
+        [CommandMethod("kontroll_diam")]
+        public void kontroll_diam()
+        {
+            try
+            {
+                MARK_command program = new MARK_command();
                 program.run();
                 program.close();
             }

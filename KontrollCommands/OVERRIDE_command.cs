@@ -6,22 +6,22 @@ using System.Threading.Tasks;
 
 using DR = System.Drawing;
 
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
-using AAC = Autodesk.AutoCAD.Colors;
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
+//using AAC = Autodesk.AutoCAD.Colors;
 
-////ODA
-//using Teigha.Runtime;
-//using Teigha.DatabaseServices;
-//using Teigha.Geometry;
+//ODA
+using Teigha.Runtime;
+using Teigha.DatabaseServices;
+using Teigha.Geometry;
 
-////Bricsys
-//using Bricscad.ApplicationServices;
-//using Bricscad.Runtime;
-//using Bricscad.EditorInput;
+//Bricsys
+using Bricscad.ApplicationServices;
+using Bricscad.Runtime;
+using Bricscad.EditorInput;
 
 namespace commands
 {
@@ -50,8 +50,12 @@ namespace commands
 
         internal void run()
         {
+            writeCadMessage("START");
+
             getAllDims();
             setColorToDims();
+
+            writeCadMessage("END");
         }
 
 
@@ -63,8 +67,6 @@ namespace commands
 
         private void setColorToDims()
         {
-            AAC.Color red = AAC.Color.FromColorIndex(AAC.ColorMethod.ByAci, 1);
-
             List<Dimension> overrides = new List<Dimension>();
 
             foreach (Dimension dim in dims.Keys)
@@ -89,8 +91,6 @@ namespace commands
             }
 
             writeCadMessage("Override count: " + overrides.Count.ToString());
-            writeCadMessage("");
-
         }
         
 

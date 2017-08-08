@@ -6,22 +6,22 @@ using System.Threading.Tasks;
 
 using DR = System.Drawing;
 
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
-using AAC = Autodesk.AutoCAD.Colors;
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
+//using AAC = Autodesk.AutoCAD.Colors;
 
-////ODA
-//using Teigha.Runtime;
-//using Teigha.DatabaseServices;
-//using Teigha.Geometry;
+//ODA
+using Teigha.Runtime;
+using Teigha.DatabaseServices;
+using Teigha.Geometry;
 
-////Bricsys
-//using Bricscad.ApplicationServices;
-//using Bricscad.Runtime;
-//using Bricscad.EditorInput;
+//Bricsys
+using Bricscad.ApplicationServices;
+using Bricscad.Runtime;
+using Bricscad.EditorInput;
 
 namespace commands
 {
@@ -52,13 +52,19 @@ namespace commands
 
         internal void run()
         {
+            writeCadMessage("START");
+
             getAllDims();
             logic2();
+
+            writeCadMessage("END");
         }
 
 
         private void logic2()
         {
+            List<Dimension> wrongs = new List<Dimension>();
+
             foreach (Dimension dim in dims.Keys)
             {
                 BlockTableRecord btr = dims[dim];
@@ -77,14 +83,18 @@ namespace commands
                     {
                         createCircle(100, 1, p1, dims[dim]);
                         createCircle(150, 2, rdim.TextPosition, dims[dim]);
+                        wrongs.Add(dim);
                     }
                     if (pp2 == false)
                     {
                         createCircle(100, 1, p2, dims[dim]);
                         createCircle(150, 2, rdim.TextPosition, dims[dim]);
+                        wrongs.Add(dim);
                     }
                 }
             }
+            
+            writeCadMessage("Vigade arv: " + wrongs.Count().ToString());
         }
 
 
@@ -148,6 +158,7 @@ namespace commands
                 else if (currentEntity is BlockReference)
                 {
                     BlockReference blockRef = currentEntity as BlockReference;
+                    double scale = blockRef.ScaleFactors.X;
 
                     BlockTableRecord block = null;
                     if (blockRef.IsDynamicBlock)
@@ -162,7 +173,7 @@ namespace commands
                     List<Point3d> btrPoints = getBlockTableRecordPoints(block);
                     foreach (Point3d p in btrPoints)
                     {
-                        Point3d pp = new Point3d(p.X + blockRef.Position.X, p.Y + blockRef.Position.Y, 0);
+                        Point3d pp = new Point3d((p.X * scale) + blockRef.Position.X, (p.Y * scale) + blockRef.Position.Y, 0);
                         points.Add(pp);
                     }
                     

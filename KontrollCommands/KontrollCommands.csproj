@@ -30,14 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="accoremgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2013\accoremgd.dll</HintPath>
-    </Reference>
-    <Reference Include="acdbmgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2013\acdbmgd.dll</HintPath>
-    </Reference>
-    <Reference Include="acmgd">
-      <HintPath>..\..\..\..\..\..\Program Files\Autodesk\AutoCAD 2013\acmgd.dll</HintPath>
+    <Reference Include="BrxMgd, Version=20.0.5807.230, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V16 en_US\BrxMgd.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -49,10 +44,16 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Net.Http" />
     <Reference Include="System.Xml" />
+    <Reference Include="TD_Mgd, Version=4.1.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\..\..\..\..\Program Files\Bricsys\BricsCAD V16 en_US\TD_Mgd.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="MARK_command.cs" />
     <Compile Include="CORNER_command.cs" />
     <Compile Include="KontrollCommands.cs" />
+    <Compile Include="Mark.cs" />
     <Compile Include="OVERRIDE_command.cs" />
     <Compile Include="SCALE_command.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
