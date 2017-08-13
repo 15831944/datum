@@ -5,9 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "datum", "datum\datum.csproj", "{02C82FC4-69B7-4970-8EA9-1223C5FFAC02}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CadCommands", "CadCommands\CadCommands.csproj", "{C0CF0C05-BD6F-4EBD-A0A5-954CCEC1326B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HillsCommands", "BricsCommands\HillsCommands.csproj", "{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HillsCommands", "HillsCommands\HillsCommands.csproj", "{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "armering_summary", "xml_armering_gen\armering_summary.csproj", "{6BA3F47B-EB00-47D7-887A-CFDF97568382}"
 EndProject
@@ -23,10 +21,6 @@ Global
 		{02C82FC4-69B7-4970-8EA9-1223C5FFAC02}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{02C82FC4-69B7-4970-8EA9-1223C5FFAC02}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{02C82FC4-69B7-4970-8EA9-1223C5FFAC02}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C0CF0C05-BD6F-4EBD-A0A5-954CCEC1326B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C0CF0C05-BD6F-4EBD-A0A5-954CCEC1326B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C0CF0C05-BD6F-4EBD-A0A5-954CCEC1326B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C0CF0C05-BD6F-4EBD-A0A5-954CCEC1326B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC20F5A5-58BD-43B7-8C1F-E852F6783AAF}.Release|Any CPU.ActiveCfg = Release|Any CPU

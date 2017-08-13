@@ -16,10 +16,10 @@ namespace datum
             {
                 string run = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";
 
-                string netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Debug\HillsCommands.dll";
+                string netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
                 if (!File.Exists(netload))
                 {
-                    netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\BricsCommands\bin\Release\HillsCommands.dll";
+                    netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommandss\bin\Release\HillsCommands.dll";
                 }
                 string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
                 string script = "script2.scr";
@@ -30,12 +30,12 @@ namespace datum
             else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe"))
             {
                 string run = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
-                string netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Debug\CadCommands.dll";
+                string netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
                 if (!File.Exists(netload))
                 {
-                    netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Release\CadCommands.dll";
+                    netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Release\HillsCommands.dll";
                 }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\6\V-066_078.dwg";
+                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\9\training1.dwg";
                 //string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
                 string script = "script2.scr";
 

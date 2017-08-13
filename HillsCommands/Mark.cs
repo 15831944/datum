@@ -1,10 +1,8 @@
 ﻿using System;
-using System.Text;
-using System.Collections;
-using System.Linq;
-using System.IO;
-using System.Diagnostics;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
 //Autocad
 using Autodesk.AutoCAD.Runtime;
@@ -69,9 +67,9 @@ namespace commands
 
             if (nospaces.Contains("=")) return false; // CHECK 1
             if (!nospaces.Contains("-")) return false; // CHECK 2
-            if (!nospaces.Contains("ø")) return false; // CHECK 3
+            if (!nospaces.Contains("Ø")) return false; // CHECK 3
 
-            string[] split1 = nospaces.Split('ø');
+            string[] split1 = nospaces.Split('Ø');
             if (split1.Count() > 2) return false; // CHECK 4
 
             string[] split2 = split1[1].Split('-');
@@ -82,7 +80,7 @@ namespace commands
             string pos = split2[1];
 
             if (diam.Length == 0) return false; // CHECK 6
-            if (pos.Length == 1) return false; // CHECK 7
+            if (pos.Length < 2) return false; // CHECK 7
 
             if (numb.Length == 0)
             {
@@ -150,79 +148,10 @@ namespace commands
 
                 Int32.TryParse(pos.Substring(numShape, pos.Length - numShape), out position_nr);
 
-                if (position_nr != 0) return false; // CHECK 11
+                if (position_nr == 0) return false; // CHECK 11
             }
 
-            position_nr = 999999999;
-
-            return true;
-        }
-
-        internal bool validate2()
-        {
-            string nospaces = original.Replace(@"\P", "");
-            nospaces = nospaces.Replace(" FS", "");
-            nospaces = nospaces.Replace(" HS", "");
-            nospaces = nospaces.Replace(" ", "");
-
-            if (nospaces.Contains("=")) return false; // CHECK 1
-            if (!nospaces.Contains("-")) return false; // CHECK 2
-            if (!nospaces.Contains("Ø")) return false; // CHECK 3
-
-            string[] split1 = nospaces.Split('Ø');
-            if (split1.Count() > 2) return false; // CHECK 4
-
-            string[] split2 = split1[1].Split('-');
-            if (split2.Count() > 2) return false; // CHECK 5
-
-            string numb = split1[0];
-            string diam = split2[0];
-            string pos = split2[1];
-
-            if (diam.Length == 0) return false; // CHECK 6
-            if (pos.Length != 1) return false; // CHECK 7
-
-            if (numb.Length == 0)
-            {
-                numb = "1";
-            }
-            else if (numb.Contains("+"))
-            {
-                string[] nmbs = numb.Split('+');
-
-                int i = 0;
-
-                foreach (string n in nmbs)
-                {
-                    int currentNumber = -99;
-                    Int32.TryParse(n, out currentNumber);
-
-                    if (currentNumber < 0) return false; // CHECK 8
-
-                    i = i + currentNumber;
-                }
-
-                numb = i.ToString();
-            }
-
-            if (diam.Contains("s"))
-            {
-                string[] diams = diam.Split('s');
-                diam = diams[0];
-            }
-
-            int temp = 0;
-            Int32.TryParse(numb, out temp);
-            if (temp == 0) return false; // CHECK 9
-            number = temp;
-
-            temp = 0;
-            Int32.TryParse(diam, out temp);
-            if (temp == 0) return false; // CHECK 10
-            diameter = temp;
-
-            temp = 0;
-            Int32.TryParse(pos, out temp);
+            position = pos;
 
             return true;
         }

@@ -18,7 +18,7 @@ namespace xml_armering_gen
             //string program = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";
             string program = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
 
-            string netload = @"C:\Users\Alex\Documents\GitHub\datum\CadCommands\bin\Debug\CadCommands.dll";
+            string netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
 
             Console.WriteLine("Enter source folder:");
             string location = Console.ReadLine();
