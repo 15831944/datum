@@ -12,11 +12,15 @@ namespace xml_armering_gen
 {
     class Program
     {
+        static bool kodu = false; //THIS
+
         static void Main(string[] args)
         {
             string script = @"xml_gen_script.scr";
-            //string program = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";
-            string program = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
+
+            string program = "";
+            if (kodu) program = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
+            else program = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";            
 
             string netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
 
@@ -203,8 +207,11 @@ namespace xml_armering_gen
             Console.WriteLine("Waiting for BricsCad to close...");
             System.Threading.Thread.Sleep(5000);
 
-            //while (IsProcessOpen("bricscad"))
-            while (IsProcessOpen("acad"))
+            string procc = "";
+            if (kodu) procc = "acad";
+            else procc = "bricscad";
+
+            while (IsProcessOpen(procc))
             {
                 System.Threading.Thread.Sleep(1000);
             }
@@ -375,8 +382,17 @@ namespace xml_armering_gen
                 }
             }
 
+            Console.WriteLine("");
             Console.WriteLine(notFoundNode.Count.ToString() + " - rauda ei ole joonistel kasutuses");
             Console.WriteLine(data.Count.ToString() + " - rauda ei ole XML-is defineeritud");
+
+            Console.WriteLine("");
+            Console.WriteLine("Ei ole defineeritud:");
+            foreach (Row reb in data)
+            {
+                Console.WriteLine(reb.Position_Shape + " " + reb.Position_Nr.ToString() + " " + reb.Diameter.ToString() );
+            }
+
         }
     }
 }
