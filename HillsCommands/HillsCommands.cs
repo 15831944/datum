@@ -122,7 +122,7 @@ namespace commands
         {
             try
             {
-                TABLE_command_v2 program = new TABLE_command_v2();
+                TABLE_command_v1 program = new TABLE_command_v1();
                 program.run(true);
                 program.dump_csv();
             }

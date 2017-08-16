@@ -155,9 +155,8 @@ namespace commands
                 else if (currentEntity is BlockReference)
                 {
                     BlockReference blockRef = currentEntity as BlockReference;
-                    double scale = blockRef.ScaleFactors.X;
-
                     BlockTableRecord block = null;
+
                     if (blockRef.IsDynamicBlock)
                     {
                         block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
@@ -166,11 +165,18 @@ namespace commands
                     {
                         block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
                     }
-
                     List<Point3d> btrPoints = getBlockTableRecordPoints(block);
+
+                    double scale_X = blockRef.ScaleFactors.X;
+                    double scale_Y = blockRef.ScaleFactors.Y;
+                    double rotation = blockRef.Rotation;
                     foreach (Point3d p in btrPoints)
                     {
-                        Point3d pp = new Point3d((p.X * scale) + blockRef.Position.X, (p.Y * scale) + blockRef.Position.Y, 0);
+                        double scaled_X = p.X * scale_X;
+                        double scaled_Y = p.Y * scale_Y;
+                        double new_X = scaled_X * Math.Cos(rotation) - scaled_Y * Math.Sin(rotation);
+                        double new_Y = scaled_X * Math.Sin(rotation) + scaled_Y * Math.Cos(rotation);
+                        Point3d pp = new Point3d(new_X + blockRef.Position.X, new_Y + blockRef.Position.Y, 0);
                         points.Add(pp);
                     }
                     
@@ -315,7 +321,6 @@ namespace commands
         {
             ed.WriteMessage("\n" + errorMessage);
         }
-
-
+        
     }
 }
