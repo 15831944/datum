@@ -28,7 +28,7 @@ namespace commands
         string[] newBoxNames = { "KN-C", "KN-V23", "KN-V27" };
 
         List<Area_v2> local_stats;
-
+        
         Document doc;
         Database db;
         Editor ed;
@@ -74,21 +74,23 @@ namespace commands
         {
             foreach (Area_v2 area in areas)
             {
-                string name = getLayoutName(area);
+                string name = getAreaName(area);
+                double scale = getAreaScale(area);
+                Point3d centerPoint = getAreaCenter(area);
+
                 Layout lay = createLayoutandSetActive(name);
-                setPlotSettings(lay, "ISO_A3_(297.00_x_420.00_MM)", "monochrome.ctb", "DWF6 ePlot.pc3");
-                Extents2d ext = getMaximumExtents(lay);
+                setPlotSettings(lay, "ISO_full_bleed_A3_(297.00_x_420.00_MM)", "monochrome.ctb", "DWG To PDF.pc3");
 
                 Viewport vp = layoutViewportGetter(lay);
-                viewportMagic(vp, ext, 1.0);
-
-                break; //TTTTTTTTTTTTTTTTTTTTTTTTHHHHHHHHHHHHHHHHHHHHHHHHHHHIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIISSSSSSSSSSSSSSSSSSSSSSSSSSSSS
+                Extents2d ext = getMaximumExtents(lay);
+                setViewportGeometry(vp, ext, 1.05);
+                setViewportParameters(vp, scale, centerPoint);
             }
 
             ed.Regen();
         }
 
-        private string getLayoutName(Area_v2 area)
+        private string getAreaName(Area_v2 area)
         {
             string ritn_nr = "x";
 
@@ -119,6 +121,39 @@ namespace commands
             }
 
             return ritn_nr;
+        }
+
+        private double getAreaScale(Area_v2 area)
+        {
+            double scale = 1;
+
+            DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
+
+            if (currentEntity is BlockReference)
+            {
+                BlockReference blockRef = currentEntity as BlockReference;
+                scale = blockRef.ScaleFactors.X;
+            }
+
+            return scale;
+        }
+
+        private Point3d getAreaCenter(Area_v2 area)
+        {
+            Point3d center = new Point3d (0,0,0);
+
+            DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
+
+            if (currentEntity is BlockReference)
+            {
+                BlockReference blockRef = currentEntity as BlockReference;
+                Point3d max = blockRef.GeometricExtents.MaxPoint;
+                Point3d min = blockRef.GeometricExtents.MinPoint;
+
+                center = new Point3d(min.X + ((max.X - min.X) / 2), min.Y + ((max.Y - min.Y) / 2), 0);
+            }
+
+            return center;
         }
 
         private Layout createLayoutandSetActive(string name)
@@ -220,13 +255,19 @@ namespace commands
             return vp;
         }
 
-        private void viewportMagic(Viewport vp, Extents2d ext, double fac = 1.0)
+        private void setViewportGeometry(Viewport vp, Extents2d ext, double fac = 1.0)
         {
             vp.Width = (ext.MaxPoint.X - ext.MinPoint.X) * fac;
             vp.Height = (ext.MaxPoint.Y - ext.MinPoint.Y) * fac;
 
             Point2d gg = Point2d.Origin + (ext.MaxPoint - ext.MinPoint) * 0.5;
             vp.CenterPoint = flatten(gg);
+        }
+
+        private void setViewportParameters(Viewport vp, double scale, Point3d center)
+        {
+            vp.ViewCenter = flatten(center);
+            vp.CustomScale = 1 / scale;
         }
 
         private List<Area_v2> getAllAreas(string[] blockNames)
@@ -330,7 +371,12 @@ namespace commands
         {
             return new Point3d(pt.X, pt.Y, 0);
         }
-        
+
+        private Point2d flatten(Point3d pt)
+        {
+            return new Point2d(pt.X, pt.Y);
+        }
+
         private Point2d swapCoords(Point2d pt, bool flip = true)
         {
             return flip ? new Point2d(pt.Y, pt.X) : pt;
@@ -348,5 +394,42 @@ namespace commands
 
             ed.Regen();
         }
-    }
+
+//        public static void FitContentToViewport(this Viewport vp, Extents3d ext, double fac = 1.0
+//)
+//        {
+//            // Let's zoom to just larger than the extents
+
+//            vp.ViewCenter = (ext.MinPoint + ((ext.MaxPoint - ext.MinPoint) * 0.5)).Strip();
+
+//            // Get the dimensions of our view from the database extents
+
+//            var hgt = ext.MaxPoint.Y - ext.MinPoint.Y;
+//            var wid = ext.MaxPoint.X - ext.MinPoint.X;
+
+//            // We'll compare with the aspect ratio of the viewport itself
+//            // (which is derived from the page size)
+
+//            var aspect = vp.Width / vp.Height;
+
+//            // If our content is wider than the aspect ratio, make sure we
+//            // set the proposed height to be larger to accommodate the
+//            // content
+
+//            if (wid / hgt > aspect)
+//            {
+//                hgt = wid / aspect;
+//            }
+
+//            // Set the height so we're exactly at the extents
+
+//            vp.ViewHeight = hgt;
+
+//            // Set a custom scale to zoom out slightly (could also
+//            // vp.ViewHeight *= 1.1, for instance)
+
+//            vp.CustomScale *= fac;
+//        }
+ //   }
+}
 }
