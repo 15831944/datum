@@ -7,20 +7,20 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using SW = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
+//Autocad
+using Autodesk.AutoCAD.Runtime;
+using Autodesk.AutoCAD.ApplicationServices;
+using Autodesk.AutoCAD.DatabaseServices;
+using Autodesk.AutoCAD.Geometry;
+using Autodesk.AutoCAD.EditorInput;
 
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
+////Bricsys
+//using Teigha.Runtime;
+//using Teigha.DatabaseServices;
+//using Teigha.Geometry;
+//using Bricscad.ApplicationServices;
+//using Bricscad.Runtime;
+//using Bricscad.EditorInput;
 
 [assembly: CommandClass(typeof(commands.HillsCommands))]
 namespace commands
@@ -185,15 +185,16 @@ namespace commands
         [CommandMethod("PPPP")]
         public void create_layers()
         {
-            try
-            {
+            //try
+            //{
                 LAYERS_command_v2 program = new LAYERS_command_v2();
                 program.run();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
+                program.close();
+            //}
+            //catch (System.Exception ex)
+            //{
+            //    SW.MessageBox.Show("Viga\n" + ex.Message);
+            //}
         }
     }
 }
