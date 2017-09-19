@@ -102,7 +102,7 @@ namespace commands
         [CommandMethod("ccc_old")]
         public void arm_weights_selected_v1()
         {
-            WEIGHT_command_v2 program = new WEIGHT_command_v2();
+            WEIGHT_command_v1 program = new WEIGHT_command_v1();
 
             try
             {
