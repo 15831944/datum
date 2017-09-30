@@ -35,7 +35,7 @@ namespace datum
                 {
                     netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Release\HillsCommands.dll";
                 }
-                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\9\training1.dwg";
+                string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\9\training2.dwg";
                 //string dwg = @"C:\Users\Alex\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
                 string script = "script2.scr";
 
