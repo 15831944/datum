@@ -12,6 +12,8 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.PlottingServices;
+using Autodesk.AutoCAD.Publishing;
 
 ////Bricsys
 //using Teigha.Runtime;
@@ -24,11 +26,11 @@ using Autodesk.AutoCAD.EditorInput;
 namespace commands
 {
     class LAYERS_command_v2
-    { 
+    {
         string[] newBoxNames = { "KN-C", "KN-V23", "KN-V27" };
 
         List<Area_v2> local_stats;
-        
+
         Document doc;
         Database db;
         Editor ed;
@@ -53,22 +55,25 @@ namespace commands
             writeCadMessage("");
             writeCadMessage("START");
 
-            List<Area_v2> areas = new List<Area_v2>();
+            plotSingle();
 
-            areas = getAllAreas(newBoxNames);
+            //List<Area_v2> areas = new List<Area_v2>();
 
-            if (areas.Count < 1)
-            {
-                string names = string.Join(", ", newBoxNames.ToArray());
-                writeCadMessage("[ERROR] - (" + names + ") not found");
-            }
+            //areas = getAllAreas(newBoxNames);
 
-            mainCreationLoop(areas);
+            //if (areas.Count < 1)
+            //{
+            //    string names = string.Join(", ", newBoxNames.ToArray());
+            //    writeCadMessage("[ERROR] - (" + names + ") not found");
+            //}
+
+            //mainCreationLoop(areas);
 
             writeCadMessage("DONE");
 
             return;
         }
+
 
         private void mainCreationLoop(List<Area_v2> areas)
         {
@@ -85,9 +90,128 @@ namespace commands
                 Extents2d ext = getMaximumExtents(lay);
                 setViewportGeometry(vp, ext, 1.05);
                 setViewportParameters(vp, scale, centerPoint);
+
+
+
+                //plotSingle(lay, name);
             }
 
             ed.Regen();
+        }
+
+        //private void plotSingle(Layout lay, string name)
+        private void plotSingle()
+        {
+            // Reference the Layout Manager
+            LayoutManager acLayoutMgr = LayoutManager.Current;
+
+            // Get the current layout and output its name in the Command Line window
+            Layout acLayout = trans.GetObject(acLayoutMgr.GetLayoutId(acLayoutMgr.CurrentLayout), OpenMode.ForRead) as Layout;
+
+            // Get the PlotInfo from the layout
+            using (PlotInfo acPlInfo = new PlotInfo())
+            {
+                acPlInfo.Layout = acLayout.ObjectId;
+
+                // Get a copy of the PlotSettings from the layout
+                using (PlotSettings acPlSet = new PlotSettings(acLayout.ModelType))
+                {
+                    acPlSet.CopyFrom(acLayout);
+
+                    // Update the PlotSettings object
+                    PlotSettingsValidator acPlSetVdr = PlotSettingsValidator.Current;
+
+                    // Set the plot type
+                    acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents);
+
+                    // Set the plot scale
+                    acPlSetVdr.SetUseStandardScale(acPlSet, true);
+                    acPlSetVdr.SetStdScaleType(acPlSet, StdScaleType.ScaleToFit);
+
+                    // Center the plot
+                    acPlSetVdr.SetPlotCentered(acPlSet, true);
+
+                    // Set the plot device to use
+                    acPlSetVdr.SetPlotConfigurationName(acPlSet, "DWG To PDF.pc3", "ISO_full_bleed_A3_(297.00_x_420.00_MM)");
+
+                    // Set the plot info as an override since it will not be saved back to the layout
+                    acPlInfo.OverrideSettings = acPlSet;
+
+                    // Validate the plot info
+                    using (PlotInfoValidator acPlInfoVdr = new PlotInfoValidator())
+                    {
+                        acPlInfoVdr.MediaMatchingPolicy = MatchingPolicy.MatchEnabled;
+                        acPlInfoVdr.Validate(acPlInfo);
+
+                        // Check to see if a plot is already in progress
+                        if (PlotFactory.ProcessPlotState == ProcessPlotState.NotPlotting)
+                        {
+                            using (PlotEngine acPlEng = PlotFactory.CreatePublishEngine())
+                            {
+                                // Track the plot progress with a Progress dialog
+                                using (PlotProgressDialog acPlProgDlg = new PlotProgressDialog(false, 1, true))
+                                {
+                                    using ((acPlProgDlg))
+                                    {
+                                        // Define the status messages to display when plotting starts
+                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.DialogTitle, "Plot Progress");
+                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.CancelJobButtonMessage, "Cancel Job");
+                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.CancelSheetButtonMessage, "Cancel Sheet");
+                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.SheetSetProgressCaption, "Sheet Set Progress");
+                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.SheetProgressCaption, "Sheet Progress");
+
+                                        // Set the plot progress range
+                                        acPlProgDlg.LowerPlotProgressRange = 0;
+                                        acPlProgDlg.UpperPlotProgressRange = 100;
+                                        acPlProgDlg.PlotProgressPos = 0;
+
+                                        // Display the Progress dialog
+                                        acPlProgDlg.OnBeginPlot();
+                                        acPlProgDlg.IsVisible = true;
+
+                                        // Start to plot the layout
+                                        acPlEng.BeginPlot(acPlProgDlg, null);
+
+                                        // Define the plot output
+                                        acPlEng.BeginDocument(acPlInfo, doc.Name, null, 1, true, "c:\\myplot");
+
+                                        // Display information about the current plot
+                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.Status, "Plotting: " + doc.Name + " - " + acLayout.LayoutName);
+
+                                        // Set the sheet progress range
+                                        acPlProgDlg.OnBeginSheet();
+                                        acPlProgDlg.LowerSheetProgressRange = 0;
+                                        acPlProgDlg.UpperSheetProgressRange = 100;
+                                        acPlProgDlg.SheetProgressPos = 0;
+
+                                        // Plot the first sheet/layout
+                                        using (PlotPageInfo acPlPageInfo = new PlotPageInfo())
+                                        {
+                                            acPlEng.BeginPage(acPlPageInfo, acPlInfo, true, null);
+                                        }
+
+                                        acPlEng.BeginGenerateGraphics(null);
+                                        acPlEng.EndGenerateGraphics(null);
+
+                                        // Finish plotting the sheet/layout
+                                        acPlEng.EndPage(null);
+                                        acPlProgDlg.SheetProgressPos = 100;
+                                        acPlProgDlg.OnEndSheet();
+
+                                        // Finish plotting the document
+                                        acPlEng.EndDocument(null);
+
+                                        // Finish the plot
+                                        acPlProgDlg.PlotProgressPos = 100;
+                                        acPlProgDlg.OnEndPlot();
+                                        acPlEng.EndPlot(null);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         private string getAreaName(Area_v2 area)
@@ -112,11 +236,17 @@ namespace commands
 
                 if (blockRef.Name == "KN-V23")
                 {
-                    ritn_nr = "V23-" + ritn_nr;
+                    if (!ritn_nr.Contains("23"))
+                    {
+                        ritn_nr = "V23-" + ritn_nr;
+                    }
                 }
                 else if (blockRef.Name == "KN-V27")
                 {
-                    ritn_nr = "V27-" + ritn_nr;
+                    if (!ritn_nr.Contains("73"))
+                    {
+                        ritn_nr = "V27-" + ritn_nr;
+                    }
                 }
             }
 
@@ -140,7 +270,7 @@ namespace commands
 
         private Point3d getAreaCenter(Area_v2 area)
         {
-            Point3d center = new Point3d (0,0,0);
+            Point3d center = new Point3d(0, 0, 0);
 
             DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
 
@@ -197,7 +327,7 @@ namespace commands
                 {
                     writeCadMessage("[WARNING] Device not found!");
                 }
-                
+
                 // Set the media name/size
                 var mns = psv.GetCanonicalMediaNameList(ps);
                 if (mns.Contains(pageSize))
@@ -394,42 +524,5 @@ namespace commands
 
             ed.Regen();
         }
-
-//        public static void FitContentToViewport(this Viewport vp, Extents3d ext, double fac = 1.0
-//)
-//        {
-//            // Let's zoom to just larger than the extents
-
-//            vp.ViewCenter = (ext.MinPoint + ((ext.MaxPoint - ext.MinPoint) * 0.5)).Strip();
-
-//            // Get the dimensions of our view from the database extents
-
-//            var hgt = ext.MaxPoint.Y - ext.MinPoint.Y;
-//            var wid = ext.MaxPoint.X - ext.MinPoint.X;
-
-//            // We'll compare with the aspect ratio of the viewport itself
-//            // (which is derived from the page size)
-
-//            var aspect = vp.Width / vp.Height;
-
-//            // If our content is wider than the aspect ratio, make sure we
-//            // set the proposed height to be larger to accommodate the
-//            // content
-
-//            if (wid / hgt > aspect)
-//            {
-//                hgt = wid / aspect;
-//            }
-
-//            // Set the height so we're exactly at the extents
-
-//            vp.ViewHeight = hgt;
-
-//            // Set a custom scale to zoom out slightly (could also
-//            // vp.ViewHeight *= 1.1, for instance)
-
-//            vp.CustomScale *= fac;
-//        }
- //   }
-}
+    }
 }
