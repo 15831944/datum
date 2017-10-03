@@ -12,8 +12,6 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.PlottingServices;
-using Autodesk.AutoCAD.Publishing;
 
 ////Bricsys
 //using Teigha.Runtime;
@@ -23,9 +21,10 @@ using Autodesk.AutoCAD.Publishing;
 //using Bricscad.Runtime;
 //using Bricscad.EditorInput;
 
+
 namespace commands
 {
-    class LAYERS_command_v2
+    class PRINT_command_v2
     {
         string[] newBoxNames = { "KN-C", "KN-V23", "KN-V27" };
 
@@ -38,7 +37,8 @@ namespace commands
         Transaction trans;
         LayoutManager layerManager;
 
-        public LAYERS_command_v2()
+
+        public PRINT_command_v2()
         {
             local_stats = new List<Area_v2>();
 
@@ -50,24 +50,30 @@ namespace commands
             layerManager = LayoutManager.Current;
         }
 
-        public void run()
+
+        public void run(bool multy)
         {
             writeCadMessage("");
             writeCadMessage("START");
 
-            plotSingle();
+            List<Area_v2> areas = new List<Area_v2>();
 
-            //List<Area_v2> areas = new List<Area_v2>();
+            if (multy == true)
+            {
+                areas = getAllAreas(newBoxNames);
+            }
+            else
+            {
+                areas = getSelectedAreas(newBoxNames);
+            }
 
-            //areas = getAllAreas(newBoxNames);
+            if (areas.Count < 1)
+            {
+                string names = string.Join(", ", newBoxNames.ToArray());
+                writeCadMessage("[ERROR] - (" + names + ") not found");
+            }
 
-            //if (areas.Count < 1)
-            //{
-            //    string names = string.Join(", ", newBoxNames.ToArray());
-            //    writeCadMessage("[ERROR] - (" + names + ") not found");
-            //}
-
-            //mainCreationLoop(areas);
+            mainCreationLoop(areas);
 
             writeCadMessage("DONE");
 
@@ -91,132 +97,66 @@ namespace commands
                 setViewportGeometry(vp, ext, 1.05);
                 setViewportParameters(vp, scale, centerPoint);
 
+                Dictionary<Layout, string> layouts = new Dictionary<Layout, string>();
+                layouts[lay] = name;
+                plotDriver(layouts);
 
-
-                //plotSingle(lay, name);
-            }
+                removeLayout(lay);
+            }                     
 
             ed.Regen();
         }
 
-        //private void plotSingle(Layout lay, string name)
-        private void plotSingle()
+
+        public void plotDriver(Dictionary<Layout, string> layouts)
         {
-            // Reference the Layout Manager
-            LayoutManager acLayoutMgr = LayoutManager.Current;
+            short bgp = (short)Application.GetSystemVariable("BACKGROUNDPLOT");
 
-            // Get the current layout and output its name in the Command Line window
-            Layout acLayout = trans.GetObject(acLayoutMgr.GetLayoutId(acLayoutMgr.CurrentLayout), OpenMode.ForRead) as Layout;
-
-            // Get the PlotInfo from the layout
-            using (PlotInfo acPlInfo = new PlotInfo())
+            if (layouts.Keys.Count > 0)
             {
-                acPlInfo.Layout = acLayout.ObjectId;
-
-                // Get a copy of the PlotSettings from the layout
-                using (PlotSettings acPlSet = new PlotSettings(acLayout.ModelType))
+                try
                 {
-                    acPlSet.CopyFrom(acLayout);
+                    Application.SetSystemVariable("BACKGROUNDPLOT", 0);
 
-                    // Update the PlotSettings object
-                    PlotSettingsValidator acPlSetVdr = PlotSettingsValidator.Current;
+                    string dwgFile = db.Filename;
+                    string outputDir = Path.GetDirectoryName(db.Filename);
+                    string layoutName = layouts[layouts.Keys.First()];
 
-                    // Set the plot type
-                    acPlSetVdr.SetPlotType(acPlSet, Autodesk.AutoCAD.DatabaseServices.PlotType.Extents);
+                    if (layoutName.Length == 0) { layoutName = generateRandomString(20); }
 
-                    // Set the plot scale
-                    acPlSetVdr.SetUseStandardScale(acPlSet, true);
-                    acPlSetVdr.SetStdScaleType(acPlSet, StdScaleType.ScaleToFit);
+                    string pdf = layoutName + ".pdf";
+                    string pdfFile = Path.Combine(outputDir, pdf);
+                    
+                    
+                    //TODO invalid chars
 
-                    // Center the plot
-                    acPlSetVdr.SetPlotCentered(acPlSet, true);
 
-                    // Set the plot device to use
-                    acPlSetVdr.SetPlotConfigurationName(acPlSet, "DWG To PDF.pc3", "ISO_full_bleed_A3_(297.00_x_420.00_MM)");
-
-                    // Set the plot info as an override since it will not be saved back to the layout
-                    acPlInfo.OverrideSettings = acPlSet;
-
-                    // Validate the plot info
-                    using (PlotInfoValidator acPlInfoVdr = new PlotInfoValidator())
+                    if (File.Exists(pdfFile))
                     {
-                        acPlInfoVdr.MediaMatchingPolicy = MatchingPolicy.MatchEnabled;
-                        acPlInfoVdr.Validate(acPlInfo);
-
-                        // Check to see if a plot is already in progress
-                        if (PlotFactory.ProcessPlotState == ProcessPlotState.NotPlotting)
-                        {
-                            using (PlotEngine acPlEng = PlotFactory.CreatePublishEngine())
-                            {
-                                // Track the plot progress with a Progress dialog
-                                using (PlotProgressDialog acPlProgDlg = new PlotProgressDialog(false, 1, true))
-                                {
-                                    using ((acPlProgDlg))
-                                    {
-                                        // Define the status messages to display when plotting starts
-                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.DialogTitle, "Plot Progress");
-                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.CancelJobButtonMessage, "Cancel Job");
-                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.CancelSheetButtonMessage, "Cancel Sheet");
-                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.SheetSetProgressCaption, "Sheet Set Progress");
-                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.SheetProgressCaption, "Sheet Progress");
-
-                                        // Set the plot progress range
-                                        acPlProgDlg.LowerPlotProgressRange = 0;
-                                        acPlProgDlg.UpperPlotProgressRange = 100;
-                                        acPlProgDlg.PlotProgressPos = 0;
-
-                                        // Display the Progress dialog
-                                        acPlProgDlg.OnBeginPlot();
-                                        acPlProgDlg.IsVisible = true;
-
-                                        // Start to plot the layout
-                                        acPlEng.BeginPlot(acPlProgDlg, null);
-
-                                        // Define the plot output
-                                        acPlEng.BeginDocument(acPlInfo, doc.Name, null, 1, true, "c:\\myplot");
-
-                                        // Display information about the current plot
-                                        acPlProgDlg.set_PlotMsgString(PlotMessageIndex.Status, "Plotting: " + doc.Name + " - " + acLayout.LayoutName);
-
-                                        // Set the sheet progress range
-                                        acPlProgDlg.OnBeginSheet();
-                                        acPlProgDlg.LowerSheetProgressRange = 0;
-                                        acPlProgDlg.UpperSheetProgressRange = 100;
-                                        acPlProgDlg.SheetProgressPos = 0;
-
-                                        // Plot the first sheet/layout
-                                        using (PlotPageInfo acPlPageInfo = new PlotPageInfo())
-                                        {
-                                            acPlEng.BeginPage(acPlPageInfo, acPlInfo, true, null);
-                                        }
-
-                                        acPlEng.BeginGenerateGraphics(null);
-                                        acPlEng.EndGenerateGraphics(null);
-
-                                        // Finish plotting the sheet/layout
-                                        acPlEng.EndPage(null);
-                                        acPlProgDlg.SheetProgressPos = 100;
-                                        acPlProgDlg.OnEndSheet();
-
-                                        // Finish plotting the document
-                                        acPlEng.EndDocument(null);
-
-                                        // Finish the plot
-                                        acPlProgDlg.PlotProgressPos = 100;
-                                        acPlProgDlg.OnEndPlot();
-                                        acPlEng.EndPlot(null);
-                                    }
-                                }
-                            }
-                        }
+                        layoutName = generateRandomString(20);
+                        pdf = layoutName + ".pdf";
+                        pdfFile = Path.Combine(outputDir, pdf);
                     }
+
+                    PlotDriver_Plagiaat plotter = new PlotDriver_Plagiaat(dwgFile, pdfFile, outputDir, layouts.Keys);
+                    plotter.Publish();
+
+                }
+                catch (System.Exception e)
+                {
+                    ed.WriteMessage("\nError: {0}\n{1}", e.Message, e.StackTrace);
+                }
+                finally
+                {
+                    Application.SetSystemVariable("BACKGROUNDPLOT", bgp);
                 }
             }
         }
 
+
         private string getAreaName(Area_v2 area)
         {
-            string ritn_nr = "x";
+            string ritn_nr = "x";   
 
             DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
 
@@ -253,6 +193,7 @@ namespace commands
             return ritn_nr;
         }
 
+
         private double getAreaScale(Area_v2 area)
         {
             double scale = 1;
@@ -267,6 +208,7 @@ namespace commands
 
             return scale;
         }
+
 
         private Point3d getAreaCenter(Area_v2 area)
         {
@@ -286,27 +228,38 @@ namespace commands
             return center;
         }
 
+
+        private void removeLayout(Layout lay)
+        {
+            layerManager.DeleteLayout(lay.LayoutName);
+            layerManager.CurrentLayout = "Model";
+        }
+
+
         private Layout createLayoutandSetActive(string name)
         {
-            ObjectId id = layerManager.GetLayoutId(name);
+            string randomName = generateRandomString(20);
+
+            ObjectId id = layerManager.GetLayoutId(randomName);
 
             if (!id.IsValid)
             {
-                id = layerManager.CreateLayout(name);
+                id = layerManager.CreateLayout(randomName);
             }
             else
             {
-                writeCadMessage("Layout " + name + " already exists.");
+                writeCadMessage("Layout " + randomName + " already exists.");
             }
 
             Layout layout = trans.GetObject(id, OpenMode.ForWrite) as Layout;
             if (layout.TabSelected == false)
             {
-                layerManager.CurrentLayout = name;
+                layerManager.CurrentLayout = randomName;
             }
 
             return layout;
         }
+
 
         private void setPlotSettings(Layout lay, string pageSize, string styleSheet, string device)
         {
@@ -354,6 +307,7 @@ namespace commands
             }
         }
 
+
         private Viewport layoutViewportGetter(Layout lay)
         {
             ObjectIdCollection viewIds = lay.GetViewports();
@@ -385,6 +339,7 @@ namespace commands
             return vp;
         }
 
+
         private void setViewportGeometry(Viewport vp, Extents2d ext, double fac = 1.0)
         {
             vp.Width = (ext.MaxPoint.X - ext.MinPoint.X) * fac;
@@ -399,6 +354,21 @@ namespace commands
             vp.ViewCenter = flatten(center);
             vp.CustomScale = 1 / scale;
         }
+
+
+        private List<Area_v2> getSelectedAreas(string[] blockNames)
+        {
+            List<Area_v2> areas = new List<Area_v2>();
+
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                List<BlockReference> blocks = getSelectedBlockReference(blockNames, trans);
+                areas = getBoxAreas(blocks, trans);
+            }
+
+            return areas;
+        }
+
 
         private List<Area_v2> getAllAreas(string[] blockNames)
         {
@@ -419,7 +389,7 @@ namespace commands
 
             return areas;
         }
-
+        
 
         private List<Area_v2> getBoxAreas(List<BlockReference> blocks, Transaction trans)
         {
@@ -486,6 +456,57 @@ namespace commands
             return refs;
         }
 
+
+        private List<BlockReference> getSelectedBlockReference(string[] blockNames, Transaction trans)
+        {
+            List<BlockReference> refs = new List<BlockReference>();
+
+            PromptSelectionOptions opts = new PromptSelectionOptions();
+            opts.MessageForAdding = "\nSelect BLOCK " + blockNames[0] + " / " + blockNames[1];
+            PromptSelectionResult selection = ed.GetSelection(opts);
+
+            if (selection.Status == PromptStatus.OK)
+            {
+                ObjectId[] selectionIds = selection.Value.GetObjectIds();
+
+                foreach (ObjectId id in selectionIds)
+                {
+                    DBObject currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as DBObject;
+
+                    if (currentEntity == null)
+                    {
+                        continue;
+                    }
+
+                    else if (currentEntity is BlockReference)
+                    {
+                        BlockReference blockRef = currentEntity as BlockReference;
+
+                        BlockTableRecord block = null;
+                        if (blockRef.IsDynamicBlock)
+                        {
+                            block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                        }
+                        else
+                        {
+                            block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                        }
+
+                        if (block != null)
+                        {
+                            if (blockNames.Contains(block.Name))
+                            {
+                                refs.Add(blockRef);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return refs;
+        }
+
+
         private Extents2d getMaximumExtents(Layout lay)
         {
             double div = lay.PlotPaperUnits == PlotPaperUnit.Inches ? 25.4 : 1.0;
@@ -523,6 +544,21 @@ namespace commands
             trans.Dispose();
 
             ed.Regen();
+        }
+
+        private string generateRandomString(int number)
+        {
+            string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            char[] stringChars = new char[number];
+            Random random = new Random();
+
+            for (int i = 0; i < stringChars.Length; i++)
+            {
+                stringChars[i] = chars[random.Next(chars.Length)];
+            }
+
+            string finalString = new String(stringChars);
+            return finalString;
         }
     }
 }
