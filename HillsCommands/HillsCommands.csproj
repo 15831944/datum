@@ -58,7 +58,6 @@
   <ItemGroup>
     <Compile Include="Area_v1.cs" />
     <Compile Include="Area_v2.cs" />
-    <Compile Include="PlotDriver_Plagiaat.cs" />
     <Compile Include="DIM_command_v2.cs" />
     <Compile Include="DIM_command.cs" />
     <Compile Include="Mark.cs" />

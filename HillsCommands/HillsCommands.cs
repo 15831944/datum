@@ -182,7 +182,7 @@ namespace commands
             }
         }
 
-        [CommandMethod("HILLS_PRINT_ALL")]
+        [CommandMethod("pppp")]
         public void print_all()
         {
             try

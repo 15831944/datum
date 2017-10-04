@@ -12,6 +12,8 @@ using Autodesk.AutoCAD.ApplicationServices;
 using Autodesk.AutoCAD.DatabaseServices;
 using Autodesk.AutoCAD.Geometry;
 using Autodesk.AutoCAD.EditorInput;
+using Autodesk.AutoCAD.PlottingServices;
+using System.Collections.Specialized;
 
 ////Bricsys
 //using Teigha.Runtime;
@@ -90,7 +92,7 @@ namespace commands
                 Point3d centerPoint = getAreaCenter(area);
 
                 Layout lay = createLayoutandSetActive(name);
-                setPlotSettings(lay, "ISO_full_bleed_A3_(297.00_x_420.00_MM)", "monochrome.ctb", "DWG To PDF.pc3");
+                setLayoutPlotSettings(lay, "ISO_full_bleed_A3_(297.00_x_420.00_MM)", "monochrome.ctb", "DWG To PDF.pc3");
 
                 Viewport vp = layoutViewportGetter(lay);
                 Extents2d ext = getMaximumExtents(lay);
@@ -138,8 +140,7 @@ namespace commands
                         pdfFile = Path.Combine(outputDir, pdf);
                     }
 
-                    PlotDriver_Plagiaat plotter = new PlotDriver_Plagiaat(dwgFile, pdfFile, outputDir, layouts.Keys);
-                    plotter.Publish();
+                    PlotLayout(layouts.Keys.First(), pdfFile);
 
                 }
                 catch (System.Exception e)
@@ -149,6 +150,98 @@ namespace commands
                 finally
                 {
                     Application.SetSystemVariable("BACKGROUNDPLOT", bgp);
+                }
+            }
+        }
+
+
+        public void PlotLayout(Layout lay, string location)
+        {
+            using (PlotInfo plotInfo = new PlotInfo())
+            {
+                plotInfo.Layout = lay.ObjectId;
+
+                using (PlotSettings plotSettings = new PlotSettings(lay.ModelType))
+                {
+                    plotSettings.CopyFrom(lay);
+                    plotInfo.OverrideSettings = plotSettings;
+
+                    //PlotSettingsValidator plotValidator = PlotSettingsValidator.Current;
+                    //plotValidator.SetPlotType(plotSettings, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
+                    //plotValidator.SetUseStandardScale(plotSettings, true);
+                    //plotValidator.SetStdScaleType(plotSettings, StdScaleType.StdScale1To1);
+                    //plotValidator.SetPlotCentered(plotSettings, true);
+                    //plotValidator.SetPlotConfigurationName(plotSettings, "DWG To PDF.pc3", "ISO_full_bleed_A3_(297.00_x_420.00_MM)");
+
+                    using (PlotInfoValidator infoValidator = new PlotInfoValidator())
+                    {
+                        infoValidator.MediaMatchingPolicy = MatchingPolicy.MatchEnabled;
+                        infoValidator.Validate(plotInfo);
+
+                        if (PlotFactory.ProcessPlotState == ProcessPlotState.NotPlotting)
+                        {
+                            using (PlotEngine engine = PlotFactory.CreatePublishEngine())
+                            {
+                                using (PlotProgressDialog dialog = new PlotProgressDialog(false, 1, true))
+                                {
+                                    using ((dialog))
+                                    {
+                                        dialog.set_PlotMsgString(PlotMessageIndex.DialogTitle, "Plot Progress");
+                                        dialog.set_PlotMsgString(PlotMessageIndex.CancelJobButtonMessage, "Cancel Job");
+                                        dialog.set_PlotMsgString(PlotMessageIndex.CancelSheetButtonMessage, "Cancel Sheet");
+                                        dialog.set_PlotMsgString(PlotMessageIndex.SheetSetProgressCaption, "Sheet Set Progress");
+                                        dialog.set_PlotMsgString(PlotMessageIndex.SheetProgressCaption, "Sheet Progress");
+
+                                        // Set the plot progress range
+                                        dialog.LowerPlotProgressRange = 0;
+                                        dialog.UpperPlotProgressRange = 100;
+                                        dialog.PlotProgressPos = 0;
+
+                                        // Display the Progress dialog
+                                        dialog.OnBeginPlot();
+                                        dialog.IsVisible = true;
+
+                                        // Start to plot the layout
+                                        engine.BeginPlot(dialog, null);
+
+                                        // Define the plot output
+                                        engine.BeginDocument(plotInfo, doc.Name, null, 1, true, location);
+
+                                        // Display information about the current plot
+                                        dialog.set_PlotMsgString(PlotMessageIndex.Status, "Plotting: " + doc.Name + " - " + lay.LayoutName);
+
+                                        // Set the sheet progress range
+                                        dialog.OnBeginSheet();
+                                        dialog.LowerSheetProgressRange = 0;
+                                        dialog.UpperSheetProgressRange = 100;
+                                        dialog.SheetProgressPos = 0;
+
+                                        // Plot the first sheet/layout
+                                        using (PlotPageInfo acPlPageInfo = new PlotPageInfo())
+                                        {
+                                            engine.BeginPage(acPlPageInfo, plotInfo, true, null);
+                                        }
+
+                                        engine.BeginGenerateGraphics(null);
+                                        engine.EndGenerateGraphics(null);
+
+                                        // Finish plotting the sheet/layout
+                                        engine.EndPage(null);
+                                        dialog.SheetProgressPos = 100;
+                                        dialog.OnEndSheet();
+
+                                        // Finish plotting the document
+                                        engine.EndDocument(null);
+
+                                        // Finish the plot
+                                        dialog.PlotProgressPos = 100;
+                                        dialog.OnEndPlot();
+                                        engine.EndPlot(null);
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -261,49 +354,45 @@ namespace commands
         }
 
 
-        private void setPlotSettings(Layout lay, string pageSize, string styleSheet, string device)
+        private void setLayoutPlotSettings(Layout lay, string pageSize, string styleSheet, string device)
         {
-            using (var ps = new PlotSettings(lay.ModelType))
+            using (PlotSettings plotSettings = new PlotSettings(lay.ModelType))
             {
-                ps.CopyFrom(lay);
+                plotSettings.CopyFrom(lay);
+                PlotSettingsValidator validator = PlotSettingsValidator.Current;
 
-                var psv = PlotSettingsValidator.Current;
-
-                // Set the device
-                var devs = psv.GetPlotDeviceList();
-                if (devs.Contains(device))
+                StringCollection devices = validator.GetPlotDeviceList();
+                if (devices.Contains(device))
                 {
-                    psv.SetPlotConfigurationName(ps, device, null);
-                    psv.RefreshLists(ps);
+                    validator.SetPlotConfigurationName(plotSettings, device, null);
+                    validator.RefreshLists(plotSettings);
                 }
                 else
                 {
                     writeCadMessage("[WARNING] Device not found!");
                 }
 
-                // Set the media name/size
-                var mns = psv.GetCanonicalMediaNameList(ps);
-                if (mns.Contains(pageSize))
+                StringCollection paperSizes = validator.GetCanonicalMediaNameList(plotSettings);
+                if (paperSizes.Contains(pageSize))
                 {
-                    psv.SetCanonicalMediaName(ps, pageSize);
+                    validator.SetCanonicalMediaName(plotSettings, pageSize);
                 }
                 else
                 {
                     writeCadMessage("[WARNING] Paper not found!");
                 }
 
-                // Set the pen settings
-                var ssl = psv.GetPlotStyleSheetList();
-                if (ssl.Contains(styleSheet))
+                StringCollection styleSheets = validator.GetPlotStyleSheetList();
+                if (styleSheets.Contains(styleSheet))
                 {
-                    psv.SetCurrentStyleSheet(ps, styleSheet);
+                    validator.SetCurrentStyleSheet(plotSettings, styleSheet);
                 }
                 else
                 {
                     writeCadMessage("[WARNING] Style not found!");
                 }
 
-                lay.CopyFrom(ps);
+                lay.CopyFrom(plotSettings);
             }
         }
 
