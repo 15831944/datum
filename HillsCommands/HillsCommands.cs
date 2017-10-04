@@ -182,19 +182,34 @@ namespace commands
             }
         }
 
-        [CommandMethod("PPPP")]
-        public void create_layers()
+        [CommandMethod("HILLS_PRINT_ALL")]
+        public void print_all()
         {
-            //try
-            //{
-                LAYERS_command_v2 program = new LAYERS_command_v2();
-                program.run();
+            try
+            {
+                PRINT_command_v2 program = new PRINT_command_v2();
+                program.run(true);
                 program.close();
-            //}
-            //catch (System.Exception ex)
-            //{
-            //    SW.MessageBox.Show("Viga\n" + ex.Message);
-            //}
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+        [CommandMethod("HILLS_PRINT_SELECTED")]
+        public void print_selected()
+        {
+            try
+            {
+                PRINT_command_v2 program = new PRINT_command_v2();
+                program.run(false);
+                program.close();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
         }
     }
 }

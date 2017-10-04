@@ -58,6 +58,7 @@
   <ItemGroup>
     <Compile Include="Area_v1.cs" />
     <Compile Include="Area_v2.cs" />
+    <Compile Include="PlotDriver_Plagiaat.cs" />
     <Compile Include="DIM_command_v2.cs" />
     <Compile Include="DIM_command.cs" />
     <Compile Include="Mark.cs" />
@@ -68,7 +69,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="LAYERS_command_v2.cs" />
+    <Compile Include="PRINT_command_v2.cs" />
     <Compile Include="SUM_command_v2.cs" />
     <Compile Include="TABLE_command_v1.cs" />
     <Compile Include="TABLE_command_v2.cs" />
