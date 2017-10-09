@@ -1,27 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 using System.Diagnostics;
 
-//Autocad
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
-using Autodesk.AutoCAD.PlottingServices;
-using System.Collections.Specialized;
+////Autocad
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
+//using Autodesk.AutoCAD.PlottingServices;
 
-////Bricsys
-//using Teigha.Runtime;
-//using Teigha.DatabaseServices;
-//using Teigha.Geometry;
-//using Bricscad.ApplicationServices;
-//using Bricscad.Runtime;
-//using Bricscad.EditorInput;
+//Bricsys
+using Teigha.Runtime;
+using Teigha.DatabaseServices;
+using Teigha.Geometry;
+using Bricscad.ApplicationServices;
+using Bricscad.Runtime;
+using Bricscad.EditorInput;
+using Bricscad.PlottingServices;
 
 
 namespace commands
@@ -35,6 +36,7 @@ namespace commands
         Document doc;
         Database db;
         Editor ed;
+        PlotEngine engine;
 
         Transaction trans;
         LayoutManager layerManager;
@@ -47,6 +49,7 @@ namespace commands
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
             ed = doc.Editor;
+            engine = PlotFactory.CreatePublishEngine();
 
             trans = db.TransactionManager.StartTransaction();
             layerManager = LayoutManager.Current;
@@ -92,7 +95,8 @@ namespace commands
                 Point3d centerPoint = getAreaCenter(area);
 
                 Layout lay = createLayoutandSetActive(name);
-                setLayoutPlotSettings(lay, "ISO_full_bleed_A3_(297.00_x_420.00_MM)", "monochrome.ctb", "DWG To PDF.pc3");
+                //setLayoutPlotSettings(lay, "ISO_full_bleed_A3_(297.00_x_420.00_MM)", "monochrome.ctb", "DWG To PDF.pc3");
+                setLayoutPlotSettings(lay, "PDFCreator", "A3", "monochrome.ctb");
 
                 Viewport vp = layoutViewportGetter(lay);
                 Extents2d ext = getMaximumExtents(lay);
@@ -116,20 +120,20 @@ namespace commands
 
             if (layouts.Keys.Count > 0)
             {
+                Application.SetSystemVariable("BACKGROUNDPLOT", 0);
+
                 try
                 {
-                    Application.SetSystemVariable("BACKGROUNDPLOT", 0);
-
                     string dwgFile = db.Filename;
                     string outputDir = Path.GetDirectoryName(db.Filename);
                     string layoutName = layouts[layouts.Keys.First()];
 
-                    if (layoutName.Length == 0) { layoutName = generateRandomString(20); }
+                    if (layoutName.Length == 0) { layoutName = generateRandomString(10); }
 
                     string pdf = layoutName + ".pdf";
                     string pdfFile = Path.Combine(outputDir, pdf);
-                    
-                    
+
+
                     //TODO invalid chars
 
 
@@ -139,6 +143,8 @@ namespace commands
                         pdf = layoutName + ".pdf";
                         pdfFile = Path.Combine(outputDir, pdf);
                     }
+
+                    //print_export(layouts.Keys.First(), pdfFile);
 
                     PlotLayout(layouts.Keys.First(), pdfFile);
 
@@ -151,6 +157,7 @@ namespace commands
                 {
                     Application.SetSystemVariable("BACKGROUNDPLOT", bgp);
                 }
+
             }
         }
 
@@ -166,82 +173,32 @@ namespace commands
                     plotSettings.CopyFrom(lay);
                     plotInfo.OverrideSettings = plotSettings;
 
-                    //PlotSettingsValidator plotValidator = PlotSettingsValidator.Current;
-                    //plotValidator.SetPlotType(plotSettings, Autodesk.AutoCAD.DatabaseServices.PlotType.Layout);
-                    //plotValidator.SetUseStandardScale(plotSettings, true);
-                    //plotValidator.SetStdScaleType(plotSettings, StdScaleType.StdScale1To1);
-                    //plotValidator.SetPlotCentered(plotSettings, true);
-                    //plotValidator.SetPlotConfigurationName(plotSettings, "DWG To PDF.pc3", "ISO_full_bleed_A3_(297.00_x_420.00_MM)");
+                    PlotSettingsValidator plotValidator = PlotSettingsValidator.Current;
 
                     using (PlotInfoValidator infoValidator = new PlotInfoValidator())
                     {
                         infoValidator.MediaMatchingPolicy = MatchingPolicy.MatchEnabled;
                         infoValidator.Validate(plotInfo);
 
-                        if (PlotFactory.ProcessPlotState == ProcessPlotState.NotPlotting)
+                        using (PlotProgressDialog dialog = new PlotProgressDialog(false, 1, true))
                         {
-                            using (PlotEngine engine = PlotFactory.CreatePublishEngine())
+                            ed.WriteMessage("Plotting: " + doc.Name + " - " + lay.LayoutName);
+
+                            engine.BeginPlot(dialog, null);
+                            engine.BeginDocument(plotInfo, doc.Name, null, 1, true, location);
+                            using (PlotPageInfo pageInfo = new PlotPageInfo())
                             {
-                                using (PlotProgressDialog dialog = new PlotProgressDialog(false, 1, true))
-                                {
-                                    using ((dialog))
-                                    {
-                                        dialog.set_PlotMsgString(PlotMessageIndex.DialogTitle, "Plot Progress");
-                                        dialog.set_PlotMsgString(PlotMessageIndex.CancelJobButtonMessage, "Cancel Job");
-                                        dialog.set_PlotMsgString(PlotMessageIndex.CancelSheetButtonMessage, "Cancel Sheet");
-                                        dialog.set_PlotMsgString(PlotMessageIndex.SheetSetProgressCaption, "Sheet Set Progress");
-                                        dialog.set_PlotMsgString(PlotMessageIndex.SheetProgressCaption, "Sheet Progress");
-
-                                        // Set the plot progress range
-                                        dialog.LowerPlotProgressRange = 0;
-                                        dialog.UpperPlotProgressRange = 100;
-                                        dialog.PlotProgressPos = 0;
-
-                                        // Display the Progress dialog
-                                        dialog.OnBeginPlot();
-                                        dialog.IsVisible = true;
-
-                                        // Start to plot the layout
-                                        engine.BeginPlot(dialog, null);
-
-                                        // Define the plot output
-                                        engine.BeginDocument(plotInfo, doc.Name, null, 1, true, location);
-
-                                        // Display information about the current plot
-                                        dialog.set_PlotMsgString(PlotMessageIndex.Status, "Plotting: " + doc.Name + " - " + lay.LayoutName);
-
-                                        // Set the sheet progress range
-                                        dialog.OnBeginSheet();
-                                        dialog.LowerSheetProgressRange = 0;
-                                        dialog.UpperSheetProgressRange = 100;
-                                        dialog.SheetProgressPos = 0;
-
-                                        // Plot the first sheet/layout
-                                        using (PlotPageInfo acPlPageInfo = new PlotPageInfo())
-                                        {
-                                            engine.BeginPage(acPlPageInfo, plotInfo, true, null);
-                                        }
-
-                                        engine.BeginGenerateGraphics(null);
-                                        engine.EndGenerateGraphics(null);
-
-                                        // Finish plotting the sheet/layout
-                                        engine.EndPage(null);
-                                        dialog.SheetProgressPos = 100;
-                                        dialog.OnEndSheet();
-
-                                        // Finish plotting the document
-                                        engine.EndDocument(null);
-
-                                        // Finish the plot
-                                        dialog.PlotProgressPos = 100;
-                                        dialog.OnEndPlot();
-                                        engine.EndPlot(null);
-                                    }
-                                }
+                                engine.BeginPage(pageInfo, plotInfo, true, null);
                             }
+                            engine.BeginGenerateGraphics(null);
+
+                            engine.EndGenerateGraphics(null);
+                            engine.EndPage(null);
+                            engine.EndDocument(null);
+                            engine.EndPlot(null);
                         }
                     }
+
                 }
             }
         }
@@ -354,7 +311,7 @@ namespace commands
         }
 
 
-        private void setLayoutPlotSettings(Layout lay, string pageSize, string styleSheet, string device)
+        private void setLayoutPlotSettings(Layout lay, string device, string pageSize, string styleSheet)
         {
             using (PlotSettings plotSettings = new PlotSettings(lay.ModelType))
             {
@@ -629,6 +586,8 @@ namespace commands
 
         internal void close()
         {
+            engine.Dispose();
+
             trans.Commit();
             trans.Dispose();
 

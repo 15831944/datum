@@ -5,20 +5,23 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IO;
 
-//Autocad
-using Autodesk.AutoCAD.Runtime;
-using Autodesk.AutoCAD.ApplicationServices;
-using Autodesk.AutoCAD.DatabaseServices;
-using Autodesk.AutoCAD.Geometry;
-using Autodesk.AutoCAD.EditorInput;
+////Autocad
+//using Autodesk.AutoCAD.Runtime;
+//using Autodesk.AutoCAD.ApplicationServices;
+//using Autodesk.AutoCAD.DatabaseServices;
+//using Autodesk.AutoCAD.Geometry;
+//using Autodesk.AutoCAD.EditorInput;
+//using Autodesk.AutoCAD.PlottingServices;
 
-////Bricsys
-//using Teigha.Runtime;
-//using Teigha.DatabaseServices;
-//using Teigha.Geometry;
-//using Bricscad.ApplicationServices;
-//using Bricscad.Runtime;
-//using Bricscad.EditorInput;
+//Bricsys
+using Teigha.Runtime;
+using Teigha.DatabaseServices;
+using Teigha.Geometry;
+using Bricscad.ApplicationServices;
+using Bricscad.Runtime;
+using Bricscad.EditorInput;
+using Bricscad.PlottingServices;
+
 
 namespace commands
 {
@@ -144,6 +147,7 @@ namespace commands
                         currentPoint = new Point3d(a.Start.X + (366 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
                     }
 
+                    int counter = 0;
                     foreach (Mark r in rows)
                     {
                         if (r.Position != "emptyrow")
@@ -159,9 +163,29 @@ namespace commands
                             insertText(r.Number.ToString(), number_IP, markLayerName, txtHeight, trans);
                         }
 
-                        currentPoint = new Point3d(currentPoint.X, currentPoint.Y - (4 * scale), currentPoint.Z);
+                        if (counter == 21)
+                        {
+                            if (name == newBoxNames[0])
+                            {
+                                currentPoint = new Point3d(a.Start.X + (336 * scale), a.Start.Y + (141.8 * scale), a.Start.Z);
+                            }
+                            else if (name == newBoxNames[1])
+                            {
+                                currentPoint = new Point3d(a.Start.X + (336 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
+                            }
+                        }
+                        else
+                        {
+                            currentPoint = new Point3d(currentPoint.X, currentPoint.Y - (4 * scale), currentPoint.Z);
+                        }
+
+                        counter++;
+
+                        
                     }
                 }
+
+                
 
                 trans.Commit();
             }

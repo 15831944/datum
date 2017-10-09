@@ -19,9 +19,9 @@ namespace datum
                 string netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
                 if (!File.Exists(netload))
                 {
-                    netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommandss\bin\Release\HillsCommands.dll";
+                    netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommands\bin\Release\HillsCommands.dll";
                 }
-                string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\344_Grow\XML\5\training1.dwg";
+                string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\344_Grow\XML\9\training1.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
