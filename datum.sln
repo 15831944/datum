@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "armering_summary", "xml_arm
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "KontrollCommands", "KontrollCommands\KontrollCommands.csproj", "{31B1C62A-25AE-4EEA-8912-658BDBF708DF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "armering_merge", "armering_merge\armering_merge.csproj", "{C771E72B-CF3D-4568-AEE1-BBB97CC56545}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "armering_merge", "xml_armering_merge\armering_merge.csproj", "{C771E72B-CF3D-4568-AEE1-BBB97CC56545}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
