@@ -71,6 +71,7 @@
     <Compile Include="PRINT_command_v2.cs" />
     <Compile Include="SUM_command_v2.cs" />
     <Compile Include="TABLE_command_v1.cs" />
+    <Compile Include="TABLE_command_XML_SINGLE.cs" />
     <Compile Include="TABLE_command_v2.cs" />
     <Compile Include="WEIGHT_command_v1.cs" />
     <Compile Include="WEIGHT_command_v2.cs" />

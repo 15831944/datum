@@ -33,7 +33,7 @@ namespace commands
         [CommandMethod("HLS_INFO")]
         public void info()
         {
-            SW.MessageBox.Show("AE Hills Versioon: 14.08.2017\n");
+            SW.MessageBox.Show("AE Hills Versioon: 17.09.2017\n");
         }
 
 
@@ -128,6 +128,21 @@ namespace commands
                 TABLE_command_v1 program = new TABLE_command_v1();
                 program.run(true);
                 program.dump_csv();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+
+        [CommandMethod("XML_SUM_MARKS_SINGLE")]
+        public void xml_sum_marks()
+        {
+            try
+            {
+                TABLE_command_XML_SINGLE program = new TABLE_command_XML_SINGLE();
+                program.run();
             }
             catch (System.Exception ex)
             {

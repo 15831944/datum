@@ -220,6 +220,15 @@ namespace commands
                     AttributeReference ar = obj as AttributeReference;
                     if (ar != null)
                     {
+                        if (blockRef.Name == "KN-V23")
+                        {
+                            if (ar.Tag == "RITN_23_NR") ritn_nr = ar.TextString;
+                        }
+                        else if (blockRef.Name == "KN-V27")
+                        {
+                            if (ar.Tag == "RITN_27_NR") ritn_nr = ar.TextString;
+                        }
+
                         if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
                     }
                 }

@@ -47,6 +47,7 @@ namespace xml_armering_gen
             Console.ReadLine();
         }
 
+
         private static bool IsProcessOpen(string name)
         {
             foreach (Process clsProcess in Process.GetProcesses())
@@ -59,6 +60,7 @@ namespace xml_armering_gen
 
             return false;
         }
+
 
         private static List<Row> parseCSVs(List<string> csvs)
         {
@@ -88,6 +90,7 @@ namespace xml_armering_gen
             return unique_rows;
         }
 
+
         private static void generateUnique(List<Row> files, ref List<Row> uniques)
         {
             foreach (Row f in files)
@@ -111,6 +114,7 @@ namespace xml_armering_gen
                 }
             }             
         }
+
 
         private static List<Row> readCSV(StreamReader reader)
         {
@@ -155,6 +159,7 @@ namespace xml_armering_gen
             return data;
         }
 
+
         private static List<string> getFiles(string source, string ext)
         {
             List<string> files = new List<string>();
@@ -170,6 +175,7 @@ namespace xml_armering_gen
 
             return files;
         }
+
 
         private static void createScriptFile(List<string> dwgs, string script, string netload)
         {
@@ -195,12 +201,14 @@ namespace xml_armering_gen
             File.AppendAllText(script, scriptText);
         }
 
+
         private static void runAutocad(string program, string script)
         {
             string excet = program;
             string args = "/b \"" + script + "\"";
             Process.Start(excet, args);
         }
+
 
         private static void deleteScriptFile(string script)
         {
@@ -224,6 +232,7 @@ namespace xml_armering_gen
 
             }
         }
+
 
         private static void dump(string location, List<Row> data)
         {
@@ -259,6 +268,7 @@ namespace xml_armering_gen
 
             File.AppendAllText(destination, csvText);
         }
+
 
         private static void xml_dump(string location, List<Row> data)
         {
@@ -296,6 +306,8 @@ namespace xml_armering_gen
             List<XmlNode> rebarNodes = getAllRebar(xmlDoc);
 
             setNumber(rebarNodes, data);
+            List<XmlNode> foundNodes = removeNotFoundNodes(rebarNodes);
+            sortNodes(foundNodes, xmlDoc);
 
             xmlDoc.Save(xml_output_full);
 
@@ -315,6 +327,7 @@ namespace xml_armering_gen
             return xd;
         }
 
+
         private static List<XmlNode> getAllRebar(XmlDocument file)
         {
             List<XmlNode> rebars = new List<XmlNode>();
@@ -333,6 +346,22 @@ namespace xml_armering_gen
 
             return rebars;
         }
+
+
+        private static List<XmlNode> getAllPages(XmlDocument file)
+        {
+            List<XmlNode> pages = new List<XmlNode>();
+
+            foreach (XmlNode page in file.DocumentElement)
+            {
+                if (page.Name != "B2aPage") continue;
+
+                pages.Add(page);
+            }
+
+            return pages;
+        }
+
 
         private static void setNumber(List<XmlNode> rebarNodes, List<Row> data)
         {
@@ -393,6 +422,229 @@ namespace xml_armering_gen
                 Console.WriteLine(reb.Position_Shape + " " + reb.Position_Nr.ToString() + " " + reb.Diameter.ToString() );
             }
 
+        }
+
+
+        private static List<XmlNode> removeNotFoundNodes(List<XmlNode> all)
+        {
+            List<XmlNode> found = new List<XmlNode>();
+
+            foreach (XmlNode single in all)
+            {
+                XmlNode group = single["NoStpGrp"];
+                XmlNode rebar = single["B2aBar"];
+
+                if (rebar != null && group != null)
+                {
+                    if (group.InnerText != "9999")
+                    {
+                        found.Add(single);
+                    }
+                }
+            }
+
+            return found;
+        }
+
+
+        private static void sortNodes(List<XmlNode> rebars, XmlDocument xmlDoc)
+        {
+            List<XmlNode> sortedRebars = sortRebars(rebars);
+
+            List<XmlNode> pa = getAllPages(xmlDoc);
+            foreach (XmlNode p in pa)
+            {
+                xmlDoc.DocumentElement.RemoveChild(p);
+            }
+
+            List<XmlNode> pages = new List<XmlNode>();
+
+            int rebarTotIndex = 0;
+            int rebarPageIndex = 1;
+            int pageIndex = 0;
+
+            XmlNode lastReb = null;
+
+            XmlNode page = newPageHandle(pages, xmlDoc);
+            pages.Add(page);
+            xmlDoc.DocumentElement.AppendChild(page);
+
+            while (true)
+            {
+                if (pageIndex < pages.Count)
+                {
+                    page = pages[pageIndex];
+                }
+                else
+                {
+                    page = newPageHandle(pages, xmlDoc);
+                    pages.Add(page);
+                    xmlDoc.DocumentElement.AppendChild(page);
+                }
+
+                while (true)
+                {
+                    XmlNode reb = sortedRebars[rebarTotIndex];
+
+                    if (lastReb != null)
+                    {
+                        if (reb != null)
+                        {
+                            XmlNode aa = reb["B2aBar"];
+                            if (aa != null)
+                            {
+                                XmlNode ab = aa["Type"];
+
+                                if (ab != null)
+                                {
+                                    XmlNode ba = lastReb["B2aBar"];
+
+                                    if (ba != null)
+                                    {
+                                        XmlNode bb = ba["Type"];
+
+                                        if (bb != null)
+                                        {
+                                            if (ab.InnerText == "A" && bb.InnerText != "A")
+                                            {
+                                                lastReb = null;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+                    reb.Attributes["RowId"].Value = rebarPageIndex.ToString();
+                    page.AppendChild(reb);
+                    lastReb = reb;
+
+                    rebarTotIndex++;
+                    rebarPageIndex++;
+
+                    if (rebarTotIndex >= rebars.Count) break;
+                    if (rebarPageIndex > 20) break;
+                }
+
+                if (rebarTotIndex >= rebars.Count) break;
+
+                rebarPageIndex = 1;
+                pageIndex++;
+            }
+        }
+
+        public static XmlNode newPageHandle(List<XmlNode> pages, XmlDocument xmlDoc)
+        {
+            XmlNode row = xmlDoc.CreateElement("B2aPage");
+            XmlAttribute attribute = xmlDoc.CreateAttribute("PageLabel");
+            attribute.Value = "A-" + (pages.Count + 1).ToString("D2");
+            row.Attributes.Append(attribute);
+
+            XmlNode head = xmlDoc.CreateElement("B2aPageHead");
+
+            XmlNode c10 = xmlDoc.CreateElement("ConcreteFctk10");
+            XmlNode cf10 = xmlDoc.CreateElement("ConcreteCoverFactor10");
+
+            head.AppendChild(c10);
+            head.AppendChild(cf10);
+
+            row.AppendChild(head);
+
+            return row;
+        }
+
+        private static List<XmlNode> sortRebars(List<XmlNode> rebars)
+        {
+            List<XmlNode> a = new List<XmlNode>();
+            List<XmlNode> others = new List<XmlNode>();
+            List<XmlNode> undef = new List<XmlNode>();
+
+            List<XmlNode> sortedRebars = new List<XmlNode>();
+            sortedRebars.AddRange(others);
+            sortedRebars.AddRange(a);
+
+            foreach (XmlNode rebar in rebars)
+            {
+                XmlNode temp_reb = rebar["B2aBar"];
+
+                if (temp_reb == null)
+                {
+                    undef.Add(rebar);
+                    continue;
+                }
+
+                XmlNode temp_type = temp_reb["Type"];
+
+                if (temp_type == null)
+                {
+                    undef.Add(rebar);
+                    continue;
+                }
+
+                if (temp_type.InnerText == "A")
+                {
+                    XmlNode temp_litt = temp_reb["Litt"];
+                    if (temp_litt == null)
+                    {
+                        undef.Add(rebar);
+                        continue;
+                    }
+                    else
+                    {
+                        a.Add(rebar);
+                    }
+                }
+                else
+                {
+                    XmlNode temp_litt = temp_reb["Litt"];
+                    if (temp_litt == null)
+                    {
+                        undef.Add(rebar);
+                        continue;
+                    }
+                    else
+                    {
+                        others.Add(rebar);
+                    }
+                }
+            }
+
+            try
+            {
+                a = a.OrderBy(b => Int32.Parse(b["B2aBar"]["Dim"].InnerText)).ToList();
+            }
+            catch
+            {
+
+            }
+
+            try
+            {
+                a = a.OrderBy(b => Int32.Parse(b["B2aBar"]["Litt"].InnerText)).ToList();
+            }
+            catch
+            {
+                a = a.OrderBy(b => b["B2aBar"]["Litt"].InnerText).ToList();
+            }
+
+            try
+            {
+                others = others.OrderBy(b => Int32.Parse(b["B2aBar"]["Litt"].InnerText)).ToList();
+            }
+            catch
+            {
+                others = others.OrderBy(b => b["B2aBar"]["Litt"].InnerText).ToList();
+            }
+
+            List<XmlNode> sorted = new List<XmlNode>();
+            sorted.AddRange(others);
+            sorted.AddRange(a);
+            sorted.AddRange(undef);
+
+            return sorted;
         }
     }
 }

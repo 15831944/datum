@@ -34,15 +34,15 @@ namespace armering_merge
             }
 
             setNumber(all_rebar);
+            sortNodes(all_rebar, xmlDoc);
 
-            filtreeri(all_rebar, xmlDoc);
             xmlDoc.Save(location + "aa.xml");
 
             Console.WriteLine("Done.");
             Console.ReadLine();
         }
 
-        private static void filtreeri(List<XmlNode> rebars, XmlDocument xmlDoc)
+        private static void sortNodes(List<XmlNode> rebars, XmlDocument xmlDoc)
         {
             List<XmlNode> sortedRebars = sortRebars(rebars);
 

@@ -211,9 +211,11 @@ namespace commands
                             AttributeReference ar = obj as AttributeReference;
                             if (ar != null)
                             {
-                                if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
+                                if (ar.Tag == "RITN_27_NR") ritn_nr = ar.TextString;
                                 if (ar.Tag == "SUMMA_NATARMERING") net_weight = ar.TextString;
                                 if (ar.Tag == "SUMMA_OVRIG_ARMERING") reinf_weight = ar.TextString;
+
+                                if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
                             }
                         }
                     }

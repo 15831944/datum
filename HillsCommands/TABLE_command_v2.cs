@@ -563,7 +563,7 @@ namespace commands
 
             foreach (Area_v2 a in local_stats.Keys)
             {
-                string ritn_nr = "";
+                string ritn_nr = "x";
                 using (Transaction trans = db.TransactionManager.StartTransaction())
                 {
                     DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
@@ -578,6 +578,15 @@ namespace commands
                             AttributeReference ar = obj as AttributeReference;
                             if (ar != null)
                             {
+                                if (blockRef.Name == "KN-V23")
+                                {
+                                    if (ar.Tag == "RITN_23_NR") ritn_nr = ar.TextString;
+                                }
+                                else if (blockRef.Name == "KN-V27")
+                                {
+                                    if (ar.Tag == "RITN_27_NR") ritn_nr = ar.TextString;
+                                }
+
                                 if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
                             }
                         }
