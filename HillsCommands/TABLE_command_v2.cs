@@ -547,7 +547,7 @@ namespace commands
             txt.AppendLine("alexi programmi ajutine file");
             txt.AppendLine("shape; positsioon; kogus; diameter");
             txt.AppendLine("");
-            txt.AppendLine("[SUMMARY]");
+            txt.AppendLine("SUMMARY");
 
             foreach (Mark u in total_stats)
             {
@@ -555,7 +555,7 @@ namespace commands
                 txt.AppendLine(u.Position_Shape.ToString() + ";" + u.Position_Nr.ToString() + ";" + u.Number.ToString() + ";" + u.Diameter.ToString());
             }
 
-            txt.AppendLine("[/SUMMARY]");
+            txt.AppendLine("---SUMMARY");
 
 
             // LOCAL

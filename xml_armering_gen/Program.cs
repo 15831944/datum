@@ -123,7 +123,7 @@ namespace xml_armering_gen
             while (!reader.EndOfStream)
             {
                 string line = reader.ReadLine();
-                if (line == "[/SUMMARY]") break;
+                if (line == "---SUMMARY") break;
 
                 line.Replace(" ", "");
                 string[] rowData = line.Split(';');

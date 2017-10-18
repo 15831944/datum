@@ -31,7 +31,6 @@ namespace commands
         static string[] newBoxNames = { "KN-C", "KN-V27" };
         static string markLayerName = "K60";
 
-        List<Mark> total_stats;
         Dictionary<Area_v2, List<Mark>> local_stats;
 
         Document doc;
@@ -40,7 +39,6 @@ namespace commands
 
         public TABLE_command_XML_SINGLE()
         {
-            total_stats = new List<Mark>();
             local_stats = new Dictionary<Area_v2, List<Mark>>();
 
             doc = Application.DocumentManager.MdiActiveDocument;
@@ -74,12 +72,12 @@ namespace commands
 
             foreach (Area_v2 current in local_stats.Keys)
             {
-                xml_dump(current, local_stats[current]);
+                List<Mark> currentMarks = local_stats[current];
+                if (currentMarks.Count > 1)
+                {
+                    xml_dump(current, currentMarks);
+                }
             }
-
-            writeCadMessage("DONE");
-
-
 
             writeCadMessage("DONE");
 
@@ -138,11 +136,6 @@ namespace commands
 
             sumMarks = new List<Mark>();
             sumMarks.AddRange(rows_num);
-
-            Mark emptyRow = new Mark(0, 0, "emptyrow", "", 0);
-            sumMarks.Add(emptyRow);
-            sumMarks.Add(emptyRow);
-
             sumMarks.AddRange(rows_char);
 
             return sumMarks;
@@ -339,6 +332,7 @@ namespace commands
             ed.WriteMessage("\n" + errorMessage);
         }
 
+
         private void xml_dump(Area_v2 area, List<Mark> data)
         {
             string name = "alfa";
@@ -391,24 +385,24 @@ namespace commands
 
             if (!File.Exists(xml_full))
             {
-                Console.WriteLine("[ERROR] Antud kaustas ei ole XML faili nimega: " + name + ".xml");
+                writeCadMessage("[ERROR] Antud kaustas ei ole XML faili nimega: " + name + ".xml");
                 return;
             }
 
             if (File.Exists(xml_lock_full))
             {
-                Console.WriteLine("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
+                writeCadMessage("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
                 return;
             }
 
             if (File.Exists(xml_output_full))
             {
-                Console.WriteLine("[ERROR] XML fail nimega " + output_name + ".xml" + " on juba olemas");
+                writeCadMessage("[ERROR] XML fail nimega " + output_name + ".xml" + " on juba olemas");
                 return;
             }
 
             File.Create(xml_lock_full).Dispose();
-            Console.WriteLine("LOCK ON");
+            writeCadMessage("LOCK ON");
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(xml_full);
@@ -417,16 +411,21 @@ namespace commands
 
             setNumber(rebarNodes, data);
             List<XmlNode> foundNodes = removeNotFoundNodes(rebarNodes);
-            sortNodes(foundNodes, xmlDoc);
 
-            xmlDoc.Save(xml_output_full);
+            if (foundNodes.Count > 1)
+            {
+                sortNodes(foundNodes, xmlDoc);
+                xmlDoc.Save(xml_output_full);
+            }
+
+            
 
             File.Delete(xml_lock_full);
-            Console.WriteLine("LOCK OFF");
+            writeCadMessage("LOCK OFF");
         }
 
 
-        private static XmlDocument removeEmptyNodes(XmlDocument xd) // DONT KNOW THIS MAGIC
+        private XmlDocument removeEmptyNodes(XmlDocument xd) // DONT KNOW THIS MAGIC
         {
             XmlNodeList emptyElements = xd.SelectNodes(@"//*[not(node())]");
             for (int i = emptyElements.Count - 1; i > -1; i--)
@@ -439,7 +438,7 @@ namespace commands
         }
 
 
-        private static List<XmlNode> getAllPages(XmlDocument file)
+        private List<XmlNode> getAllPages(XmlDocument file)
         {
             List<XmlNode> pages = new List<XmlNode>();
 
@@ -453,7 +452,7 @@ namespace commands
             return pages;
         }
 
-        private static List<XmlNode> getAllRebar(XmlDocument file)
+        private List<XmlNode> getAllRebar(XmlDocument file)
         {
             List<XmlNode> rebars = new List<XmlNode>();
 
@@ -473,7 +472,7 @@ namespace commands
         }
 
 
-        private static void setNumber(List<XmlNode> rebarNodes, List<Mark> data)
+        private void setNumber(List<XmlNode> rebarNodes, List<Mark> data)
         {
             List<XmlNode> notFoundNode = new List<XmlNode>();
             List<Mark> foundRebar = new List<Mark>();
@@ -521,20 +520,23 @@ namespace commands
                 }
             }
 
-            Console.WriteLine("");
-            Console.WriteLine(notFoundNode.Count.ToString() + " - rauda ei ole joonistel kasutuses");
-            Console.WriteLine(data.Count.ToString() + " - rauda ei ole XML-is defineeritud");
+            writeCadMessage("");
+            writeCadMessage(notFoundNode.Count.ToString() + " - rauda ei ole joonistel kasutuses");
+            writeCadMessage(data.Count.ToString() + " - rauda ei ole XML-is defineeritud");
 
-            Console.WriteLine("");
-            Console.WriteLine("Ei ole defineeritud:");
-            foreach (Mark reb in data)
+            if (data.Count > 1)
             {
-                Console.WriteLine(reb.Position_Shape + " " + reb.Position_Nr.ToString() + " " + reb.Diameter.ToString());
+                writeCadMessage("");
+                writeCadMessage("Ei ole defineeritud:");
+                foreach (Mark reb in data)
+                {
+                    writeCadMessage(reb.Position_Shape + " " + reb.Position_Nr.ToString() + " " + reb.Diameter.ToString());
+                }
             }
         }
 
 
-        private static List<XmlNode> removeNotFoundNodes(List<XmlNode> all)
+        private List<XmlNode> removeNotFoundNodes(List<XmlNode> all)
         {
             List<XmlNode> found = new List<XmlNode>();
 
@@ -556,7 +558,7 @@ namespace commands
         }
 
 
-        private static void sortNodes(List<XmlNode> rebars, XmlDocument xmlDoc)
+        private void sortNodes(List<XmlNode> rebars, XmlDocument xmlDoc)
         {
             List<XmlNode> sortedRebars = sortRebars(rebars);
 
@@ -646,7 +648,7 @@ namespace commands
         }
 
 
-        public static XmlNode newPageHandle(List<XmlNode> pages, XmlDocument xmlDoc)
+        public XmlNode newPageHandle(List<XmlNode> pages, XmlDocument xmlDoc)
         {
             XmlNode row = xmlDoc.CreateElement("B2aPage");
             XmlAttribute attribute = xmlDoc.CreateAttribute("PageLabel");
@@ -667,7 +669,7 @@ namespace commands
         }
 
 
-        private static List<XmlNode> sortRebars(List<XmlNode> rebars)
+        private List<XmlNode> sortRebars(List<XmlNode> rebars)
         {
             List<XmlNode> a = new List<XmlNode>();
             List<XmlNode> others = new List<XmlNode>();
