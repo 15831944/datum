@@ -63,6 +63,104 @@ namespace commands
             position_nr = nr;
         }
 
+        internal bool validate_original()
+        {
+            string nospaces = original.Replace(@"\P", "");
+            nospaces = nospaces.Replace(" FS", "");
+            nospaces = nospaces.Replace(" HS", "");
+            nospaces = nospaces.Replace(" ", "");
+
+            if (nospaces.Contains("=")) return false; // CHECK 1
+            if (!nospaces.Contains("-")) return false; // CHECK 2
+            if (!nospaces.Contains("Ø")) return false; // CHECK 3
+
+            string[] split1 = nospaces.Split('Ø');
+            if (split1.Count() > 2) return false; // CHECK 4
+
+            string[] split2 = split1[1].Split('-');
+            if (split2.Count() > 2) return false; // CHECK 5
+
+            string numb = split1[0];
+            string diam = split2[0];
+            string pos = split2[1];
+
+            if (diam.Length == 0) return false; // CHECK 6
+            if (pos.Length < 2) return false; // CHECK 7
+
+            if (numb.Length == 0)
+            {
+                numb = "1";
+            }
+            else if (numb.Contains("+"))
+            {
+                string[] nmbs = numb.Split('+');
+
+                int i = 0;
+
+                foreach (string n in nmbs)
+                {
+                    int currentNumber = -99;
+                    Int32.TryParse(n, out currentNumber);
+
+                    if (currentNumber < 0) return false; // CHECK 8
+
+                    i = i + currentNumber;
+                }
+
+                numb = i.ToString();
+            }
+
+            if (diam.Contains("s"))
+            {
+                string[] diams = diam.Split('s');
+                diam = diams[0];
+            }
+
+            int temp = 0;
+            Int32.TryParse(numb, out temp);
+            if (temp == 0) return false; // CHECK 9
+            number = temp;
+
+            temp = 0;
+            Int32.TryParse(diam, out temp);
+            if (temp == 0) return false; // CHECK 10
+            diameter = temp;
+
+            temp = 0;
+            Int32.TryParse(pos, out temp);
+
+            if (temp != 0)
+            {
+                position_shape = "A";
+                position_nr = temp;
+            }
+            else
+            {
+                int numShape = 0;
+                for (int j = 0; j < pos.Length; j++)
+                {
+                    char cur = pos[j];
+
+                    if (Char.IsNumber(cur))
+                    {
+                        numShape = j;
+                        break;
+                    }
+                }
+
+                position_shape = pos.Substring(0, numShape);
+                position_nr = 0;
+
+                Int32.TryParse(pos.Substring(numShape, pos.Length - numShape), out position_nr);
+
+                if (position_nr == 0) return false; // CHECK 11
+            }
+
+            position = pos;
+
+            return true;
+        }
+
         internal bool validate()
         {
             string nospaces = original.Replace(@"\P", "");
@@ -233,9 +331,13 @@ namespace commands
         public bool Equals(Mark other)
         {
             if (other == null) return false;
-            return (this.Position_Shape == other.Position_Shape &&
-                    this.Position_Nr == other.Position_Nr &&
-                    this.Diameter == other.Diameter);
+            double dX = this.insert.X - other.insert.X;
+            double dY = this.insert.Y - other.insert.Y;
+
+            double dL = Math.Sqrt((dX * dX) + (dY * dY));
+
+            if (dL < 1.0) return true;
+            else return false;
         }
 
         public override bool Equals(object obj)

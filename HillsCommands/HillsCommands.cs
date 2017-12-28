@@ -136,21 +136,6 @@ namespace commands
         }
 
 
-        [CommandMethod("XML_SUM_MARKS_SINGLE")]
-        public void xml_sum_marks()
-        {
-            //try
-            //{
-                TABLE_command_XML_SINGLE program = new TABLE_command_XML_SINGLE();
-                program.run();
-        //    }
-        //    catch (System.Exception ex)
-        //    {
-        //        SW.MessageBox.Show("Viga\n" + ex.Message);
-        //    }
-        }
-
-
         [CommandMethod("CSV_SUM_WEIGHTS")]
         public void csv_sum_weights()
         {

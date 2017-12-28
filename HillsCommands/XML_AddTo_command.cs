@@ -108,9 +108,9 @@ namespace commands
 
             foreach (Mark m in warning.Keys)
             {
-                writeCadMessage("--- WARINING DIAMETER: " + m.ToString());
+                writeCadMessage("--- WARINING: " + m.ToString());
                 string rebarString = XML_Handle.getXMLRebarString(warning[m]);
-                writeCadMessage("--- WARINING DIAMETER: " + rebarString);
+                writeCadMessage("--- WARINING: " + rebarString);
                 writeCadMessage("");
             }
 
@@ -534,9 +534,13 @@ namespace commands
                 }
                 else
                 {
-                    if (m.Position_Shape == type && m.Position_Nr.ToString() == pos_nr)
+                    if (m.Position_Nr.ToString() == pos_nr)
                     {
-                        if (m.Diameter.ToString() != diam)
+                        if (m.Position_Shape.ToString() != type)
+                        {
+                            warning[m] = rebar;
+                        }
+                        else if (m.Diameter.ToString() != diam)
                         {
                             warning[m] = rebar;
                         }

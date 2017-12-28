@@ -62,6 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Area_v2.cs" />
     <Compile Include="MARK_command.cs" />
     <Compile Include="CORNER_command.cs" />
     <Compile Include="KontrollCommands.cs" />

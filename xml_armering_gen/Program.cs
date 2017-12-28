@@ -38,7 +38,7 @@ namespace xml_armering_gen
             List<string> csvs = getFiles(csv_location, "*.CSV");
             List<Row> parsed = parseCSVs(csvs);
 
-            Console.WriteLine(parsed.Count.ToString());
+            //Console.WriteLine(parsed.Count.ToString());
 
             dump(location, parsed);
             xml_dump(location, parsed);
@@ -305,14 +305,25 @@ namespace xml_armering_gen
             xmlDoc = removeEmptyNodes(xmlDoc);
             List<XmlNode> rebarNodes = getAllRebar(xmlDoc);
 
-            setNumber(rebarNodes, data);
-            List<XmlNode> foundNodes = removeNotFoundNodes(rebarNodes);
-            sortNodes(foundNodes, xmlDoc);
+            try
+            {
+                setNumber(rebarNodes, data);
 
-            xmlDoc.Save(xml_output_full);
+                List<XmlNode> foundNodes = removeNotFoundNodes(rebarNodes);
+                sortNodes(foundNodes, xmlDoc);
+                xmlDoc.Save(xml_output_full);
+            }
+            catch (EntryPointNotFoundException e)
+            {
 
-            File.Delete(xml_lock_full);
-            Console.WriteLine("LOCK OFF");
+                Console.WriteLine("[ERROR] armatuur puudu, EXIT");
+            }
+            finally
+            {
+                File.Delete(xml_lock_full);
+                Console.WriteLine("LOCK OFF");
+            }                      
+
         }
 
         private static XmlDocument removeEmptyNodes(XmlDocument xd) // DONT KNOW THIS MAGIC
@@ -411,16 +422,24 @@ namespace xml_armering_gen
                 }
             }
 
-            Console.WriteLine("");
-            Console.WriteLine(notFoundNode.Count.ToString() + " - rauda ei ole joonistel kasutuses");
-            Console.WriteLine(data.Count.ToString() + " - rauda ei ole XML-is defineeritud");
-
-            Console.WriteLine("");
-            Console.WriteLine("Ei ole defineeritud:");
-            foreach (Row reb in data)
+            if (data.Count != 0)
             {
-                Console.WriteLine(reb.Position_Shape + " " + reb.Position_Nr.ToString() + " " + reb.Diameter.ToString() );
+                Console.WriteLine("");
+                Console.WriteLine(data.Count.ToString() + " - rauda ei ole XML-is defineeritud");
+
+
+                Console.WriteLine("");
+                Console.WriteLine("Ei ole defineeritud:");
+                foreach (Row reb in data)
+                {
+                    Console.WriteLine(reb.Position_Shape + " " + reb.Position_Nr.ToString() + " " + reb.Diameter.ToString());
+                }
+
+                throw new EntryPointNotFoundException();
             }
+            
+
+
 
         }
 

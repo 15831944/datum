@@ -392,6 +392,29 @@ namespace commands
             return result;
         }
 
+        private static void bendingRadiusHandle(Mark undef, ref XmlNode r, Editor ed)
+        {
+            if (undef.Diameter == 6 || undef.Diameter == 8 || undef.Diameter == 10)
+            {
+                r.InnerText = "12";
+            }
+            else if (undef.Diameter == 12 || undef.Diameter == 16)
+            {
+                r.InnerText = "24";
+            }
+            else if (undef.Diameter == 20)
+            {
+                r.InnerText = "32";
+            }
+            else if (undef.Diameter == 25)
+            {
+                r.InnerText = "64";
+            }
+            else
+            {
+                r.InnerText = prompt("R", ed);
+            }
+        }
 
         public static XmlNode newNodeHandle(Mark undef, string materjal, XmlDocument xmlDoc, Editor ed)
         {
@@ -433,7 +456,7 @@ namespace commands
 
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -449,7 +472,7 @@ namespace commands
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
                 c.InnerText = prompt("C", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -466,7 +489,7 @@ namespace commands
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -487,7 +510,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 v.InnerText = prompt("V", ed);
                 u.InnerText = prompt("U", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -508,7 +531,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 y.InnerText = prompt("Y", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(c);
@@ -526,7 +549,7 @@ namespace commands
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -547,7 +570,7 @@ namespace commands
                 x.InnerText = prompt("X", ed);
                 v.InnerText = prompt("V", ed);
                 s.InnerText = prompt("S", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(c);
@@ -576,7 +599,7 @@ namespace commands
                 v.InnerText = prompt("V", ed);
                 s.InnerText = prompt("S", ed);
                 u.InnerText = prompt("U", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -610,7 +633,7 @@ namespace commands
                 s.InnerText = prompt("S", ed);
                 t.InnerText = prompt("T", ed);
                 u.InnerText = prompt("U", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(c);
@@ -635,7 +658,7 @@ namespace commands
                 b.InnerText = prompt("B", ed);
                 c.InnerText = prompt("C", ed);
                 d.InnerText = prompt("D", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -659,7 +682,7 @@ namespace commands
                 d.InnerText = prompt("D", ed);
                 e.InnerText = prompt("E", ed);
                 f.InnerText = prompt("F", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -689,7 +712,7 @@ namespace commands
                 v.InnerText = prompt("V", ed);
                 s.InnerText = prompt("S", ed);
                 u.InnerText = prompt("U", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -727,7 +750,7 @@ namespace commands
                 s.InnerText = prompt("S", ed);
                 t.InnerText = prompt("T", ed);
                 u.InnerText = prompt("U", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -752,7 +775,7 @@ namespace commands
 
                 a.InnerText = prompt("A", ed);
                 b.InnerText = prompt("B", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
                 e1.InnerText = "L";
                 e2.InnerText = "L";
 
@@ -774,7 +797,7 @@ namespace commands
                 a.InnerText = prompt("A", ed);
                 d.InnerText = prompt("D", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
                 e1.InnerText = "L";
                 e2.InnerText = "L";
 
@@ -822,7 +845,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 d.InnerText = prompt("D", ed);
                 y.InnerText = prompt("Y", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(c);
@@ -858,7 +881,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 d.InnerText = prompt("D", ed);
                 y.InnerText = prompt("Y", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -883,7 +906,7 @@ namespace commands
                 d.InnerText = prompt("D", ed);
                 y.InnerText = prompt("Y", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -907,7 +930,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 d.InnerText = prompt("D", ed);
                 e.InnerText = prompt("E", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -930,7 +953,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 x.InnerText = prompt("X", ed);
                 y.InnerText = prompt("Y", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
                 e1.InnerText = "L";
                 e2.InnerText = "L";
 
@@ -954,7 +977,7 @@ namespace commands
                 a.InnerText = prompt("A", ed);
                 x.InnerText = prompt("X", ed);
                 y.InnerText = prompt("Y", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
                 e1.InnerText = "L";
                 e2.InnerText = "L";
 
@@ -981,7 +1004,7 @@ namespace commands
                 e.InnerText = prompt("E", ed);
                 x.InnerText = prompt("X", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -1007,7 +1030,7 @@ namespace commands
                 d.InnerText = prompt("D", ed);
                 e.InnerText = prompt("E", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -1033,7 +1056,7 @@ namespace commands
                 d.InnerText = prompt("D", ed);
                 e.InnerText = prompt("E", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -1057,7 +1080,7 @@ namespace commands
                 c.InnerText = prompt("C", ed);
                 d.InnerText = prompt("D", ed);
                 v.InnerText = prompt("V", ed);
-                r.InnerText = prompt("R", ed);
+                bendingRadiusHandle(undef, ref r, ed);
 
                 geo.AppendChild(a);
                 geo.AppendChild(b);
@@ -2053,6 +2076,9 @@ namespace commands
                 parent.RemoveChild(child);
             }
         }
+
+
+        
     }
 }
 

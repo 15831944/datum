@@ -90,6 +90,7 @@ namespace commands
             {
                 string names = string.Join(", ", boxNames.ToArray());
                 writeCadMessage("[ERROR] - (" + names + ") not found");
+                return;
             }
 
             List<Mark> allMarks = getAllMarks(markLayerName);
@@ -143,33 +144,31 @@ namespace commands
 
         private void outputWeight(Area_v2 a, int weight)
         {
-            if (weight != 0)
-            {
-                using (Transaction trans = db.TransactionManager.StartTransaction())
-                {
-                    DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
-
-                    if (currentEntity is BlockReference)
-                    {
-                        BlockReference blockRef = currentEntity as BlockReference;
-
-                        foreach (ObjectId arId in blockRef.AttributeCollection)
-                        {
-                            DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
-                            AttributeReference ar = obj as AttributeReference;
-                            if (ar != null)
-                            {
-                                if (ar.Tag == "SUMMA_OVRIG_ARMERING") ar.TextString = weight.ToString();
-                            }
-                        }
-                    }
-
-                    trans.Commit();
-                }
-            }
-            else
+            if (weight == 0)
             {
                 writeCadMessage("[SKIP]");
+            }
+
+            using (Transaction trans = db.TransactionManager.StartTransaction())
+            {
+                DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
+
+                if (currentEntity is BlockReference)
+                {
+                    BlockReference blockRef = currentEntity as BlockReference;
+
+                    foreach (ObjectId arId in blockRef.AttributeCollection)
+                    {
+                        DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
+                        AttributeReference ar = obj as AttributeReference;
+                        if (ar != null)
+                        {
+                            if (ar.Tag == "SUMMA_OVRIG_ARMERING") ar.TextString = weight.ToString();
+                        }
+                    }
+                }
+
+                trans.Commit();
             }
         }
 

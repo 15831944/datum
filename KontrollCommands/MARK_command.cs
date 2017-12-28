@@ -28,7 +28,7 @@ namespace commands
     class MARK_command
     {
         static string markLayerName = "K60";
-        
+
         Transaction trans;
 
         Document doc;
@@ -49,8 +49,8 @@ namespace commands
         {
             writeCadMessage("START");
 
-            List<Mark> allMarks = getAllMarks(markLayerName);
-            logic(allMarks);
+            List<Mark> wrongMarks = getAllWrongMarks();
+            logic(wrongMarks);
 
             writeCadMessage("END");
 
@@ -83,13 +83,13 @@ namespace commands
             }
         }
 
-        private List<Mark> getAllMarks(string layer)
+        private List<Mark> getAllWrongMarks()
         {
             List<Mark> marks = new List<Mark>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
-                List<MText> allTexts = getAllText(layer, trans);
+                List<MText> allTexts = getAllText(trans);
                 marks = getMarkData(allTexts, trans);
             }
 
@@ -100,23 +100,56 @@ namespace commands
 
         private List<Mark> getMarkData(List<MText> txts, Transaction trans)
         {
-            List<Mark> parse = new List<Mark>();
+            List<Mark> good = new List<Mark>();
+            List<Mark> bad = new List<Mark>();
 
             foreach (MText txt in txts)
             {
-                Mark current = new Mark(txt.Contents, txt.Location);
+                if (txt.Contents.StartsWith("IG-")) continue;
+                if (txt.Contents.StartsWith("NEO-")) continue;
+                if (txt.Contents.StartsWith("TAGGLIST-")) continue;
+                if (txt.Contents.StartsWith("STAGHYLSA")) continue;
+                if (txt.Contents.StartsWith("WELDA")) continue;
+                if (txt.Contents.StartsWith("LYFT")) continue;
+                if (txt.Contents.StartsWith("HFV")) continue;
+                if (txt.Contents.StartsWith("6300S")) continue;
+                if (txt.Contents.StartsWith("DUBBURSPARING")) continue;
+                
+                if (txt.Contents.Contains("-"))
+                {
+                    Mark current = new Mark(txt.Contents, txt.Location);
+                    bool valid = current.validate_original();
 
-                bool valid = current.validate();
-                bool valid2 = current.validate2();
-
-                if (valid || valid2) parse.Add(current);
+                    if (valid == false)
+                    {
+                        bad.Add(current);
+                    }
+                    else
+                    {
+                        if (good.Contains(current))
+                        {
+                            bad.Add(current);
+                        }
+                        else
+                        {
+                            if (txt.Layer != markLayerName)
+                            {
+                                bad.Add(current);
+                            }
+                            else
+                            {
+                                good.Add(current);
+                            }                            
+                        }
+                    }
+                }
             }
 
-            return parse;
+            return bad;
         }
 
 
-        private List<MText> getAllText(string layer, Transaction trans)
+        private List<MText> getAllText(Transaction trans)
         {
             List<MText> txt = new List<MText>();
 
@@ -131,35 +164,32 @@ namespace commands
                     if (currentEntity is MText)
                     {
                         MText br = currentEntity as MText;
-                        if (br.Layer == layer)
-                        {
-                            txt.Add(br);
-                        }
+
+                        txt.Add(br);
                     }
 
                     if (currentEntity is DBText)
                     {
                         DBText br = currentEntity as DBText;
-                        if (br.Layer == layer)
-                        {
-                            MText myMtext = new MText();
-                            myMtext.Contents = br.TextString;
-                            myMtext.Location = br.Position;
-                            txt.Add(myMtext);
-                        }
+
+                        MText myMtext = new MText();
+                        myMtext.Contents = br.TextString;
+                        myMtext.Location = br.Position;
+                        myMtext.Layer = br.Layer;
+                        txt.Add(myMtext);
+
                     }
 
                     if (currentEntity is MLeader)
                     {
                         MLeader br = currentEntity as MLeader;
-                        if (br.Layer == layer)
+                        if (br.ContentType == ContentType.MTextContent)
                         {
-                            if (br.ContentType == ContentType.MTextContent)
-                            {
-                                MText leaderText = br.MText;
-                                txt.Add(leaderText);
-                            }
+                            MText leaderText = br.MText;
+                            leaderText.Layer = br.Layer;
+                            txt.Add(leaderText);
                         }
+
                     }
                 }
             }
