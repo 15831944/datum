@@ -35,6 +35,7 @@ namespace commands
 
         Dictionary<Dimension, BlockTableRecord> dims;
 
+
         public SCALE_command()
         {
             doc = Application.DocumentManager.MdiActiveDocument;
@@ -46,6 +47,7 @@ namespace commands
             dims = new Dictionary<Dimension, BlockTableRecord>();
         }
 
+
         internal void run()
         {
             writeCadMessage("START");
@@ -55,6 +57,7 @@ namespace commands
 
             writeCadMessage("END");
         }
+
 
         private void setColorToDims()
         {
@@ -84,6 +87,7 @@ namespace commands
             writeCadMessage("Scale 0.5: " + scale_05.Count.ToString());
             writeCadMessage("Scale other: " + scale_other.Count.ToString());
         }
+
         
         private void getAllDims()
         {
@@ -130,6 +134,7 @@ namespace commands
             ed.WriteMessage("\n" + errorMessage);
         }
 
+
         internal void close()
         {
             trans.Commit();
@@ -137,5 +142,6 @@ namespace commands
 
             ed.Regen();
         }
+
     }
 }

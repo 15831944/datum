@@ -137,6 +137,7 @@ namespace commands
             return points;
         }
 
+
         private List<Point3d> handle(Entity ent)
         {
             List<Point3d> points = new List<Point3d>();
@@ -202,6 +203,7 @@ namespace commands
             return points;
         }
 
+
         private List<Point3d> getPolylinePoints(Polyline poly)
         {
             List<Point3d> points = new List<Point3d>();
@@ -239,6 +241,7 @@ namespace commands
             return points;
         }
 
+
         private List<Point3d> getLinePoints(Line line)
         {
             List<Point3d> points = new List<Point3d>();
@@ -270,6 +273,7 @@ namespace commands
             return points;
         }
 
+
         private List<Point3d> getCirclePoints(Circle circle)
         {
             List<Point3d> points = new List<Point3d>();
@@ -290,6 +294,7 @@ namespace commands
 
             return points;
         }
+
 
         private void getAllDims()
         {

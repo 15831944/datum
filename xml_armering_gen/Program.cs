@@ -38,7 +38,7 @@ namespace xml_armering_gen
             List<string> csvs = getFiles(csv_location, "*.CSV");
             List<Row> parsed = parseCSVs(csvs);
 
-            //Console.WriteLine(parsed.Count.ToString());
+            Console.WriteLine(parsed.Count.ToString() );
 
             dump(location, parsed);
             xml_dump(location, parsed);
@@ -421,6 +421,8 @@ namespace xml_armering_gen
                     notFoundNode.Add(rebarNode);
                 }
             }
+
+            Console.WriteLine(data.Count.ToString());
 
             if (data.Count != 0)
             {

@@ -44,12 +44,13 @@ namespace commands
         Database db;
         Editor ed;
 
+
         public DIM_command()
         {
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
             ed = doc.Editor;
-            
+
             success = false;
             ptStart = new Point3d();
             ptEnd = new Point3d();
@@ -59,11 +60,13 @@ namespace commands
             rotation = 0.0;
         }
 
+
         public void run()
         {
             main();
             ed.WriteMessage("\n[Done]");
         }
+
 
         public void main()
         {
@@ -116,6 +119,7 @@ namespace commands
             return;
         }
 
+
         private bool getInitPoint(string prompt, ref Point3d pt)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
@@ -133,6 +137,7 @@ namespace commands
 
             return true;
         }
+
 
         private bool getPositionPoint(string prompt, Point3d ptStart, Point3d ptEnd, ref Point3d ptPos, ref double rotation)
         {
@@ -174,6 +179,7 @@ namespace commands
 
             return true;
         }
+
 
         private bool getPoint(string prompt, Point3d ptBase, ref Point3d pt, ref bool finish)
         {
@@ -242,6 +248,7 @@ namespace commands
             }
         }
 
+
         private void insertCircle(Point3d center, double radius)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
@@ -264,6 +271,7 @@ namespace commands
                 acTrans.Commit();
             }
         }
+
 
         private double getDirectionVector(Point3d ptStart, Point3d ptEnd, double rotation)
         {
@@ -302,6 +310,7 @@ namespace commands
             return ptNew;
         }
 
+
         private void insertLine(Point3d ptPos, double dir, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
@@ -339,6 +348,7 @@ namespace commands
                 acTrans.Commit();
             }
         }
+
 
         private bool insertNumber(Point3d center, double rotation)
         {
@@ -383,6 +393,7 @@ namespace commands
             }
         }
 
+
         private void insertText(Point3d ptInsert, AttachmentPoint a, string txt, double rotation)
         {
             Document acDoc = Application.DocumentManager.MdiActiveDocument;
@@ -413,6 +424,7 @@ namespace commands
                 acTrans.Commit();
             }
         }
+
 
         private bool insertFormSide(Point3d ptPos, double dir, double rotation)
         {
@@ -446,5 +458,6 @@ namespace commands
             insertText(insert, a, result, 0);
             return true;
         }
+
     }
 }

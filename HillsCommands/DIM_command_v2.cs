@@ -26,6 +26,12 @@ namespace commands
 {
     class DIM_command_v2
     {
+        Document doc;
+        Database db;
+        Editor ed;
+
+        Transaction trans;
+
         double smallCircleRadius = 15.0;
         double bigCircleRadius = 50.0;
         double bigCircleOffset = 180.0;
@@ -40,15 +46,14 @@ namespace commands
 
         double rotation;
 
-        Document doc;
-        Database db;
-        Editor ed;
 
         public DIM_command_v2()
         {
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
             ed = doc.Editor;
+
+            trans = db.TransactionManager.StartTransaction();
 
             success = false;
             ptStart = new Point3d();
@@ -59,11 +64,24 @@ namespace commands
             rotation = 0.0;
         }
 
+
         public void run()
         {
+            writeCadMessage("");
+            writeCadMessage("[START]");
             main();
-            ed.WriteMessage("\n[Done]");
+            writeCadMessage("[DONE]");
         }
+
+
+        internal void close()
+        {
+            trans.Commit();
+            trans.Dispose();
+
+            ed.Regen();
+        }
+
 
         public void main()
         {
@@ -116,6 +134,7 @@ namespace commands
             return;
         }
 
+
         private bool getInitPoint(string prompt, ref Point3d pt)
         {
             PromptPointOptions pPtOpts = new PromptPointOptions("");
@@ -130,6 +149,7 @@ namespace commands
 
             return true;
         }
+
 
         private bool getPositionPoint(string prompt, Point3d ptStart, Point3d ptEnd, ref Point3d ptPos, ref double rotation)
         {
@@ -169,6 +189,7 @@ namespace commands
             return true;
         }
 
+
         private bool getPoint(string prompt, Point3d ptBase, ref Point3d pt, ref bool finish)
         {
             PromptPointOptions pPtOpts = new PromptPointOptions("");
@@ -207,43 +228,35 @@ namespace commands
 
         private void insertDimLine(Point3d ptStart, Point3d ptEnd, Point3d ptPos, double rotation)
         {
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+
+            using (RotatedDimension rotDim = new RotatedDimension())
             {
-                BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+                rotDim.XLine1Point = ptStart;
+                rotDim.XLine2Point = ptEnd;
+                rotDim.Rotation = rotation;
+                rotDim.DimLinePoint = ptPos;
+                rotDim.DimensionStyle = db.Dimstyle;
 
-                using (RotatedDimension rotDim = new RotatedDimension())
-                {
-                    rotDim.XLine1Point = ptStart;
-                    rotDim.XLine2Point = ptEnd;
-                    rotDim.Rotation = rotation;
-                    rotDim.DimLinePoint = ptPos;
-                    rotDim.DimensionStyle = db.Dimstyle;
-
-                    btr.AppendEntity(rotDim);
-                    trans.AddNewlyCreatedDBObject(rotDim, true);
-                }
-
-                trans.Commit();
+                btr.AppendEntity(rotDim);
+                trans.AddNewlyCreatedDBObject(rotDim, true);
             }
         }
+
 
         private void insertCircle(Point3d center, double radius)
         {
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+
+            using (Circle circle = new Circle())
             {
-                BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
-
-                using (Circle circle = new Circle())
-                {
-                    circle.Center = center;
-                    circle.Radius = radius;
-                    btr.AppendEntity(circle);
-                    trans.AddNewlyCreatedDBObject(circle, true);
-                }
-
-                trans.Commit();
+                circle.Center = center;
+                circle.Radius = radius;
+                btr.AppendEntity(circle);
+                trans.AddNewlyCreatedDBObject(circle, true);
             }
         }
+
 
         private double getDirectionVector(Point3d ptStart, Point3d ptEnd, double rotation)
         {
@@ -262,6 +275,7 @@ namespace commands
 
             return dir;
         }
+
 
         private Point3d getBigCirclePoint(Point3d ptPos, double dir, double rotation)
         {
@@ -282,36 +296,33 @@ namespace commands
             return ptNew;
         }
 
+
         private void insertLine(Point3d ptPos, double dir, double rotation)
         {
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+
+            Point3d ptEnd = new Point3d();
+
+            if (rotation == 0.0)
             {
-                BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
-
-                Point3d ptEnd = new Point3d();
-
-                if (rotation == 0.0)
-                {
-                    double newX = ptPos.X - (bigCircleOffset - bigCircleRadius) * dir;
-                    double newY = ptPos.Y;
-                    ptEnd = new Point3d(newX, newY, ptPos.Z);
-                }
-                else
-                {
-                    double newX = ptPos.X;
-                    double newY = ptPos.Y - (bigCircleOffset - bigCircleRadius) * dir;
-                    ptEnd = new Point3d(newX, newY, ptPos.Z);
-                }
-
-                using (Line line = new Line(ptPos, ptEnd))
-                {
-                    btr.AppendEntity(line);
-                    trans.AddNewlyCreatedDBObject(line, true);
-                }
-
-                trans.Commit();
+                double newX = ptPos.X - (bigCircleOffset - bigCircleRadius) * dir;
+                double newY = ptPos.Y;
+                ptEnd = new Point3d(newX, newY, ptPos.Z);
             }
-        } 
+            else
+            {
+                double newX = ptPos.X;
+                double newY = ptPos.Y - (bigCircleOffset - bigCircleRadius) * dir;
+                ptEnd = new Point3d(newX, newY, ptPos.Z);
+            }
+
+            using (Line line = new Line(ptPos, ptEnd))
+            {
+                btr.AppendEntity(line);
+                trans.AddNewlyCreatedDBObject(line, true);
+            }
+        }
+
 
         private bool insertNumber(Point3d center, double rotation)
         {
@@ -354,27 +365,24 @@ namespace commands
             }
         }
 
+
         private void insertText(Point3d ptInsert, AttachmentPoint a, string txt, double rotation)
         {
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+
+            using (MText acMText = new MText())
             {
-                BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+                acMText.Attachment = a;
+                acMText.Location = ptInsert;
+                acMText.Contents = txt;
+                acMText.TextHeight = textHeight;
+                acMText.Rotation = rotation;
 
-                using (MText acMText = new MText())
-                {
-                    acMText.Attachment = a;
-                    acMText.Location = ptInsert;
-                    acMText.Contents = txt;
-                    acMText.TextHeight = textHeight;
-                    acMText.Rotation = rotation;
-
-                    btr.AppendEntity(acMText);
-                    trans.AddNewlyCreatedDBObject(acMText, true);
-                }
-
-                trans.Commit();
+                btr.AppendEntity(acMText);
+                trans.AddNewlyCreatedDBObject(acMText, true);
             }
         }
+
 
         private bool insertFormSide(Point3d ptPos, double dir, double rotation)
         {
@@ -406,5 +414,12 @@ namespace commands
             insertText(insert, a, result, 0);
             return true;
         }
+
+
+        private void writeCadMessage(string errorMessage)
+        {
+            ed.WriteMessage(errorMessage + "\n");
+        }
+
     }
 }

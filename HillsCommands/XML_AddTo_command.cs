@@ -28,6 +28,12 @@ namespace commands
 {
     class XML_AddTo_command
     {
+        Document doc;
+        Database db;
+        Editor ed;
+
+        Transaction trans;
+
         static string name = "alfa";
 
         string dwg_dir;
@@ -35,9 +41,6 @@ namespace commands
         string xml_lock_full;
         string xml_output_full;
 
-        Document doc;
-        Database db;
-        Editor ed;
 
         public XML_AddTo_command()
         {
@@ -45,6 +48,7 @@ namespace commands
             db = doc.Database;
             ed = doc.Editor;
 
+            trans = doc.TransactionManager.StartTransaction();
 
             HostApplicationServices hs = HostApplicationServices.Current;
             string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
@@ -88,14 +92,14 @@ namespace commands
             xmlDoc.Load(xml_full);
             xmlDoc = XML_Handle.removeEmptyNodes(xmlDoc);
 
-            List<Mark> marks = getSelectedMarks();
-            List<Mark> filteredMarks = filterSelectedMarks(marks);
+            List<_Mark> marks = getSelectedMarks();
+            List<_Mark> filteredMarks = filterSelectedMarks(marks);
 
             List<XmlNode> pages = XML_Handle.getAllPages(xmlDoc);
             List<XmlNode> rebars = XML_Handle.getAllRebar(xmlDoc);
 
-            Dictionary<Mark, XmlNode> warning = new Dictionary<Mark, XmlNode>();
-            List<Mark> undefined = findMarksInXML(rebars, filteredMarks, ref warning);
+            Dictionary<_Mark, XmlNode> warning = new Dictionary<_Mark, XmlNode>();
+            List<_Mark> undefined = findMarksInXML(rebars, filteredMarks, ref warning);
 
             if (undefined.Count != 0)
             {
@@ -106,7 +110,7 @@ namespace commands
 
             }
 
-            foreach (Mark m in warning.Keys)
+            foreach (_Mark m in warning.Keys)
             {
                 writeCadMessage("--- WARINING: " + m.ToString());
                 string rebarString = XML_Handle.getXMLRebarString(warning[m]);
@@ -116,6 +120,15 @@ namespace commands
 
             File.Delete(xml_lock_full);
             writeCadMessage("LOCK OFF");
+        }
+
+
+        internal void close()
+        {
+            trans.Commit();
+            trans.Dispose();
+
+            ed.Regen();
         }
 
 
@@ -301,19 +314,20 @@ namespace commands
             return sorted;
         }
 
-        private List<XmlNode> handleUndefined(List<Mark> undefined, List<XmlNode> rebars, XmlDocument xmlDoc)
+
+        private List<XmlNode> handleUndefined(List<_Mark> undefined, List<XmlNode> rebars, XmlDocument xmlDoc)
         {
             List<XmlNode> newRebar = new List<XmlNode>();
 
             writeCadMessage(" ");
-            foreach (Mark u in undefined)
+            foreach (_Mark u in undefined)
             {
                 writeCadMessage("--- Not found: " + u.ToString());
             }
 
             string materjal = promptGetMaterial();
 
-            foreach (Mark u in undefined)
+            foreach (_Mark u in undefined)
             {
                 bool add = promptAddRebarToXml(u);
                 if (add)
@@ -357,7 +371,7 @@ namespace commands
         }
 
 
-        private bool promptAddRebarToXml(Mark u)
+        private bool promptAddRebarToXml(_Mark u)
         {
             PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
             promptOptions.Message = "\nAdd to XML: " + u.ToString();
@@ -377,6 +391,7 @@ namespace commands
             return false;
         }
 
+
         private string promptGetMaterial()
         {
             string materjal = "K500C-T";
@@ -395,31 +410,29 @@ namespace commands
         }
 
 
-        private List<Mark> getSelectedMarks()
+        private List<_Mark> getSelectedMarks()
         {
-            List<Mark> parse = new List<Mark>();
+            List<_Mark> parse = new List<_Mark>();
 
-            using (Transaction trans = db.TransactionManager.StartTransaction())
+            List<MText> selected = getSelectedText(doc);
+
+            foreach (MText txt in selected)
             {
-                List<MText> selected = getSelectedText(doc, trans);
-
-                foreach (MText txt in selected)
-                {
-                    Mark current = new Mark(txt.Contents, txt.Location);
-                    bool valid = current.validate();
-                    if (valid) parse.Add(current);
-                }
+                _Mark current = new _Mark(txt.Contents, txt.Location);
+                bool valid = current.validate();
+                if (valid) parse.Add(current);
             }
+
 
             return parse;
         }
 
 
-        private List<Mark> filterSelectedMarks(List<Mark> marks)
+        private List<_Mark> filterSelectedMarks(List<_Mark> marks)
         {
-            List<Mark> unique = new List<Mark>();
+            List<_Mark> unique = new List<_Mark>();
 
-            foreach (Mark m in marks)
+            foreach (_Mark m in marks)
             {
                 if (unique.Contains(m))
                 {
@@ -433,13 +446,13 @@ namespace commands
 
             unique = unique.OrderBy(b => b.Diameter).ToList();
 
-            List<Mark> rows_num = unique.FindAll(x => x.Position_Shape == "A").ToList();
-            List<Mark> rows_char = unique.FindAll(x => x.Position_Shape != "A").ToList();
+            List<_Mark> rows_num = unique.FindAll(x => x.Position_Shape == "A").ToList();
+            List<_Mark> rows_char = unique.FindAll(x => x.Position_Shape != "A").ToList();
 
             rows_num = rows_num.OrderBy(b => b.Position_Nr).ToList();
             rows_char = rows_char.OrderBy(b => b.Position_Nr).ToList();
 
-            unique = new List<Mark>();
+            unique = new List<_Mark>();
             unique.AddRange(rows_num);
             unique.AddRange(rows_char);
 
@@ -447,7 +460,7 @@ namespace commands
         }
 
 
-        private List<MText> getSelectedText(Document doc, Transaction trans)
+        private List<MText> getSelectedText(Document doc)
         {
             List<MText> txt = new List<MText>();
 
@@ -495,11 +508,11 @@ namespace commands
         }
 
 
-        private List<Mark> findMarksInXML(List<XmlNode> rebars, List<Mark> marks, ref Dictionary<Mark, XmlNode> warning)
+        private List<_Mark> findMarksInXML(List<XmlNode> rebars, List<_Mark> marks, ref Dictionary<_Mark, XmlNode> warning)
         {
-            List<Mark> undefined = new List<Mark>();
+            List<_Mark> undefined = new List<_Mark>();
 
-            foreach (Mark m in marks)
+            foreach (_Mark m in marks)
             {
                 bool found = matchMarkToXML(m, rebars, ref warning);
                 if (found == false) { undefined.Add(m); }
@@ -509,7 +522,7 @@ namespace commands
         }
 
 
-        private bool matchMarkToXML(Mark m, List<XmlNode> rows, ref Dictionary<Mark, XmlNode> warning)
+        private bool matchMarkToXML(_Mark m, List<XmlNode> rows, ref Dictionary<_Mark, XmlNode> warning)
         {
             foreach (XmlNode row in rows)
             {
@@ -557,9 +570,11 @@ namespace commands
             return false;
         }
 
+
         private void writeCadMessage(string errorMessage)
         {
             ed.WriteMessage("\n" + errorMessage);
         }
+
     }
 }

@@ -392,7 +392,7 @@ namespace commands
             return result;
         }
 
-        private static void bendingRadiusHandle(Mark undef, ref XmlNode r, Editor ed)
+        private static void bendingRadiusHandle(_Mark undef, ref XmlNode r, Editor ed)
         {
             if (undef.Diameter == 6 || undef.Diameter == 8 || undef.Diameter == 10)
             {
@@ -416,7 +416,7 @@ namespace commands
             }
         }
 
-        public static XmlNode newNodeHandle(Mark undef, string materjal, XmlDocument xmlDoc, Editor ed)
+        public static XmlNode newNodeHandle(_Mark undef, string materjal, XmlDocument xmlDoc, Editor ed)
         {
             XmlNode row = xmlDoc.CreateElement("B2aPageRow");
             XmlAttribute attribute = xmlDoc.CreateAttribute("RowId");

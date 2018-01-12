@@ -24,7 +24,7 @@ using Bricscad.PlottingServices;
 
 namespace commands
 {
-    class Area_v2
+    class _Area_v2
     {
         ObjectId _id;
         Point3d _start;
@@ -34,7 +34,7 @@ namespace commands
         public Point3d Start { get { return _start; } } // for sorting
 
 
-        public Area_v2(ObjectId id, Point3d s, Point3d e)
+        public _Area_v2(ObjectId id, Point3d s, Point3d e)
         {
             _id = id;
 
@@ -45,13 +45,14 @@ namespace commands
 
         internal bool isPointInArea(Point3d point)
         {
-            if (point.X <= _start.X) return false;
-            if (point.X >= _end.X) return false;
+            if (point.X < _start.X) return false;
+            if (point.X > _end.X) return false;
 
-            if (point.Y <= _start.Y) return false;
-            if (point.Y >= _end.Y) return false;
+            if (point.Y < _start.Y) return false;
+            if (point.Y > _end.Y) return false;
 
             return true;
         }
+
     }
 }

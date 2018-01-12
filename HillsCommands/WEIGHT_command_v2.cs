@@ -28,20 +28,22 @@ namespace commands
 {
     class WEIGHT_command_v2
     {
+        Document doc;
+        Database db;
+        Editor ed;
+
+        Transaction trans;
+
         static string name = "alfa";
 
         static string[] boxNames = { "KN-C", "KN-V27" };
         static string markLayerName = "K60";
 
-        Dictionary<Area_v2, int> local_stats;
+        Dictionary<_Area_v2, int> local_stats;
 
         string dwg_dir;
         string xml_full;
         string xml_lock_full;
-
-        Document doc;
-        Database db;
-        Editor ed;
 
         public WEIGHT_command_v2()
         {
@@ -49,7 +51,9 @@ namespace commands
             db = doc.Database;
             ed = doc.Editor;
 
-            local_stats = new Dictionary<Area_v2, int>();
+            trans = db.TransactionManager.StartTransaction();
+
+            local_stats = new Dictionary<_Area_v2, int>();
 
             HostApplicationServices hs = HostApplicationServices.Current;
             string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
@@ -62,8 +66,19 @@ namespace commands
         }
 
 
+        internal void close()
+        {
+            trans.Commit();
+            trans.Dispose();
+
+            ed.Regen();
+        }
+
+
         public void unlock_after_crash()
         {
+            close();
+
             if (File.Exists(xml_lock_full))
             {
                 File.Delete(xml_lock_full);
@@ -73,9 +88,9 @@ namespace commands
 
         public void run(bool multy)
         {
-            writeCadMessage("START");
+            writeCadMessage("[START]");
 
-            List<Area_v2> areas = new List<Area_v2>();
+            List<_Area_v2> areas = new List<_Area_v2>();
 
             if (multy == true)
             {
@@ -93,7 +108,7 @@ namespace commands
                 return;
             }
 
-            List<Mark> allMarks = getAllMarks(markLayerName);
+            List<_Mark> allMarks = getAllMarks(markLayerName);
             if (allMarks.Count < 1)
             {
                 writeCadMessage("[ERROR] - " + "Reinforcement marks" + " not found");
@@ -122,7 +137,7 @@ namespace commands
             File.Delete(xml_lock_full);
             writeCadMessage("LOCK OFF");
 
-            Dictionary<Area_v2, List<Mark>> local_reinforcement = matchMarkArea(areas, allMarks);
+            Dictionary<_Area_v2, List<_Mark>> local_reinforcement = matchMarkArea(areas, allMarks);
             local_stats = generateAllWeights(local_reinforcement, bending);
 
             return;
@@ -131,18 +146,18 @@ namespace commands
 
         public void output_local()
         {
-            foreach (Area_v2 current in local_stats.Keys)
+            foreach (_Area_v2 current in local_stats.Keys)
             {
                 outputWeight(current, local_stats[current]);
             }
 
-            writeCadMessage("DONE");
+            writeCadMessage("[DONE]");
 
             return;
         }
 
 
-        private void outputWeight(Area_v2 a, int weight)
+        private void outputWeight(_Area_v2 a, int weight)
         {
             if (weight == 0)
             {
@@ -173,13 +188,13 @@ namespace commands
         }
 
 
-        private Dictionary<Area_v2, int> generateAllWeights(Dictionary<Area_v2, List<Mark>> reinf, List<XmlNode> bending)
+        private Dictionary<_Area_v2, int> generateAllWeights(Dictionary<_Area_v2, List<_Mark>> reinf, List<XmlNode> bending)
         {
-            Dictionary<Area_v2, int> stats = new Dictionary<Area_v2, int>();
+            Dictionary<_Area_v2, int> stats = new Dictionary<_Area_v2, int>();
 
-            foreach (Area_v2 current in reinf.Keys)
+            foreach (_Area_v2 current in reinf.Keys)
             {
-                List<Mark> currentReinf = reinf[current];
+                List<_Mark> currentReinf = reinf[current];
 
                 int currentWeight = calculateWeight(currentReinf, bending);
                 stats[current] = currentWeight;
@@ -189,17 +204,17 @@ namespace commands
         }
 
 
-        private int calculateWeight(List<Mark> reinf, List<XmlNode> bending)
+        private int calculateWeight(List<_Mark> reinf, List<XmlNode> bending)
         {
-            Dictionary<Mark, XmlNode> matches = new Dictionary<Mark, XmlNode>();
-            Dictionary<Mark, double> weights = new Dictionary<Mark, double>();
+            Dictionary<_Mark, XmlNode> matches = new Dictionary<_Mark, XmlNode>();
+            Dictionary<_Mark, double> weights = new Dictionary<_Mark, double>();
             matches = findMarksInXML(reinf, bending);
 
             double currentWeight = 0;
 
-            List<Mark> emptyMarks = new List<Mark>();
+            List<_Mark> emptyMarks = new List<_Mark>();
 
-            foreach (Mark m in matches.Keys)
+            foreach (_Mark m in matches.Keys)
             {
                 if (matches[m] == null)
                 {
@@ -209,7 +224,7 @@ namespace commands
 
             if (emptyMarks.Count == 0)
             {
-                foreach (Mark m in matches.Keys)
+                foreach (_Mark m in matches.Keys)
                 {
                     double weight = getRebarWeights(matches[m]);
                     weights[m] = weight;
@@ -217,7 +232,7 @@ namespace commands
             }
             else
             {
-                foreach (Mark m in emptyMarks)
+                foreach (_Mark m in emptyMarks)
                 {
                     writeCadMessage("[ERROR] Can not find match for [" + m.ToString() + "] in XML");
                 }
@@ -225,7 +240,7 @@ namespace commands
                 return 0;
             }
 
-            foreach (Mark m in weights.Keys)
+            foreach (_Mark m in weights.Keys)
             {
                 if (weights[m] == 0)
                 {
@@ -235,14 +250,14 @@ namespace commands
 
             if (emptyMarks.Count == 0)
             {
-                foreach (Mark m in weights.Keys)
+                foreach (_Mark m in weights.Keys)
                 {
                     currentWeight = currentWeight + (m.Number * weights[m]);
                 }
             }
             else
             {
-                foreach (Mark m in emptyMarks)
+                foreach (_Mark m in emptyMarks)
                 {
                     writeCadMessage("[ERROR] Not enought information for [" + m.ToString() + "] in XML");
                 }
@@ -277,11 +292,11 @@ namespace commands
         }
 
 
-        private Dictionary<Mark, XmlNode> findMarksInXML(List<Mark> marks, List<XmlNode> bending)
+        private Dictionary<_Mark, XmlNode> findMarksInXML(List<_Mark> marks, List<XmlNode> bending)
         {
-            Dictionary<Mark, XmlNode> markMatch = new Dictionary<Mark, XmlNode>();
+            Dictionary<_Mark, XmlNode> markMatch = new Dictionary<_Mark, XmlNode>();
 
-            foreach (Mark m in marks)
+            foreach (_Mark m in marks)
             {
                 markMatch[m] = matchMarkToXML(m, bending);
             }
@@ -290,7 +305,7 @@ namespace commands
         }
 
 
-        private XmlNode matchMarkToXML(Mark m, List<XmlNode> rows)
+        private XmlNode matchMarkToXML(_Mark m, List<XmlNode> rows)
         {
             foreach (XmlNode row in rows)
             {
@@ -314,22 +329,22 @@ namespace commands
 
 
 
-        private Dictionary<Area_v2, List<Mark>> matchMarkArea(List<Area_v2> areas, List<Mark> allMarks)
+        private Dictionary<_Area_v2, List<_Mark>> matchMarkArea(List<_Area_v2> areas, List<_Mark> allMarks)
         {
-            Dictionary<Area_v2, List<Mark>> sorted = new Dictionary<Area_v2, List<Mark>>();
+            Dictionary<_Area_v2, List<_Mark>> sorted = new Dictionary<_Area_v2, List<_Mark>>();
 
-            foreach (Area_v2 area in areas)
+            foreach (_Area_v2 area in areas)
             {
-                List<Mark> marks = getMarksInArea(area, allMarks);
-                List<Mark> validMarks = new List<Mark>();
+                List<_Mark> marks = getMarksInArea(area, allMarks);
+                List<_Mark> validMarks = new List<_Mark>();
 
-                foreach (Mark m in marks)
+                foreach (_Mark m in marks)
                 {
                     bool valid = m.validate();
                     if (valid) validMarks.Add(m);
                 }
 
-                List<Mark> sumMarks = getSummary(validMarks);
+                List<_Mark> sumMarks = getSummary(validMarks);
                 sorted[area] = sumMarks;
             }
 
@@ -337,11 +352,11 @@ namespace commands
         }
 
 
-        private List<Mark> getSummary(List<Mark> marks)
+        private List<_Mark> getSummary(List<_Mark> marks)
         {
-            List<Mark> sumMarks = new List<Mark>();
+            List<_Mark> sumMarks = new List<_Mark>();
 
-            foreach (Mark m in marks)
+            foreach (_Mark m in marks)
             {
                 if (sumMarks.Contains(m))
                 {
@@ -350,7 +365,7 @@ namespace commands
                 }
                 else
                 {
-                    Mark nm = new Mark(m.Number, m.Diameter, m.Position, m.Position_Shape, m.Position_Nr);
+                    _Mark nm = new _Mark(m.Number, m.Diameter, m.Position, m.Position_Shape, m.Position_Nr);
                     sumMarks.Add(nm);
                 }
             }
@@ -359,9 +374,9 @@ namespace commands
         }
 
 
-        private List<Mark> getAllMarks(string layer)
+        private List<_Mark> getAllMarks(string layer)
         {
-            List<Mark> marks = new List<Mark>();
+            List<_Mark> marks = new List<_Mark>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -373,13 +388,13 @@ namespace commands
         }
 
 
-        private List<Mark> getMarksInArea(Area_v2 area, List<Mark> allmarks)
+        private List<_Mark> getMarksInArea(_Area_v2 area, List<_Mark> allmarks)
         {
-            List<Mark> marks = new List<Mark>();
+            List<_Mark> marks = new List<_Mark>();
 
             for (int i = allmarks.Count - 1; i >= 0; i--)
             {
-                Mark mark = allmarks[i];
+                _Mark mark = allmarks[i];
                 if (area.isPointInArea(mark.IP))
                 {
                     marks.Add(mark);
@@ -391,22 +406,22 @@ namespace commands
         }
 
 
-        private List<Mark> getMarkData(List<MText> txts, Transaction trans)
+        private List<_Mark> getMarkData(List<MText> txts, Transaction trans)
         {
-            List<Mark> parse = new List<Mark>();
+            List<_Mark> parse = new List<_Mark>();
 
             foreach (MText txt in txts)
             {
-                Mark current = new Mark(txt.Contents, txt.Location);
+                _Mark current = new _Mark(txt.Contents, txt.Location);
                 parse.Add(current);
             }
 
             return parse;
         }
 
-        private List<Area_v2> getSelectedAreas(string[] blockNames)
+        private List<_Area_v2> getSelectedAreas(string[] blockNames)
         {
-            List<Area_v2> areas = new List<Area_v2>();
+            List<_Area_v2> areas = new List<_Area_v2>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -417,9 +432,9 @@ namespace commands
             return areas;
         }
 
-        private List<Area_v2> getAllAreas(string[] blockNames)
+        private List<_Area_v2> getAllAreas(string[] blockNames)
         {
-            List<Area_v2> areas = new List<Area_v2>();
+            List<_Area_v2> areas = new List<_Area_v2>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -438,14 +453,14 @@ namespace commands
         }
 
 
-        private List<Area_v2> getBoxAreas(List<BlockReference> blocks, Transaction trans)
+        private List<_Area_v2> getBoxAreas(List<BlockReference> blocks, Transaction trans)
         {
-            List<Area_v2> parse = new List<Area_v2>();
+            List<_Area_v2> parse = new List<_Area_v2>();
 
             foreach (BlockReference block in blocks)
             {
                 Extents3d blockExtents = block.GeometricExtents;
-                Area_v2 area = new Area_v2(block.Id, blockExtents.MinPoint, blockExtents.MaxPoint);
+                _Area_v2 area = new _Area_v2(block.Id, blockExtents.MinPoint, blockExtents.MaxPoint);
                 parse.Add(area);
             }
 

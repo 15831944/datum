@@ -28,15 +28,16 @@ namespace commands
 {
     class XML_PrintKnownRebar_command
     {
+        Document doc;
+        Database db;
+        Editor ed;
+
         static string name = "alfa";
 
         string dwg_dir;
         string xml_full;
         string xml_lock_full;
 
-        Document doc;
-        Database db;
-        Editor ed;
 
         public XML_PrintKnownRebar_command()
         {
@@ -53,7 +54,7 @@ namespace commands
             xml_full = dwg_dir + name + ".xml";
             xml_lock_full = dwg_dir + name + ".LCK";
         }
-
+        
 
         public void unlock_after_crash()
         {
@@ -106,10 +107,12 @@ namespace commands
             writeCadMessage("LOCK OFF");
         }
 
+
         private void writeCadMessage(string errorMessage)
         {
             ed.WriteMessage("\n" + errorMessage);
         }
+
 
         private string promptFilter()
         {
@@ -166,5 +169,6 @@ namespace commands
 
             return "SPEC";
         }
+
     }
 }

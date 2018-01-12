@@ -25,43 +25,20 @@ using Bricscad.EditorInput;
 using Bricscad.PlottingServices;
 
 
-[assembly: CommandClass(typeof(commands.KontrollCommands))]
+[assembly: CommandClass(typeof(commands.__KontrollCommands))]
 namespace commands
 {
-    public class KontrollCommands
+    public class __KontrollCommands
     {
-        [CommandMethod("kontroll_scale")]
-        public void kontroll_scale()
+        [CommandMethod("KONTROLL_INFO")]
+        public void info()
         {
-            try
-            {
-                SCALE_command program = new SCALE_command();
-                program.run();
-                program.close();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
-        }
-
-        [CommandMethod("kontroll_override")]
-        public void kontroll_override()
-        {
-            try
-            {
-                OVERRIDE_command program = new OVERRIDE_command();
-                program.run();
-                program.close();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
+            string version = String.Format("Dated: {0}", System.IO.File.GetLastWriteTime(System.Reflection.Assembly.GetExecutingAssembly().Location).ToShortDateString());
+            SW.MessageBox.Show("AE Kontroll " + version + "\n");
         }
 
 
-        [CommandMethod("kontroll_corner")]
+        [CommandMethod("KONTROLL_CORNER")]
         public void kontroll_corner()
         {
             try
@@ -77,14 +54,44 @@ namespace commands
         }
 
 
-
-
-        [CommandMethod("kontroll_diam")]
+        [CommandMethod("KONTROLL_MARK")]
         public void kontroll_diam()
         {
             try
             {
                 MARK_command program = new MARK_command();
+                program.run();
+                program.close();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+
+        [CommandMethod("KONTROLL_OVERRIDE")]
+        public void kontroll_override()
+        {
+            try
+            {
+                OVERRIDE_command program = new OVERRIDE_command();
+                program.run();
+                program.close();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+        }
+
+
+        [CommandMethod("KONTROLL_SCALE")]
+        public void kontroll_scale()
+        {
+            try
+            {
+                SCALE_command program = new SCALE_command();
                 program.run();
                 program.close();
             }

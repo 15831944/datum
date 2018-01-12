@@ -31,7 +31,7 @@ namespace commands
     {
         string[] newBoxNames = { "KN-C", "KN-V23", "KN-V27" };
 
-        List<Area_v2> local_stats;
+        List<_Area_v2> local_stats;
 
         Document doc;
         Database db;
@@ -39,12 +39,13 @@ namespace commands
         PlotEngine engine;
 
         Transaction trans;
+
         LayoutManager layerManager;
 
 
         public PRINT_command_v2()
         {
-            local_stats = new List<Area_v2>();
+            local_stats = new List<_Area_v2>();
 
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
@@ -59,9 +60,9 @@ namespace commands
         public void run(bool multy)
         {
             writeCadMessage("");
-            writeCadMessage("START");
+            writeCadMessage("[START]");
 
-            List<Area_v2> areas = new List<Area_v2>();
+            List<_Area_v2> areas = new List<_Area_v2>();
 
             if (multy == true)
             {
@@ -80,15 +81,26 @@ namespace commands
 
             mainCreationLoop(areas);
 
-            writeCadMessage("DONE");
+            writeCadMessage("[DONE]");
 
             return;
         }
 
 
-        private void mainCreationLoop(List<Area_v2> areas)
+        internal void close()
         {
-            foreach (Area_v2 area in areas)
+            engine.Dispose();
+
+            trans.Commit();
+            trans.Dispose();
+
+            ed.Regen();
+        }
+
+
+        private void mainCreationLoop(List<_Area_v2> areas)
+        {
+            foreach (_Area_v2 area in areas)
             {
                 string name = getAreaName(area);
                 double scale = getAreaScale(area);
@@ -204,7 +216,7 @@ namespace commands
         }
 
 
-        private string getAreaName(Area_v2 area)
+        private string getAreaName(_Area_v2 area)
         {
             string ritn_nr = "x";   
 
@@ -220,6 +232,8 @@ namespace commands
                     AttributeReference ar = obj as AttributeReference;
                     if (ar != null)
                     {
+                        if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
+
                         if (blockRef.Name == "KN-V23")
                         {
                             if (ar.Tag == "RITN_23_NR") ritn_nr = ar.TextString;
@@ -228,8 +242,6 @@ namespace commands
                         {
                             if (ar.Tag == "RITN_27_NR") ritn_nr = ar.TextString;
                         }
-
-                        if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
                     }
                 }
 
@@ -253,7 +265,7 @@ namespace commands
         }
 
 
-        private double getAreaScale(Area_v2 area)
+        private double getAreaScale(_Area_v2 area)
         {
             double scale = 1;
 
@@ -269,7 +281,7 @@ namespace commands
         }
 
 
-        private Point3d getAreaCenter(Area_v2 area)
+        private Point3d getAreaCenter(_Area_v2 area)
         {
             Point3d center = new Point3d(0, 0, 0);
 
@@ -404,6 +416,7 @@ namespace commands
             vp.CenterPoint = flatten(gg);
         }
 
+
         private void setViewportParameters(Viewport vp, double scale, Point3d center)
         {
             vp.ViewCenter = flatten(center);
@@ -411,9 +424,9 @@ namespace commands
         }
 
 
-        private List<Area_v2> getSelectedAreas(string[] blockNames)
+        private List<_Area_v2> getSelectedAreas(string[] blockNames)
         {
-            List<Area_v2> areas = new List<Area_v2>();
+            List<_Area_v2> areas = new List<_Area_v2>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -425,9 +438,9 @@ namespace commands
         }
 
 
-        private List<Area_v2> getAllAreas(string[] blockNames)
+        private List<_Area_v2> getAllAreas(string[] blockNames)
         {
-            List<Area_v2> areas = new List<Area_v2>();
+            List<_Area_v2> areas = new List<_Area_v2>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
@@ -446,15 +459,15 @@ namespace commands
         }
         
 
-        private List<Area_v2> getBoxAreas(List<BlockReference> blocks, Transaction trans)
+        private List<_Area_v2> getBoxAreas(List<BlockReference> blocks, Transaction trans)
         {
-            List<Area_v2> parse = new List<Area_v2>();
+            List<_Area_v2> parse = new List<_Area_v2>();
 
             foreach (BlockReference block in blocks)
             {
                 Extents3d blockExtents = block.GeometricExtents;
 
-                Area_v2 area = new Area_v2(block.ObjectId, blockExtents.MinPoint, blockExtents.MaxPoint);
+                _Area_v2 area = new _Area_v2(block.ObjectId, blockExtents.MinPoint, blockExtents.MaxPoint);
                 parse.Add(area);
             }
 
@@ -573,35 +586,30 @@ namespace commands
             return new Extents2d(min, max);
         }
 
+
         private Point3d flatten(Point2d pt)
         {
             return new Point3d(pt.X, pt.Y, 0);
         }
+
 
         private Point2d flatten(Point3d pt)
         {
             return new Point2d(pt.X, pt.Y);
         }
 
+
         private Point2d swapCoords(Point2d pt, bool flip = true)
         {
             return flip ? new Point2d(pt.Y, pt.X) : pt;
         }
+
 
         private void writeCadMessage(string errorMessage)
         {
             ed.WriteMessage(errorMessage + "\n");
         }
 
-        internal void close()
-        {
-            engine.Dispose();
-
-            trans.Commit();
-            trans.Dispose();
-
-            ed.Regen();
-        }
 
         private string generateRandomString(int number)
         {
@@ -617,5 +625,6 @@ namespace commands
             string finalString = new String(stringChars);
             return finalString;
         }
+
     }
 }

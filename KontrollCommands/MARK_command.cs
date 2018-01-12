@@ -35,6 +35,7 @@ namespace commands
         Database db;
         Editor ed;
 
+
         public MARK_command()
         {
             doc = Application.DocumentManager.MdiActiveDocument;
@@ -49,8 +50,8 @@ namespace commands
         {
             writeCadMessage("START");
 
-            List<Mark> wrongMarks = getAllWrongMarks();
-            logic(wrongMarks);
+            List<_Mark> wrongMarks = getAllWrongMarks();
+            drawWrongMarks(wrongMarks);
 
             writeCadMessage("END");
 
@@ -58,16 +59,17 @@ namespace commands
         }
 
         
-        private void logic(List<Mark> marks)
+        private void drawWrongMarks(List<_Mark> marks)
         {
             writeCadMessage("Vigade arv: " + marks.Count().ToString());
 
-            foreach (Mark mark in marks)
+            foreach (_Mark mark in marks)
             {
                 createCircle(2000, 1, mark.IP);
                 createCircle(200, 1, mark.IP);
             }
         }
+
 
         private void createCircle(double radius, int index, Point3d ip)
         {
@@ -83,25 +85,25 @@ namespace commands
             }
         }
 
-        private List<Mark> getAllWrongMarks()
+
+        private List<_Mark> getAllWrongMarks()
         {
-            List<Mark> marks = new List<Mark>();
+            List<_Mark> wrongMarks = new List<_Mark>();
 
             using (Transaction trans = db.TransactionManager.StartTransaction())
             {
                 List<MText> allTexts = getAllText(trans);
-                marks = getMarkData(allTexts, trans);
+                wrongMarks = filterWrongMarks(allTexts, trans);
             }
 
-            return marks;
+            return wrongMarks;
         }
 
 
-
-        private List<Mark> getMarkData(List<MText> txts, Transaction trans)
+        private List<_Mark> filterWrongMarks(List<MText> txts, Transaction trans)
         {
-            List<Mark> good = new List<Mark>();
-            List<Mark> bad = new List<Mark>();
+            List<_Mark> good = new List<_Mark>();
+            List<_Mark> bad = new List<_Mark>();
 
             foreach (MText txt in txts)
             {
@@ -117,7 +119,7 @@ namespace commands
                 
                 if (txt.Contents.Contains("-"))
                 {
-                    Mark current = new Mark(txt.Contents, txt.Location);
+                    _Mark current = new _Mark(txt.Contents, txt.Location);
                     bool valid = current.validate_original();
 
                     if (valid == false)

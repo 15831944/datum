@@ -62,11 +62,11 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Area_v2.cs" />
+    <Compile Include="_Area_v2.cs" />
     <Compile Include="MARK_command.cs" />
     <Compile Include="CORNER_command.cs" />
-    <Compile Include="KontrollCommands.cs" />
-    <Compile Include="Mark.cs" />
+    <Compile Include="__KontrollCommands.cs" />
+    <Compile Include="_Mark.cs" />
     <Compile Include="OVERRIDE_command.cs" />
     <Compile Include="SCALE_command.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

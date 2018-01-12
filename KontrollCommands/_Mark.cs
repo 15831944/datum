@@ -26,7 +26,7 @@ using Bricscad.PlottingServices;
 
 namespace commands
 {
-    class Mark : IEquatable<Mark>
+    class _Mark : IEquatable<_Mark>
     {
         string original;
         Point3d insert;
@@ -48,13 +48,15 @@ namespace commands
         public string Position_Shape { get { return position_shape; } }
         public int Position_Nr { get { return position_nr; } }
 
-        public Mark(string original_text, Point3d insp)
+
+        public _Mark(string original_text, Point3d insp)
         {
             original = original_text;
             insert = insp;
         }
 
-        public Mark(int num, int diam, string pos, string shp, int nr)
+
+        public _Mark(int num, int diam, string pos, string shp, int nr)
         {
             number = num;
             diameter = diam;
@@ -62,6 +64,7 @@ namespace commands
             position_shape = shp;
             position_nr = nr;
         }
+
 
         internal bool validate_original()
         {
@@ -161,6 +164,7 @@ namespace commands
             return true;
         }
 
+
         internal bool validate()
         {
             string nospaces = original.Replace(@"\P", "");
@@ -259,6 +263,7 @@ namespace commands
             return true;
         }
 
+
         internal bool validate2()
         {
             string nospaces = original.Replace(@"\P", "");
@@ -328,7 +333,8 @@ namespace commands
             return true;
         }
 
-        public bool Equals(Mark other)
+
+        public bool Equals(_Mark other)
         {
             if (other == null) return false;
             double dX = this.insert.X - other.insert.X;
@@ -340,27 +346,32 @@ namespace commands
             else return false;
         }
 
+
         public override bool Equals(object obj)
         {
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals(obj as Mark);
+            return Equals(obj as _Mark);
         }
 
-        public static bool operator ==(Mark a, Mark b)
+
+        public static bool operator ==(_Mark a, _Mark b)
         {
             return object.Equals(a, b);
         }
 
-        public static bool operator !=(Mark a, Mark b)
+
+        public static bool operator !=(_Mark a, _Mark b)
         {
             return !object.Equals(a, b);
         }
+
 
         public override string ToString()
         {
             return Position_Shape + " " + Position_Nr + " Ø" + Diameter + " (" + Original + ")";
         }
+
     }
 }

@@ -24,7 +24,7 @@ using Bricscad.PlottingServices;
 
 namespace commands
 {
-    class Area_v1
+    class _Area_v1
     {
         Point3d start;
         Point3d end;
@@ -37,7 +37,7 @@ namespace commands
         public Point3d IP_weight { get { return weight; } }
 
 
-        public Area_v1(Point3d s, Point3d e)
+        public _Area_v1(Point3d s, Point3d e)
         {
             start = s;
             end = e;
@@ -57,5 +57,6 @@ namespace commands
 
             return true;
         }
+
     }
 }

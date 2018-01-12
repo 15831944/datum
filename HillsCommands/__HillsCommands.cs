@@ -25,39 +25,27 @@ using Bricscad.EditorInput;
 using Bricscad.PlottingServices;
 
 
-[assembly: CommandClass(typeof(commands.HillsCommands))]
+[assembly: CommandClass(typeof(commands.__HillsCommands))]
 namespace commands
 {
-    public class HillsCommands
+    public class __HillsCommands
     {
-        [CommandMethod("HLS_INFO")]
+
+        [CommandMethod("HILLS_INFO")]
         public void info()
         {
-            SW.MessageBox.Show("AE Hills Versioon: 17.09.2017\n");
+            string version = String.Format("Dated: {0}", System.IO.File.GetLastWriteTime(System.Reflection.Assembly.GetExecutingAssembly().Location).ToShortDateString());
+            SW.MessageBox.Show("AE Hills " + version + "\n");
         }
 
 
-        [CommandMethod("QWE")]
-        public void dimentioning()
-        {
-            try
-            {
-                DIM_command_v2 program = new DIM_command_v2();
-                program.run();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
-        }
-
-
-        [CommandMethod("bbb")]
+        [CommandMethod("BBB")]
         public void arm_table_sum_selected()
         {
+            TABLE_command_v2 program = new TABLE_command_v2();
+
             try
             {
-                TABLE_command_v2 program = new TABLE_command_v2();
                 program.run(false);
                 program.output_local();
             }
@@ -65,15 +53,20 @@ namespace commands
             {
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
+            finally
+            {
+                program.close();
+            }
         }
 
 
-        [CommandMethod("bbb_old")]
+        [CommandMethod("BBB_OLD")]
         public void arm_table_sum_selected_v1()
         {
+            TABLE_command_v1 program = new TABLE_command_v1();
+
             try
             {
-                TABLE_command_v1 program = new TABLE_command_v1();
                 program.run(false);
                 program.output_local();
             }
@@ -84,7 +77,7 @@ namespace commands
         }
 
 
-        [CommandMethod("ccc")]
+        [CommandMethod("CCC")]
         public void arm_weights_selected()
         {
             WEIGHT_command_v2 program = new WEIGHT_command_v2();
@@ -99,10 +92,14 @@ namespace commands
                 program.unlock_after_crash();
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
+            finally
+            {
+                program.close();
+            }
         }
 
 
-        [CommandMethod("ccc_old")]
+        [CommandMethod("CCC_OLD")]
         public void arm_weights_selected_v1()
         {
             WEIGHT_command_v1 program = new WEIGHT_command_v1();
@@ -120,29 +117,55 @@ namespace commands
         }
 
 
-        [CommandMethod("CSV_SUM_MARKS")]
-        public void csv_sum_marks()
+        [CommandMethod("DDD")]
+        public void csv_sum_weights()
         {
+            SUM_command_v2 program = new SUM_command_v2();
+
             try
             {
-                TABLE_command_v1 program = new TABLE_command_v1();
-                program.run(true);
+                program.run();
                 program.dump_csv();
             }
             catch (System.Exception ex)
             {
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
+            finally
+            {
+                program.close();
+            }
         }
 
 
-        [CommandMethod("CSV_SUM_WEIGHTS")]
-        public void csv_sum_weights()
+        [CommandMethod("QWE")]
+        public void dimentioning()
         {
+            DIM_command_v2 program = new DIM_command_v2();
+
             try
             {
-                SUM_command_v2 program = new SUM_command_v2();
                 program.run();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+            finally
+            {
+                program.close();
+            }
+        }
+
+
+        [CommandMethod("CSV_SUM_MARKS")]
+        public void csv_sum_marks()
+        {
+            TABLE_command_v1 program = new TABLE_command_v1();
+
+            try
+            {
+                program.run(true);
                 program.dump_csv();
             }
             catch (System.Exception ex)
@@ -166,6 +189,10 @@ namespace commands
                 program.unlock_after_crash();
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
+            finally
+            {
+                program.close();
+            }
         }
 
 
@@ -185,34 +212,45 @@ namespace commands
             }
         }
 
-        [CommandMethod("pppp")]
-        public void print_all()
-        {
-            try
-            {
-                PRINT_command_v2 program = new PRINT_command_v2();
-                program.run(true);
-                program.close();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
-        }
 
-        [CommandMethod("HILLS_PRINT_SELECTED")]
-        public void print_selected()
-        {
-            try
-            {
-                PRINT_command_v2 program = new PRINT_command_v2();
-                program.run(false);
-                program.close();
-            }
-            catch (System.Exception ex)
-            {
-                SW.MessageBox.Show("Viga\n" + ex.Message);
-            }
-        }
+        //[CommandMethod("pppp")]
+        //public void print_all()
+        //{
+        //    PRINT_command_v2 program = new PRINT_command_v2();
+
+        //    try
+        //    {
+        //        program.run(true);
+        //    }
+        //    catch (System.Exception ex)
+        //    {
+        //        SW.MessageBox.Show("Viga\n" + ex.Message);
+        //    }
+        //    finally
+        //    {
+        //        program.close();
+        //    }
+        //}
+
+
+        //[CommandMethod("HILLS_PRINT_SELECTED")]
+        //public void print_selected()
+        //{
+        //    PRINT_command_v2 program = new PRINT_command_v2();
+
+        //    try
+        //    {
+        //        program.run(false);
+        //    }
+        //    catch (System.Exception ex)
+        //    {
+        //        SW.MessageBox.Show("Viga\n" + ex.Message);
+        //    }
+        //    finally
+        //    {
+        //        program.close();
+        //    }
+        //}
+
     }
 }
