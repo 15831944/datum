@@ -28,22 +28,33 @@ namespace commands
 {
     class element
     {
-        public _Area_v2 _dim;
-        public _Area_v2 _reinf;
-
-        public string _nr;
-
+        public _Area_v2 _23;
+        
+        public string _nr23;
+        public string _date23;
+        public string _rev23;
         public int _length;
         public int _height;
 
+        public _Area_v2 _27;
+        public string _nr27;
+        public string _date27;
+        public string _rev27;
         public string _sum_net;
         public string _sum_reinf;
 
-        public element(_Area_v2 dim, _Area_v2 reinf, string rig)
+        public element(_Area_v2 dim, _Area_v2 reinf, string nr23, string nr27)
         {
-            _dim = dim;
-            _reinf = reinf;
-            _nr = rig;
+            _23 = dim;
+            _27 = reinf;
+            _nr23 = nr23;
+            _nr27 = nr27;
+        }
+
+        public override string ToString()
+        {
+            string result = _nr23 + ";" + _date23 + ";" + _rev23 + ";" + ";" + _nr23.Replace("Vi23-", "V-").Replace("V23-", "V-") + ";" + _length.ToString() + ";" + _height.ToString() + ";" + ";" + ";"  + _nr27 + ";" + _date27 + ";" + _rev27 + ";" + ";" + _nr27.Replace("Vi27-", "V-").Replace("V27-", "V-") + ";" + ";" + _sum_net + ";" + _sum_reinf;
+            return result;
         }
 
     }
@@ -61,8 +72,9 @@ namespace commands
 
         List<element> local_stats;
 
+        bool _open;
 
-        public SUM_command_v2()
+        public SUM_command_v2(bool open)
         {
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
@@ -71,6 +83,8 @@ namespace commands
             trans = db.TransactionManager.StartTransaction();
 
             local_stats = new List<element>();
+
+            _open = open;
         }
 
 
@@ -99,7 +113,8 @@ namespace commands
             }
 
             List<element> a = matchAreaToArea(areas_dimentions, areas_reinf);
-            getWeights(a);
+            get27Data(a);
+            get23Data(a);
             getDimentions(a);
 
             local_stats = a;
@@ -133,7 +148,8 @@ namespace commands
 
             foreach (_Area_v2 area_dim in areas_dimentions)
             {
-                string ritn_nr_dim = "x";
+                string ritn_nr_dim_a = "x";
+                string ritn_nr_dim_b = "x";
 
                 DBObject currentEntity = trans.GetObject(area_dim.ID, OpenMode.ForWrite, false) as DBObject;
 
@@ -147,15 +163,18 @@ namespace commands
                         AttributeReference ar = obj as AttributeReference;
                         if (ar != null)
                         {
-                            if (ar.Tag == "RITN_27_NR") ritn_nr_dim = ar.TextString;
-                            if (ar.Tag == "RITN_NR") ritn_nr_dim = ar.TextString;
+                            if (ar.Tag == "RITN_23_NR") ritn_nr_dim_a = ar.TextString;
+                            if (ar.Tag == "RITN_27_NR") ritn_nr_dim_b = ar.TextString;
+                            if (ar.Tag == "RITN_NR") ritn_nr_dim_a = ar.TextString;
+                            if (ar.Tag == "RITN_NR") ritn_nr_dim_b = ar.TextString;
                         }
                     }
                 }
 
                 foreach (_Area_v2 area_reinf in areas_reinf)
                 {
-                    string ritn_nr_reinf = "x";
+                    string ritn_nr_reinf_a = "x";
+                    string ritn_nr_reinf_b = "x";
 
                     DBObject currentEntity_2 = trans.GetObject(area_reinf.ID, OpenMode.ForWrite, false) as DBObject;
 
@@ -169,18 +188,20 @@ namespace commands
                             AttributeReference ar = obj as AttributeReference;
                             if (ar != null)
                             {
-                                if (ar.Tag == "RITN_27_NR") ritn_nr_reinf = ar.TextString;
-                                if (ar.Tag == "RITN_NR") ritn_nr_reinf = ar.TextString;
+                                if (ar.Tag == "RITN_23_NR") ritn_nr_reinf_a = ar.TextString;
+                                if (ar.Tag == "RITN_27_NR") ritn_nr_reinf_b = ar.TextString;
+                                if (ar.Tag == "RITN_NR") ritn_nr_reinf_a = ar.TextString;
+                                if (ar.Tag == "RITN_NR") ritn_nr_reinf_b = ar.TextString;
                             }
                         }
                     }
 
 
-                    if (ritn_nr_dim == ritn_nr_reinf)
+                    if (ritn_nr_dim_a == ritn_nr_reinf_a)
                     {
-                        if (ritn_nr_reinf != "x")
+                        if (ritn_nr_reinf_a != "x")
                         {
-                            element el = new element(area_dim, area_reinf, ritn_nr_dim);
+                            element el = new element(area_dim, area_reinf, ritn_nr_dim_a, ritn_nr_dim_b);
                             elements.Add(el);
                             break;
                         }
@@ -192,14 +213,14 @@ namespace commands
         }
 
 
-        private void getWeights(List<element> elements)
+        private void get23Data(List<element> elements)
         {
             foreach (element el in elements)
             {
-                _Area_v2 area = el._reinf;
+                _Area_v2 area = el._23;
 
-                string net_weight = "y";
-                string reinf_weight = "z";
+                string date = "xyz";
+                string rev = "xyz";
 
                 DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
 
@@ -213,17 +234,55 @@ namespace commands
                         AttributeReference ar = obj as AttributeReference;
                         if (ar != null)
                         {
+                            if (ar.Tag == "DATUM") date = ar.TextString;
+                            if (ar.Tag == "REVISION") rev = ar.TextString;
+                        }
+                    }
+                }
+
+                el._date23 = date;
+                el._rev23 = rev;
+            }
+
+        }
+
+
+        private void get27Data(List<element> elements)
+        {
+            foreach (element el in elements)
+            {
+                _Area_v2 area = el._27;
+
+                string date = "xyz";
+                string rev = "xyz";
+                string net_weight = "xyz";
+                string reinf_weight = "xyz";
+
+                DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
+
+                if (currentEntity is BlockReference)
+                {
+                    BlockReference blockRef = currentEntity as BlockReference;
+
+                    foreach (ObjectId arId in blockRef.AttributeCollection)
+                    {
+                        DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
+                        AttributeReference ar = obj as AttributeReference;
+                        if (ar != null)
+                        {
+                            if (ar.Tag == "DATUM") date = ar.TextString;
+                            if (ar.Tag == "REVISION") rev = ar.TextString;
                             if (ar.Tag == "SUMMA_NATARMERING") net_weight = ar.TextString;
                             if (ar.Tag == "SUMMA_OVRIG_ARMERING") reinf_weight = ar.TextString;
                         }
                     }
                 }
-
-                writeCadMessage(net_weight);
+                
+                el._date27 = date;
+                el._rev27 = rev;
                 el._sum_net = net_weight;
                 el._sum_reinf = reinf_weight;
             }
-
         }
 
 
@@ -233,7 +292,7 @@ namespace commands
 
             foreach (element el in elements)
             {
-                _Area_v2 area = el._dim;
+                _Area_v2 area = el._23;
 
                 List<RotatedDimension> sortedDims = getDimsInArea(area, allDims);
 
@@ -241,11 +300,13 @@ namespace commands
                 double height = 0;
                 foreach (RotatedDimension rd in sortedDims)
                 {
-                    if (rd.Rotation % Math.PI == 0)
+                    double rot0 = Math.Abs(rd.Rotation % Math.PI);
+                    double rot90 = Math.Abs(Math.Abs(rd.Rotation % Math.PI) - Math.PI / 2);
+                    if (rot0 < 0.01)
                     {
                         if (length < rd.Measurement) length = rd.Measurement;
                     }
-                    else if (rd.Rotation % Math.PI == Math.PI / 2)
+                    else if (rot90 < 0.01)
                     {
                         if (height < rd.Measurement) height = rd.Measurement;
                     }
@@ -407,7 +468,7 @@ namespace commands
             string dwg_name = Path.GetFileNameWithoutExtension(dwg_path);
 
             if (!dwg_dir.EndsWith(@"\")) { dwg_dir = dwg_dir + @"\"; }
-            string csv_dir = dwg_dir + @"weights\";
+            string csv_dir = dwg_dir + @"temp_excel\";
             string csv_path = csv_dir + dwg_name + ".csv";
 
             if (local_stats == null || local_stats.Count == 0) return;
@@ -420,24 +481,30 @@ namespace commands
             writeCadMessage(csv_path);
             txt.AppendLine("alexi programmi ajutine file");
             txt.AppendLine("");
-            txt.AppendLine("RITN_NR; LENGTH; HEIGHT; WIDTH; SUMMA_NATARMERING; SUMMA_OVRIG_ARMERING");
-
+            txt.AppendLine("RITN_NR_23; DATUM_23; REV_23; REV_DATE_23; ELEMENT; LENGTH; HEIGHT; WIDTH; ; RITN_NR_27; DATUM_27; REV_27; REV_DATE_27; ELEMENT; ; SUMMA_NATARMERING; SUMMA_OVRIG_ARMERING");
+            txt.AppendLine("");
+            txt.AppendLine("SUMMARY");
             foreach (element e in local_stats)
             {
-                txt.AppendLine(e._nr + ";" + e._length.ToString() + ";" + e._height.ToString() + ";" + ";" + e._sum_net + ";" + e._sum_reinf);
+                txt.AppendLine(e.ToString());
             }
+
+            txt.AppendLine("!---SUMMARY");
 
             string csvText = txt.ToString();
 
             File.AppendAllText(csv_path, csvText);
 
-            try
+            if (_open)
             {
-                Process.Start(csv_path);
-            }
-            catch
-            {
+                try
+                {
+                    Process.Start(csv_path);
+                }
+                catch
+                {
 
+                }
             }
         }
 

@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace xml_armering_gen
+namespace summary_armering
 {
     class Row
     {

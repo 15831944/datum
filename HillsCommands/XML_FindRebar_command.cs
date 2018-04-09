@@ -26,7 +26,7 @@ using Bricscad.PlottingServices;
 
 namespace commands
 {
-    class XML_PrintKnownRebar_command
+    class XML_FindRebar_command
     {
         Document doc;
         Database db;
@@ -39,7 +39,7 @@ namespace commands
         string xml_lock_full;
 
 
-        public XML_PrintKnownRebar_command()
+        public XML_FindRebar_command()
         {
             doc = Application.DocumentManager.MdiActiveDocument;
             db = doc.Database;
@@ -59,6 +59,7 @@ namespace commands
         public void unlock_after_crash()
         {
             writeCadMessage("LOCK OFF");
+
             if (File.Exists(xml_lock_full))
             {
                 File.Delete(xml_lock_full);
@@ -80,6 +81,18 @@ namespace commands
                 return;
             }
 
+            string userFilter = promptFilter();
+            if (userFilter == null)
+            {
+                return;
+            }
+
+            string userDiameter = promptDiameter();
+            if (userDiameter == null || userDiameter == "")
+            {
+                userDiameter = "???";
+            }
+            
             File.Create(xml_lock_full).Dispose();
             writeCadMessage("LOCK ON");
 
@@ -88,22 +101,9 @@ namespace commands
 
             List<XmlNode> rows = XML_Handle.getAllRebar(xmlDoc);
 
-            string userFilter = promptFilter();
             List<XmlNode> filteredRows = XML_Handle.filter(rows, userFilter);
-
-            foreach (XmlNode row in filteredRows)
-            {
-                XmlNode rebar = row["B2aBar"];
-                if (rebar == null)
-                {
-                    writeCadMessage("error reading");
-                    continue;
-                }
-
-                string rebarString = XML_Handle.getXMLRebarString(rebar);
-                writeCadMessage(rebarString);
-            }
-          
+            List<XmlNode> similar = findSimilar(userFilter, userDiameter, filteredRows, xmlDoc);
+            printSimilar(similar);
         }
 
 
@@ -116,8 +116,7 @@ namespace commands
         private string promptFilter()
         {
             PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
-            promptOptions.Message = "\nWhat to print: ";
-            promptOptions.Keywords.Add("A");
+            promptOptions.Message = "\nWhat to search: ";
             promptOptions.Keywords.Add("B");
             promptOptions.Keywords.Add("C");
             promptOptions.Keywords.Add("D");
@@ -151,22 +150,67 @@ namespace commands
             promptOptions.Keywords.Add("XX");
             promptOptions.Keywords.Add("Z");
 
-            promptOptions.Keywords.Add("ALL");
-            promptOptions.Keywords.Add("SPEC");
-            promptOptions.Keywords.Add("LAST");
-            promptOptions.AllowNone = true;
+            promptOptions.AllowNone = false;
             PromptResult promptResult = ed.GetKeywords(promptOptions);
 
             if (promptResult.Status == PromptStatus.OK)
             {
-                if (promptResult.StringResult == "") return "LAST";
-                else
-                {
-                    return promptResult.StringResult;
-                }
+                return promptResult.StringResult;
             }
 
-            return "LAST";
+            return null;
+        }
+
+
+        private string promptDiameter()
+        {
+            string userDiameter = "";
+
+            PromptIntegerOptions promptOptions = new PromptIntegerOptions("Diameter:");
+
+            promptOptions.AllowNone = true;
+            PromptIntegerResult promptResult = ed.GetInteger(promptOptions);
+
+            if (promptResult.Status == PromptStatus.OK)
+            {
+                userDiameter = promptResult.Value.ToString();
+            }
+
+            return userDiameter;
+        }
+
+
+        private List<XmlNode> findSimilar(string filter, string diam, List<XmlNode> rebars, XmlDocument xmlDoc)
+        {
+            List<XmlNode> similar = new List<XmlNode>();
+
+            _Mark u = new _Mark(0, 10, "", filter, 0);
+            XmlNode newNode = XML_Handle.newNodeHandle(u, "", xmlDoc, ed);
+            
+            newNode["B2aBar"]["Dim"].InnerText = diam;
+
+            similar = XML_Handle.findSimilar(newNode, rebars);
+
+            return similar;
+        }
+
+
+        private void printSimilar(List<XmlNode> rebars)
+        {
+            foreach (XmlNode row in rebars)
+            {
+                XmlNode rebar = row["B2aBar"];
+                if (rebar == null)
+                {
+                    writeCadMessage("error reading");
+                    continue;
+                }
+
+                string rebarString = XML_Handle.getXMLRebarString(rebar);
+                writeCadMessage(rebarString);
+            }
+
+            writeCadMessage("[NB! Sümeetrilisust kontrollitakse B, C, D, F, N - tüüpi raudadel]");
         }
 
     }

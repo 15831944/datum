@@ -68,7 +68,7 @@ namespace commands
 
         internal void close()
         {
-            trans.Commit();
+            //trans.Commit();
             trans.Dispose();
 
             ed.Regen();

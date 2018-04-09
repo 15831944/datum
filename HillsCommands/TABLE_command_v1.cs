@@ -491,7 +491,7 @@ namespace commands
             string dwg_name = Path.GetFileNameWithoutExtension(dwg_path);
 
             if (!dwg_dir.EndsWith(@"\")) { dwg_dir = dwg_dir + @"\"; }
-            string csv_dir = dwg_dir + @"temp\";
+            string csv_dir = dwg_dir + @"temp_armering\";
             string csv_path = csv_dir + dwg_name + ".csv";
 
             if (total_stats == null || total_stats.Count == 0) return;
@@ -515,7 +515,7 @@ namespace commands
             }
 
             txt.AppendLine("");
-            txt.AppendLine("---SUMMARY");
+            txt.AppendLine("!---SUMMARY");
 
             int i = 1;
             foreach (_Area_v1 a in local_stats.Keys)

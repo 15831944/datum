@@ -120,7 +120,7 @@ namespace commands
         [CommandMethod("DDD")]
         public void csv_sum_weights()
         {
-            SUM_command_v2 program = new SUM_command_v2();
+            SUM_command_v2 program = new SUM_command_v2(true);
 
             try
             {
@@ -161,7 +161,7 @@ namespace commands
         [CommandMethod("CSV_SUM_MARKS")]
         public void csv_sum_marks()
         {
-            TABLE_command_v1 program = new TABLE_command_v1();
+            TABLE_command_v2 program = new TABLE_command_v2();
 
             try
             {
@@ -171,6 +171,31 @@ namespace commands
             catch (System.Exception ex)
             {
                 SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+            finally
+            {
+                //program.close();
+            }
+        }
+
+
+        [CommandMethod("CSV_SUM_EXCEL")]
+        public void csv_sum_excel()
+        {
+            SUM_command_v2 program = new SUM_command_v2(false);
+
+            try
+            {
+                program.run();
+                program.dump_csv();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+            finally
+            {
+                //program.close();
             }
         }
 
@@ -186,11 +211,11 @@ namespace commands
             }
             catch (System.Exception ex)
             {
-                program.unlock_after_crash();
                 SW.MessageBox.Show("Viga\n" + ex.Message);
             }
             finally
             {
+                program.unlock_after_crash();
                 program.close();
             }
         }
@@ -207,8 +232,31 @@ namespace commands
             }
             catch (System.Exception ex)
             {
-                program.unlock_after_crash();
                 SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+            finally
+            {
+                program.unlock_after_crash();
+            }
+        }
+
+
+        [CommandMethod("XMLF")]
+        public void find_rebar_from_XML()
+        {
+            XML_FindRebar_command program = new XML_FindRebar_command();
+
+            try
+            {
+                program.run();
+            }
+            catch (System.Exception ex)
+            {
+                SW.MessageBox.Show("Viga\n" + ex.Message);
+            }
+            finally
+            {
+                program.unlock_after_crash();
             }
         }
 

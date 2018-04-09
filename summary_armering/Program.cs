@@ -8,7 +8,7 @@ using System.IO;
 using System.Xml;
 using System.Diagnostics;
 
-namespace xml_armering_gen
+namespace summary_armering
 {
     class Program
     {
@@ -16,18 +16,20 @@ namespace xml_armering_gen
 
         static void Main(string[] args)
         {
-            string script = @"xml_gen_script.scr";
+            string script = @"summary_armering_script.scr";
 
             string program = "";
             if (kodu) program = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
-            else program = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";            
+            else program = @"C:\Program Files\Bricsys\BricsCAD V16 en_US\bricscad.exe";
 
-            string netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
+            string netload = "";
+            //if (kodu) netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Release\HillsCommands.dll";
+            //else netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommands\bin\Release\HillsCommands.dll";
 
             Console.WriteLine("Enter source folder:");
             string location = Console.ReadLine();
             if (!location.EndsWith(@"\")) { location = location + @"\";  }
-            string csv_location = location + @"temp\";
+            string csv_location = location + @"temp_armering\";
 
             List<string> dwgs = getFiles(location, "*.DWG");
 
@@ -123,7 +125,7 @@ namespace xml_armering_gen
             while (!reader.EndOfStream)
             {
                 string line = reader.ReadLine();
-                if (line == "---SUMMARY") break;
+                if (line == "!---SUMMARY") break;
 
                 line.Replace(" ", "");
                 string[] rowData = line.Split(';');
@@ -181,7 +183,7 @@ namespace xml_armering_gen
         {
             StringBuilder txt = new StringBuilder();
 
-            txt.AppendLine("NETLOAD \"" + netload + "\"");
+            //txt.AppendLine("NETLOAD \"" + netload + "\"");
 
             foreach (string dwg in dwgs)
             {
@@ -236,7 +238,7 @@ namespace xml_armering_gen
 
         private static void dump(string location, List<Row> data)
         {
-            string fileName = "kokku";
+            string fileName = "sum_armering";
             string extention = ".csv";
 
             int i = 1;
@@ -669,4 +671,3 @@ namespace xml_armering_gen
         }
     }
 }
-

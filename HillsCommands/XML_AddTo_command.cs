@@ -64,6 +64,8 @@ namespace commands
 
         public void unlock_after_crash()
         {
+            writeCadMessage("LOCK OFF");
+
             if (File.Exists(xml_lock_full))
             {
                 File.Delete(xml_lock_full);
@@ -117,9 +119,6 @@ namespace commands
                 writeCadMessage("--- WARINING: " + rebarString);
                 writeCadMessage("");
             }
-
-            File.Delete(xml_lock_full);
-            writeCadMessage("LOCK OFF");
         }
 
 
