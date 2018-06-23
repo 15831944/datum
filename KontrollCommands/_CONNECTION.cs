@@ -43,34 +43,43 @@ using _SWF = System.Windows.Forms;
 
 namespace commands
 {
-    class _Area_v2
+    class _CONNECTION
     {
-        _Db.ObjectId _id;
-        _Ge.Point3d _start;
-        _Ge.Point3d _end;
+        _Ap.Document _doc;
+        _Db.Database _db;
+        _Ed.Editor _ed;
+        _Db.Transaction _trans;
 
-        public _Db.ObjectId ID { get { return _id; } }
-        public _Ge.Point3d Start { get { return _start; } } // for sorting
+        _Db.BlockTable _blockTable;
+        _Db.BlockTableRecord _modelSpace;
+
+        public _Ap.Document doc { get { return _doc; } }
+        public _Db.Database db { get { return _db; } }
+        public _Ed.Editor ed { get { return _ed; } }
+        public _Db.Transaction trans { get { return _trans; } }
+
+        public _Db.BlockTable blockTable { get { return _blockTable; } }
+        public _Db.BlockTableRecord modelSpace { get { return _modelSpace; } }
 
 
-        public _Area_v2(_Db.ObjectId id, _Ge.Point3d s, _Ge.Point3d e)
+        public _CONNECTION()
         {
-            _id = id;
+            _doc = _Ap.Application.DocumentManager.MdiActiveDocument;
+            _db = _doc.Database;
+            _ed = _doc.Editor;
+            _trans = _db.TransactionManager.StartTransaction();
 
-            _start = s;
-            _end = e;
+            _blockTable = _trans.GetObject(_db.BlockTableId, _Db.OpenMode.ForRead) as _Db.BlockTable;
+            _modelSpace = _trans.GetObject(_Db.SymbolUtilityServices.GetBlockModelSpaceId(_db), _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
         }
 
 
-        internal bool isPointInArea(_Ge.Point3d point)
+        internal void close()
         {
-            if (point.X <= _start.X) return false;
-            if (point.X >= _end.X) return false;
-
-            if (point.Y <= _start.Y) return false;
-            if (point.Y >= _end.Y) return false;
-
-            return true;
+            _ed.WriteMessage("\n[close connection]\n");
+            _trans.Commit();
+            _trans.Dispose();
+            _ed.Regen();
         }
 
     }

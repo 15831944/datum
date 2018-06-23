@@ -1,27 +1,45 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
 using System.IO;
 using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
 
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
 
 
 namespace commands
@@ -61,11 +79,7 @@ namespace commands
 
     class SUM_command_v2
     {
-        Document doc;
-        Database db;
-        Editor ed;
-
-        Transaction trans;
+        _CONNECTION _c;
 
         static string[] dimBoxNames = { "KN-C", "KN-V23" };
         static string[] reinfBoxNames = { "KN-C", "KN-V27" };
@@ -74,13 +88,9 @@ namespace commands
 
         bool _open;
 
-        public SUM_command_v2(bool open)
+        public SUM_command_v2(ref _CONNECTION c, bool open)
         {
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
-
-            trans = db.TransactionManager.StartTransaction();
+            _c = c;
 
             local_stats = new List<element>();
 
@@ -90,8 +100,6 @@ namespace commands
 
         public void run()
         {
-            writeCadMessage("[START]");
-
             List<_Area_v2> areas_dimentions = new List<_Area_v2>();
             List<_Area_v2> areas_reinf = new List<_Area_v2>();
 
@@ -101,15 +109,13 @@ namespace commands
             if (areas_dimentions.Count < 1)
             {
                 string names = string.Join(", ", dimBoxNames.ToArray());
-                writeCadMessage("[ERROR] - (" + names + ") not found");
-                return;
+                throw new DMTException("[ERROR] - (" + names + ") not found");
             }
 
             if (areas_reinf.Count < 1)
             {
                 string names = string.Join(", ", reinfBoxNames.ToArray());
-                writeCadMessage("[ERROR] - (" + names + ") not found");
-                return;
+                throw new DMTException("[ERROR] - (" + names + ") not found");
             }
 
             List<element> a = matchAreaToArea(areas_dimentions, areas_reinf);
@@ -118,27 +124,6 @@ namespace commands
             getDimentions(a);
 
             local_stats = a;
-
-            return;
-        }
-
-
-        internal void close()
-        {
-            trans.Commit();
-            trans.Dispose();
-
-            ed.Regen();
-        }
-
-
-        public void dump_csv()
-        {
-            dump();
-
-            writeCadMessage("[DONE]");
-
-            return;
         }
 
 
@@ -151,16 +136,16 @@ namespace commands
                 string ritn_nr_dim_a = "x";
                 string ritn_nr_dim_b = "x";
 
-                DBObject currentEntity = trans.GetObject(area_dim.ID, OpenMode.ForWrite, false) as DBObject;
+                _Db.DBObject currentEntity = _c.trans.GetObject(area_dim.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-                if (currentEntity is BlockReference)
+                if (currentEntity is _Db.BlockReference)
                 {
-                    BlockReference blockRef = currentEntity as BlockReference;
+                    _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                    foreach (ObjectId arId in blockRef.AttributeCollection)
+                    foreach (_Db.ObjectId arId in blockRef.AttributeCollection)
                     {
-                        DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
-                        AttributeReference ar = obj as AttributeReference;
+                        _Db.DBObject obj = _c.trans.GetObject(arId, _Db.OpenMode.ForWrite);
+                        _Db.AttributeReference ar = obj as _Db.AttributeReference;
                         if (ar != null)
                         {
                             if (ar.Tag == "RITN_23_NR") ritn_nr_dim_a = ar.TextString;
@@ -176,16 +161,16 @@ namespace commands
                     string ritn_nr_reinf_a = "x";
                     string ritn_nr_reinf_b = "x";
 
-                    DBObject currentEntity_2 = trans.GetObject(area_reinf.ID, OpenMode.ForWrite, false) as DBObject;
+                    _Db.DBObject currentEntity_2 = _c.trans.GetObject(area_reinf.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-                    if (currentEntity_2 is BlockReference)
+                    if (currentEntity_2 is _Db.BlockReference)
                     {
-                        BlockReference blockRef = currentEntity_2 as BlockReference;
+                        _Db.BlockReference blockRef = currentEntity_2 as _Db.BlockReference;
 
-                        foreach (ObjectId arId in blockRef.AttributeCollection)
+                        foreach (_Db.ObjectId arId in blockRef.AttributeCollection)
                         {
-                            DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
-                            AttributeReference ar = obj as AttributeReference;
+                            _Db.DBObject obj = _c.trans.GetObject(arId, _Db.OpenMode.ForWrite);
+                            _Db.AttributeReference ar = obj as _Db.AttributeReference;
                             if (ar != null)
                             {
                                 if (ar.Tag == "RITN_23_NR") ritn_nr_reinf_a = ar.TextString;
@@ -222,16 +207,16 @@ namespace commands
                 string date = "xyz";
                 string rev = "xyz";
 
-                DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
+                _Db.DBObject currentEntity = _c.trans.GetObject(area.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-                if (currentEntity is BlockReference)
+                if (currentEntity is _Db.BlockReference)
                 {
-                    BlockReference blockRef = currentEntity as BlockReference;
+                    _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                    foreach (ObjectId arId in blockRef.AttributeCollection)
+                    foreach (_Db.ObjectId arId in blockRef.AttributeCollection)
                     {
-                        DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
-                        AttributeReference ar = obj as AttributeReference;
+                        _Db.DBObject obj = _c.trans.GetObject(arId, _Db.OpenMode.ForWrite);
+                        _Db.AttributeReference ar = obj as _Db.AttributeReference;
                         if (ar != null)
                         {
                             if (ar.Tag == "DATUM") date = ar.TextString;
@@ -258,16 +243,16 @@ namespace commands
                 string net_weight = "xyz";
                 string reinf_weight = "xyz";
 
-                DBObject currentEntity = trans.GetObject(area.ID, OpenMode.ForWrite, false) as DBObject;
+                _Db.DBObject currentEntity = _c.trans.GetObject(area.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-                if (currentEntity is BlockReference)
+                if (currentEntity is _Db.BlockReference)
                 {
-                    BlockReference blockRef = currentEntity as BlockReference;
+                    _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                    foreach (ObjectId arId in blockRef.AttributeCollection)
+                    foreach (_Db.ObjectId arId in blockRef.AttributeCollection)
                     {
-                        DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
-                        AttributeReference ar = obj as AttributeReference;
+                        _Db.DBObject obj = _c.trans.GetObject(arId, _Db.OpenMode.ForWrite);
+                        _Db.AttributeReference ar = obj as _Db.AttributeReference;
                         if (ar != null)
                         {
                             if (ar.Tag == "DATUM") date = ar.TextString;
@@ -288,27 +273,28 @@ namespace commands
 
         private void getDimentions(List<element> elements)
         {
-            List<RotatedDimension> allDims = getAllDims();
+            List<_Db.RotatedDimension> allDims = getAllDims();
 
             foreach (element el in elements)
             {
                 _Area_v2 area = el._23;
 
-                List<RotatedDimension> sortedDims = getDimsInArea(area, allDims);
+                List<_Db.RotatedDimension> sortedDims = getDimsInArea(area, allDims);
 
                 double length = 0;
                 double height = 0;
-                foreach (RotatedDimension rd in sortedDims)
+
+                foreach (_Db.RotatedDimension rd in sortedDims)
                 {
                     double rot0 = Math.Abs(rd.Rotation % Math.PI);
                     double rot90 = Math.Abs(Math.Abs(rd.Rotation % Math.PI) - Math.PI / 2);
                     if (rot0 < 0.01)
                     {
-                        if (length < rd.Measurement) length = rd.Measurement;
+                        if (length < rd.Measurement) length = rd.Measurement; // MEASURMENT REQUIRES TO SAVE
                     }
                     else if (rot90 < 0.01)
                     {
-                        if (height < rd.Measurement) height = rd.Measurement;
+                        if (height < rd.Measurement) height = rd.Measurement; // MEASURMENT REQUIRES TO SAVE
                     }
                 }
 
@@ -318,14 +304,14 @@ namespace commands
         }
 
 
-        private List<RotatedDimension> getDimsInArea(_Area_v2 area, List<RotatedDimension> allDims)
+        private List<_Db.RotatedDimension> getDimsInArea(_Area_v2 area, List<_Db.RotatedDimension> allDims)
         {
-            List<RotatedDimension> dims = new List<RotatedDimension>();
+            List<_Db.RotatedDimension> dims = new List<_Db.RotatedDimension>();
 
             for (int i = allDims.Count - 1; i >= 0; i--)
             {
-                RotatedDimension dim = allDims[i];
-                Point3d p1 = dim.XLine1Point;
+                _Db.RotatedDimension dim = allDims[i];
+                _Ge.Point3d p1 = dim.XLine1Point;
 
                 if (area.isPointInArea(p1))
                 {
@@ -338,28 +324,27 @@ namespace commands
         }
 
 
-        private List<RotatedDimension> getAllDims()
+        private List<_Db.RotatedDimension> getAllDims()
         {
-            List<RotatedDimension> dims = new List<RotatedDimension>();
+            List<_Db.RotatedDimension> dims = new List<_Db.RotatedDimension>();
 
-            BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForWrite) as BlockTable;
-            foreach (ObjectId btrId in bt)
+            foreach (_Db.ObjectId btrId in _c.blockTable)
             {
-                BlockTableRecord btr = trans.GetObject(btrId, OpenMode.ForWrite) as BlockTableRecord;
+                _Db.BlockTableRecord btr = _c.trans.GetObject(btrId, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
                 if (!(btr.IsFromExternalReference))
                 {
-                    foreach (ObjectId bid in btr)
+                    foreach (_Db.ObjectId bid in btr)
                     {
-                        Entity currentEntity = trans.GetObject(bid, OpenMode.ForWrite, false) as Entity;
+                        _Db.Entity currentEntity = _c.trans.GetObject(bid, _Db.OpenMode.ForWrite, false) as _Db.Entity;
 
                         if (currentEntity == null)
                         {
                             continue;
                         }
 
-                        if (currentEntity is RotatedDimension)
+                        if (currentEntity is _Db.RotatedDimension)
                         {
-                            RotatedDimension dim = currentEntity as RotatedDimension;
+                            _Db.RotatedDimension dim = currentEntity as _Db.RotatedDimension;
                             dims.Add(dim);
                         }
                     }
@@ -374,11 +359,11 @@ namespace commands
         {
             List<_Area_v2> areas = new List<_Area_v2>();
 
-            List<BlockReference> blocks = new List<BlockReference>();
+            List<_Db.BlockReference> blocks = new List<_Db.BlockReference>();
 
             foreach (string name in blockNames)
             {
-                List<BlockReference> temp = getAllBlockReference(name);
+                List<_Db.BlockReference> temp = getAllBlockReference(name);
                 blocks.AddRange(temp);
             }
 
@@ -388,13 +373,13 @@ namespace commands
         }
 
 
-        private List<_Area_v2> getBoxAreas(List<BlockReference> blocks)
+        private List<_Area_v2> getBoxAreas(List<_Db.BlockReference> blocks)
         {
             List<_Area_v2> parse = new List<_Area_v2>();
 
-            foreach (BlockReference block in blocks)
+            foreach (_Db.BlockReference block in blocks)
             {
-                Extents3d blockExtents = block.GeometricExtents;
+                _Db.Extents3d blockExtents = block.GeometricExtents;
 
                 _Area_v2 area = new _Area_v2(block.ObjectId, blockExtents.MinPoint, blockExtents.MaxPoint);
                 parse.Add(area);
@@ -406,37 +391,35 @@ namespace commands
         }
 
 
-        private List<BlockReference> getAllBlockReference(string blockName)
+        private List<_Db.BlockReference> getAllBlockReference(string blockName)
         {
-            List<BlockReference> refs = new List<BlockReference>();
+            List<_Db.BlockReference> refs = new List<_Db.BlockReference>();
 
-            BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-            if (bt.Has(blockName))
+            if (_c.blockTable.Has(blockName))
             {
-                BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+                _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-                foreach (ObjectId id in btr)
+                foreach (_Db.ObjectId id in btr)
                 {
-                    DBObject currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as DBObject;
+                    _Db.DBObject currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
                     if (currentEntity == null)
                     {
                         continue;
                     }
 
-                    else if (currentEntity is BlockReference)
+                    else if (currentEntity is _Db.BlockReference)
                     {
-                        BlockReference blockRef = currentEntity as BlockReference;
+                        _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                        BlockTableRecord block = null;
+                        _Db.BlockTableRecord block = null;
                         if (blockRef.IsDynamicBlock)
                         {
-                            block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                            block = _c.trans.GetObject(blockRef.DynamicBlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
                         }
                         else
                         {
-                            block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                            block = _c.trans.GetObject(blockRef.BlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
                         }
 
                         if (block != null)
@@ -454,16 +437,10 @@ namespace commands
         }
 
 
-        private void writeCadMessage(string errorMessage)
+        public void dump_csv()
         {
-            ed.WriteMessage("\n" + errorMessage);
-        }
-
-
-        private void dump()
-        {
-            HostApplicationServices hs = HostApplicationServices.Current;
-            string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
+            _Db.HostApplicationServices hs = _Db.HostApplicationServices.Current;
+            string dwg_path = hs.FindFile(_c.doc.Name, _c.doc.Database, _Db.FindFileHint.Default);
             string dwg_dir = Path.GetDirectoryName(dwg_path);
             string dwg_name = Path.GetFileNameWithoutExtension(dwg_path);
 
@@ -478,7 +455,7 @@ namespace commands
 
             StringBuilder txt = new StringBuilder();
 
-            writeCadMessage(csv_path);
+            write(csv_path);
             txt.AppendLine("alexi programmi ajutine file");
             txt.AppendLine("");
             txt.AppendLine("RITN_NR_23; DATUM_23; REV_23; REV_DATE_23; ELEMENT; LENGTH; HEIGHT; WIDTH; ; RITN_NR_27; DATUM_27; REV_27; REV_DATE_27; ELEMENT; ; SUMMA_NATARMERING; SUMMA_OVRIG_ARMERING");
@@ -506,6 +483,12 @@ namespace commands
 
                 }
             }
+        }
+
+
+        private void write(string message)
+        {
+            _c.ed.WriteMessage("\n" + message);
         }
 
     }

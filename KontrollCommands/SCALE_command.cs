@@ -1,70 +1,76 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
-using DR = System.Drawing;
+using System.Collections;
+using System.Linq;
+using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
-
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
 
 
 namespace commands
 {
     class SCALE_command
     {
-        Document doc;
-        Database db;
-        Editor ed;
+        _CONNECTION _c;
 
-        Transaction trans;
-
-        Dictionary<Dimension, BlockTableRecord> dims;
+        Dictionary<_Db.Dimension, _Db.BlockTableRecord> dims;
 
 
-        public SCALE_command()
+        public SCALE_command(ref _CONNECTION c)
         {
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
+            _c = c;
 
-            trans = db.TransactionManager.StartTransaction();
-
-            dims = new Dictionary<Dimension, BlockTableRecord>();
+            dims = new Dictionary<_Db.Dimension, _Db.BlockTableRecord>();
         }
 
 
         internal void run()
         {
-            writeCadMessage("START");
-
             getAllDims();
             setColorToDims();
-
-            writeCadMessage("END");
         }
 
 
         private void setColorToDims()
         {
-            List<Dimension> scale_05 = new List<Dimension>();
-            List<Dimension> scale_other = new List<Dimension>();
+            List<_Db.Dimension> scale_05 = new List<_Db.Dimension>();
+            List<_Db.Dimension> scale_other = new List<_Db.Dimension>();
 
-            foreach (Dimension dim in dims.Keys)
+            foreach (_Db.Dimension dim in dims.Keys)
             {
                 if (dim.Dimlfac == 1.0)
                 {
@@ -84,31 +90,31 @@ namespace commands
                 }                                
             }
 
-            writeCadMessage("Scale 0.5: " + scale_05.Count.ToString());
-            writeCadMessage("Scale other: " + scale_other.Count.ToString());
+            write("Scale 0.5: " + scale_05.Count.ToString());
+            write("Scale other: " + scale_other.Count.ToString());
         }
 
         
         private void getAllDims()
         {
-            BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForWrite) as BlockTable;
-            foreach (ObjectId btrId in bt)
+            foreach (_Db.ObjectId btrId in _c.blockTable)
             {
-                BlockTableRecord btr = trans.GetObject(btrId, OpenMode.ForWrite) as BlockTableRecord;
+                _Db.BlockTableRecord btr = _c.trans.GetObject(btrId, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+
                 if (!(btr.IsFromExternalReference))
                 {
-                    foreach (ObjectId bid in btr)
+                    foreach (_Db.ObjectId bid in btr)
                     {
-                        Entity currentEntity = trans.GetObject(bid, OpenMode.ForWrite, false) as Entity;
+                        _Db.Entity currentEntity = _c.trans.GetObject(bid, _Db.OpenMode.ForWrite, false) as _Db.Entity;
 
                         if (currentEntity == null)
                         {
                             continue;
                         }
 
-                        if (currentEntity is Dimension)
+                        if (currentEntity is _Db.Dimension)
                         {
-                            Dimension dim = currentEntity as Dimension;
+                            _Db.Dimension dim = currentEntity as _Db.Dimension;
                             dims[dim] = btr;
                         }
                     }
@@ -117,30 +123,22 @@ namespace commands
         }
 
 
-        private void createCircle(double radius, int index, Point3d ip, BlockTableRecord btr)
+        private void createCircle(double radius, int index, _Ge.Point3d ip, _Db.BlockTableRecord btr)
         {
-            using (Circle circle = new Circle())
+            using (_Db.Circle circle = new _Db.Circle())
             {
                 circle.Center = ip;
                 circle.Radius = radius;
                 circle.ColorIndex = index;
                 btr.AppendEntity(circle);
-                trans.AddNewlyCreatedDBObject(circle, true);
+                _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
         }
 
-        private void writeCadMessage(string errorMessage)
+
+        private void write(string message)
         {
-            ed.WriteMessage("\n" + errorMessage);
-        }
-
-
-        internal void close()
-        {
-            trans.Commit();
-            trans.Dispose();
-
-            ed.Regen();
+            _c.ed.WriteMessage("\n" + message);
         }
 
     }

@@ -1,37 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
 using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
 
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
 
 
 namespace commands
 {
     class TABLE_command_v2
     {
-        Document doc;
-        Database db;
-        Editor ed;
-
-        Transaction trans;
+        _CONNECTION _c;
 
         static string[] newBoxNames = { "KN-C", "KN-V27" };
         static string markLayerName = "K60";
@@ -40,13 +55,9 @@ namespace commands
         Dictionary<_Area_v2, List<_Mark>> local_stats;
 
 
-        public TABLE_command_v2()
+        public TABLE_command_v2(ref _CONNECTION c)
         {
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
-
-            trans = db.TransactionManager.StartTransaction();
+            _c = c;
 
             total_stats = new List<_Mark>();
             local_stats = new Dictionary<_Area_v2, List<_Mark>>();
@@ -55,8 +66,6 @@ namespace commands
 
         public void run(bool multy)
         {
-            writeCadMessage("[START]");
-
             List<_Area_v2> areas = new List<_Area_v2>();
 
             if (multy == true)
@@ -71,19 +80,13 @@ namespace commands
             if (areas.Count < 1)
             {
                 string names = string.Join(", ", newBoxNames.ToArray());
-                writeCadMessage("[ERROR] - (" + names + ") not found");
+                throw new DMTException("[ERROR] - (" + names + ") not found");
             }
 
             List<_Mark> allMarks = getAllMarks(markLayerName);
-            if (allMarks.Count < 1)
-            {
-                writeCadMessage("[ERROR] - " + "Reinforcement marks" + " not found");
-                return;
-            }
-
+            if (allMarks.Count < 1) throw new DMTException("[ERROR] - " + "Reinforcement marks" + " not found");
+            
             local_stats = matchMarkToArea(areas, allMarks);
-
-            return;
         }
 
 
@@ -92,10 +95,6 @@ namespace commands
             total_stats = getGlobalSummary(local_stats);
 
             dump();
-
-            writeCadMessage("[DONE]");
-
-            return;
         }
 
 
@@ -105,21 +104,8 @@ namespace commands
             {
                 outputTable(current, local_stats[current]);
             }
-
-            writeCadMessage("DONE");
-
-            return;
         }
-
-
-        internal void close()
-        {
-            trans.Commit();
-            trans.Dispose();
-
-            ed.Regen();
-        }
-
+        
 
         private List<_Mark> getGlobalSummary(Dictionary<_Area_v2, List<_Mark>> sorted)
         {
@@ -138,25 +124,25 @@ namespace commands
 
         private void outputTable(_Area_v2 a, List<_Mark> rows)
         {
-            DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
+            _Db.DBObject currentEntity = _c.trans.GetObject(a.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-            if (currentEntity is BlockReference)
+            if (currentEntity is _Db.BlockReference)
             {
-                BlockReference blockRef = currentEntity as BlockReference;
+                _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
                 double scale = blockRef.ScaleFactors.X;
                 string name = blockRef.Name;
 
 
-                Point3d currentPoint = a.Start;
+                _Ge.Point3d currentPoint = a.Start;
 
                 if (name == newBoxNames[0])
                 {
-                    currentPoint = new Point3d(a.Start.X + (366 * scale), a.Start.Y + (141.8 * scale), a.Start.Z);
+                    currentPoint = new _Ge.Point3d(a.Start.X + (366 * scale), a.Start.Y + (141.8 * scale), a.Start.Z);
                 }
                 else if (name == newBoxNames[1])
                 {
-                    currentPoint = new Point3d(a.Start.X + (366 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
+                    currentPoint = new _Ge.Point3d(a.Start.X + (366 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
                 }
 
                 int counter = 0;
@@ -166,35 +152,35 @@ namespace commands
                     {
                         double txtHeight = 1.5 * scale;
 
-                        Point3d position_IP = new Point3d(currentPoint.X + (1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
-                        Point3d diameter_IP = new Point3d(currentPoint.X + (0.75 * scale) + (6.1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
-                        Point3d number_IP = new Point3d(currentPoint.X + (1.5 * scale) + (9.75 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
+                        _Ge.Point3d position_IP = new _Ge.Point3d(currentPoint.X + (1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
+                        _Ge.Point3d diameter_IP = new _Ge.Point3d(currentPoint.X + (0.75 * scale) + (6.1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
+                        _Ge.Point3d number_IP = new _Ge.Point3d(currentPoint.X + (1.5 * scale) + (9.75 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
 
                         insertText(r.Position, position_IP, markLayerName, txtHeight);
                         insertText(r.Diameter.ToString(), diameter_IP, markLayerName, txtHeight);
                         insertText(r.Number.ToString(), number_IP, markLayerName, txtHeight);
                     }
 
-                    if (counter == 21)
+                    if (counter == 19)
                     {
                         if (name == newBoxNames[0])
                         {
-                            currentPoint = new Point3d(a.Start.X + (336 * scale), a.Start.Y + (141.8 * scale), a.Start.Z);
+                            currentPoint = new _Ge.Point3d(a.Start.X + (336 * scale), a.Start.Y + (141.8 * scale), a.Start.Z);
                         }
                         else if (name == newBoxNames[1])
                         {
-                            currentPoint = new Point3d(a.Start.X + (336 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
+                            currentPoint = new _Ge.Point3d(a.Start.X + (336 * scale), a.Start.Y + (263.5 * scale), a.Start.Z);
                         }
                     }
                     else
                     {
-                        currentPoint = new Point3d(currentPoint.X, currentPoint.Y - (4 * scale), currentPoint.Z);
+                        currentPoint = new _Ge.Point3d(currentPoint.X, currentPoint.Y - (4 * scale), currentPoint.Z);
                     }
 
                     counter++;
-
                 }
             }
+
         }
 
 
@@ -250,9 +236,18 @@ namespace commands
             sumMarks = new List<_Mark>();
             sumMarks.AddRange(rows_num);
 
-            _Mark emptyRow = new _Mark(0, 0, "emptyrow", "", 0);
-            sumMarks.Add(emptyRow);
-            sumMarks.Add(emptyRow);
+
+            if ((rows_num.Count + rows_char.Count + 2) <= 19)
+            {            
+                _Mark emptyRow = new _Mark(0, 0, "emptyrow", "", 0);
+                sumMarks.Add(emptyRow);
+                sumMarks.Add(emptyRow);
+            }
+            else if ((rows_num.Count + rows_char.Count + 1) <= 19)
+            {
+                _Mark emptyRow = new _Mark(0, 0, "emptyrow", "", 0);
+                sumMarks.Add(emptyRow);
+            }
 
             sumMarks.AddRange(rows_char);
 
@@ -264,7 +259,7 @@ namespace commands
         {
             List<_Mark> marks = new List<_Mark>();
 
-            List<MText> allTexts = getAllText(layer);
+            List<_Db.MText> allTexts = getAllText(layer);
             marks = getMarkData(allTexts);
 
             return marks;
@@ -289,11 +284,11 @@ namespace commands
         }
 
 
-        private List<_Mark> getMarkData(List<MText> txts)
+        private List<_Mark> getMarkData(List<_Db.MText> txts)
         {
             List<_Mark> parse = new List<_Mark>();
 
-            foreach (MText txt in txts)
+            foreach (_Db.MText txt in txts)
             {
                 _Mark current = new _Mark(txt.Contents, txt.Location);
                 parse.Add(current);
@@ -307,10 +302,8 @@ namespace commands
         {
             List<_Area_v2> areas = new List<_Area_v2>();
 
-
-            List<BlockReference> blocks = getSelectedBlockReference(blockNames);
+            List<_Db.BlockReference> blocks = getSelectedBlockReference(blockNames);
             areas = getBoxAreas(blocks);
-
 
             return areas;
         }
@@ -320,11 +313,11 @@ namespace commands
         {
             List<_Area_v2> areas = new List<_Area_v2>();
 
-            List<BlockReference> blocks = new List<BlockReference>();
+            List<_Db.BlockReference> blocks = new List<_Db.BlockReference>();
 
             foreach (string name in blockNames)
             {
-                List<BlockReference> temp = getAllBlockReference(name);
+                List<_Db.BlockReference> temp = getAllBlockReference(name);
                 blocks.AddRange(temp);
             }
 
@@ -334,13 +327,13 @@ namespace commands
         }
 
 
-        private List<_Area_v2> getBoxAreas(List<BlockReference> blocks)
+        private List<_Area_v2> getBoxAreas(List<_Db.BlockReference> blocks)
         {
             List<_Area_v2> parse = new List<_Area_v2>();
 
-            foreach (BlockReference block in blocks)
+            foreach (_Db.BlockReference block in blocks)
             {
-                Extents3d blockExtents = block.GeometricExtents;
+                _Db.Extents3d blockExtents = block.GeometricExtents;
 
                 _Area_v2 area = new _Area_v2(block.ObjectId, blockExtents.MinPoint, blockExtents.MaxPoint);
                 parse.Add(area);
@@ -352,39 +345,39 @@ namespace commands
         }
 
 
-        private List<BlockReference> getSelectedBlockReference(string[] blockNames)
+        private List<_Db.BlockReference> getSelectedBlockReference(string[] blockNames)
         {
-            List<BlockReference> refs = new List<BlockReference>();
+            List<_Db.BlockReference> refs = new List<_Db.BlockReference>();
 
-            PromptSelectionOptions opts = new PromptSelectionOptions();
+            _Ed.PromptSelectionOptions opts = new _Ed.PromptSelectionOptions();
             opts.MessageForAdding = "\nSelect BLOCK " + blockNames[0] + " / " + blockNames[1];
-            PromptSelectionResult selection = ed.GetSelection(opts);
+            _Ed.PromptSelectionResult selection = _c.ed.GetSelection(opts);
 
-            if (selection.Status == PromptStatus.OK)
+            if (selection.Status == _Ed.PromptStatus.OK)
             {
-                ObjectId[] selectionIds = selection.Value.GetObjectIds();
+                _Db.ObjectId[] selectionIds = selection.Value.GetObjectIds();
 
-                foreach (ObjectId id in selectionIds)
+                foreach (_Db.ObjectId id in selectionIds)
                 {
-                    DBObject currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as DBObject;
+                    _Db.DBObject currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
                     if (currentEntity == null)
                     {
                         continue;
                     }
 
-                    else if (currentEntity is BlockReference)
+                    else if (currentEntity is _Db.BlockReference)
                     {
-                        BlockReference blockRef = currentEntity as BlockReference;
+                        _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                        BlockTableRecord block = null;
+                        _Db.BlockTableRecord block = null;
                         if (blockRef.IsDynamicBlock)
                         {
-                            block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                            block = _c.trans.GetObject(blockRef.DynamicBlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
                         }
                         else
                         {
-                            block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                            block = _c.trans.GetObject(blockRef.BlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
                         }
 
                         if (block != null)
@@ -402,37 +395,35 @@ namespace commands
         }
 
 
-        private List<BlockReference> getAllBlockReference(string blockName)
+        private List<_Db.BlockReference> getAllBlockReference(string blockName)
         {
-            List<BlockReference> refs = new List<BlockReference>();
+            List<_Db.BlockReference> refs = new List<_Db.BlockReference>();
 
-            BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-
-            if (bt.Has(blockName))
+            if (_c.blockTable.Has(blockName))
             {
-                BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+                _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-                foreach (ObjectId id in btr)
+                foreach (_Db.ObjectId id in btr)
                 {
-                    DBObject currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as DBObject;
+                    _Db.DBObject currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
                     if (currentEntity == null)
                     {
                         continue;
                     }
 
-                    else if (currentEntity is BlockReference)
+                    else if (currentEntity is _Db.BlockReference)
                     {
-                        BlockReference blockRef = currentEntity as BlockReference;
+                        _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                        BlockTableRecord block = null;
+                        _Db.BlockTableRecord block = null;
                         if (blockRef.IsDynamicBlock)
                         {
-                            block = trans.GetObject(blockRef.DynamicBlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                            block = _c.trans.GetObject(blockRef.DynamicBlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
                         }
                         else
                         {
-                            block = trans.GetObject(blockRef.BlockTableRecord, OpenMode.ForRead) as BlockTableRecord;
+                            block = _c.trans.GetObject(blockRef.BlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
                         }
 
                         if (block != null)
@@ -450,47 +441,47 @@ namespace commands
         }
 
 
-        private List<MText> getAllText(string layer)
+        private List<_Db.MText> getAllText(string layer)
         {
-            List<MText> txt = new List<MText>();
+            List<_Db.MText> txt = new List<_Db.MText>();
 
-            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-            foreach (ObjectId id in btr)
+            foreach (_Db.ObjectId id in btr)
             {
-                Entity currentEntity = trans.GetObject(id, OpenMode.ForWrite, false) as Entity;
+                _Db.Entity currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.Entity;
 
                 if (currentEntity != null)
                 {
-                    if (currentEntity is MText)
+                    if (currentEntity is _Db.MText)
                     {
-                        MText br = currentEntity as MText;
+                        _Db.MText br = currentEntity as _Db.MText;
                         if (br.Layer == layer)
                         {
                             txt.Add(br);
                         }
                     }
 
-                    if (currentEntity is DBText)
+                    if (currentEntity is _Db.DBText)
                     {
-                        DBText br = currentEntity as DBText;
+                        _Db.DBText br = currentEntity as _Db.DBText;
                         if (br.Layer == layer)
                         {
-                            MText myMtext = new MText();
+                            _Db.MText myMtext = new _Db.MText();
                             myMtext.Contents = br.TextString;
                             myMtext.Location = br.Position;
                             txt.Add(myMtext);
                         }
                     }
 
-                    if (currentEntity is MLeader)
+                    if (currentEntity is _Db.MLeader)
                     {
-                        MLeader br = currentEntity as MLeader;
+                        _Db.MLeader br = currentEntity as _Db.MLeader;
                         if (br.Layer == layer)
                         {
-                            if (br.ContentType == ContentType.MTextContent)
+                            if (br.ContentType == _Db.ContentType.MTextContent)
                             {
-                                MText leaderText = br.MText;
+                                _Db.MText leaderText = br.MText;
                                 txt.Add(leaderText);
                             }
                         }
@@ -502,12 +493,11 @@ namespace commands
         }
 
 
-        private void insertText(string value, Point3d position, string layer, double txtHeight)
+        private void insertText(string value, _Ge.Point3d position, string layer, double txtHeight)
         {
-            BlockTable bt = trans.GetObject(db.BlockTableId, OpenMode.ForRead) as BlockTable;
-            BlockTableRecord btr = trans.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForWrite) as BlockTableRecord;
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-            using (DBText acText = new DBText())
+            using (_Db.DBText acText = new _Db.DBText())
             {
                 acText.Layer = layer;
 
@@ -516,21 +506,16 @@ namespace commands
                 acText.TextString = value;
 
                 btr.AppendEntity(acText);
-                trans.AddNewlyCreatedDBObject(acText, true);
+                _c.trans.AddNewlyCreatedDBObject(acText, true);
             }
-        }
 
-
-        private void writeCadMessage(string errorMessage)
-        {
-            ed.WriteMessage("\n" + errorMessage);
         }
 
 
         private void dump()
         {
-            HostApplicationServices hs = HostApplicationServices.Current;
-            string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
+            _Db.HostApplicationServices hs = _Db.HostApplicationServices.Current;
+            string dwg_path = hs.FindFile(_c.doc.Name, _c.doc.Database, _Db.FindFileHint.Default);
             string dwg_dir = Path.GetDirectoryName(dwg_path);
             string dwg_name = Path.GetFileNameWithoutExtension(dwg_path);
 
@@ -545,7 +530,7 @@ namespace commands
 
             StringBuilder txt = new StringBuilder();
 
-            writeCadMessage(csv_path);
+            write(csv_path);
             txt.AppendLine("alexi programmi ajutine file");
             txt.AppendLine("shape; positsioon; kogus; diameter");
             txt.AppendLine("");
@@ -565,16 +550,16 @@ namespace commands
             {
                 string ritn_nr = "x";
 
-                DBObject currentEntity = trans.GetObject(a.ID, OpenMode.ForWrite, false) as DBObject;
+                _Db.DBObject currentEntity = _c.trans.GetObject(a.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-                if (currentEntity is BlockReference)
+                if (currentEntity is _Db.BlockReference)
                 {
-                    BlockReference blockRef = currentEntity as BlockReference;
+                    _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                    foreach (ObjectId arId in blockRef.AttributeCollection)
+                    foreach (_Db.ObjectId arId in blockRef.AttributeCollection)
                     {
-                        DBObject obj = trans.GetObject(arId, OpenMode.ForWrite);
-                        AttributeReference ar = obj as AttributeReference;
+                        _Db.DBObject obj = _c.trans.GetObject(arId, _Db.OpenMode.ForWrite);
+                        _Db.AttributeReference ar = obj as _Db.AttributeReference;
                         if (ar != null)
                         {
                             if (ar.Tag == "RITN_NR") ritn_nr = ar.TextString;
@@ -613,6 +598,12 @@ namespace commands
             string csvText = txt.ToString();
 
             File.AppendAllText(csv_path, csvText);
+        }
+
+
+        private void write(string message)
+        {
+            _c.ed.WriteMessage("\n" + message);
         }
 
     }

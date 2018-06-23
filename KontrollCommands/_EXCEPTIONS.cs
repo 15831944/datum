@@ -39,39 +39,14 @@ using _SWF = System.Windows.Forms;
     using _Trx = Autodesk.AutoCAD.Runtime;
     using _Wnd = Autodesk.AutoCAD.Windows;
 #endif
-
+    
 
 namespace commands
 {
-    class _Area_v2
+    public class DMTException : Exception
     {
-        _Db.ObjectId _id;
-        _Ge.Point3d _start;
-        _Ge.Point3d _end;
-
-        public _Db.ObjectId ID { get { return _id; } }
-        public _Ge.Point3d Start { get { return _start; } } // for sorting
-
-
-        public _Area_v2(_Db.ObjectId id, _Ge.Point3d s, _Ge.Point3d e)
-        {
-            _id = id;
-
-            _start = s;
-            _end = e;
-        }
-
-
-        internal bool isPointInArea(_Ge.Point3d point)
-        {
-            if (point.X <= _start.X) return false;
-            if (point.X >= _end.X) return false;
-
-            if (point.Y <= _start.Y) return false;
-            if (point.Y >= _end.Y) return false;
-
-            return true;
-        }
-
+        public DMTException() { }
+        public DMTException(string message) : base(message) { }
+        public DMTException(string message, Exception inner) : base(message, inner) { }
     }
 }

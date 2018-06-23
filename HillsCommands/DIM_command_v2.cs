@@ -1,36 +1,52 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
+using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
 
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
 
 
 namespace commands
 {
     class DIM_command_v2
     {
-        Document doc;
-        Database db;
-        Editor ed;
-
-        Transaction trans;
+        _CONNECTION _c;
 
         double smallCircleRadius = 15.0;
         double bigCircleRadius = 50.0;
@@ -39,51 +55,29 @@ namespace commands
         double textOffset = 20.0;
 
         bool success;
-        Point3d ptStart;
-        Point3d ptEnd;
-        Point3d ptPos;
-        Point3d ptNext;
+        _Ge.Point3d ptStart;
+        _Ge.Point3d ptEnd;
+        _Ge.Point3d ptPos;
+        _Ge.Point3d ptNext;
 
         double rotation;
 
 
-        public DIM_command_v2()
+        public DIM_command_v2(ref _CONNECTION c)
         {
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
-
-            trans = db.TransactionManager.StartTransaction();
+            _c = c;
 
             success = false;
-            ptStart = new Point3d();
-            ptEnd = new Point3d();
-            ptPos = new Point3d();
-            ptNext = new Point3d();
+            ptStart = new _Ge.Point3d();
+            ptEnd = new _Ge.Point3d();
+            ptPos = new _Ge.Point3d();
+            ptNext = new _Ge.Point3d();
 
             rotation = 0.0;
         }
 
 
         public void run()
-        {
-            writeCadMessage("");
-            writeCadMessage("[START]");
-            main();
-            writeCadMessage("[DONE]");
-        }
-
-
-        internal void close()
-        {
-            trans.Commit();
-            trans.Dispose();
-
-            ed.Regen();
-        }
-
-
-        public void main()
         {
             success = getInitPoint("\nStart: ", ref ptStart);
             if (!success) { return; }
@@ -95,7 +89,7 @@ namespace commands
             if (!success) { return; }
 
             insertDimLine(ptStart, ptEnd, ptPos, rotation);
-            Point3d ptLast = ptEnd;
+            _Ge.Point3d ptLast = ptEnd;
 
             while (true)
             {
@@ -120,7 +114,7 @@ namespace commands
             insertCircle(ptPos, smallCircleRadius);
 
             double dir = getDirectionVector(ptStart, ptEnd, rotation);
-            Point3d ptBiggerCircle = getBigCirclePoint(ptPos, dir, rotation);
+            _Ge.Point3d ptBiggerCircle = getBigCirclePoint(ptPos, dir, rotation);
 
             success = insertNumber(ptBiggerCircle, rotation);
             if (!success) { return; }
@@ -130,41 +124,39 @@ namespace commands
 
             success = insertFormSide(ptPos, dir, rotation);
             if (!success) { return; }
-
-            return;
         }
 
 
-        private bool getInitPoint(string prompt, ref Point3d pt)
+        private bool getInitPoint(string prompt, ref _Ge.Point3d pt)
         {
-            PromptPointOptions pPtOpts = new PromptPointOptions("");
+            _Ed.PromptPointOptions pPtOpts = new _Ed.PromptPointOptions("");
             pPtOpts.Message = prompt;
             pPtOpts.UseBasePoint = false;
 
-            PromptPointResult pPtRes;
-            pPtRes = ed.GetPoint(pPtOpts);
+            _Ed.PromptPointResult pPtRes;
+            pPtRes = _c.ed.GetPoint(pPtOpts);
             pt = pPtRes.Value;
 
-            if (pPtRes.Status == PromptStatus.Cancel) return false;
+            if (pPtRes.Status == _Ed.PromptStatus.Cancel) return false;
 
             return true;
         }
 
 
-        private bool getPositionPoint(string prompt, Point3d ptStart, Point3d ptEnd, ref Point3d ptPos, ref double rotation)
+        private bool getPositionPoint(string prompt, _Ge.Point3d ptStart, _Ge.Point3d ptEnd, ref _Ge.Point3d ptPos, ref double rotation)
         {
-            Point3d ptBase = new Point3d((ptEnd.X + ptStart.X) / 2, (ptEnd.Y + ptStart.Y) / 2, (ptEnd.Z + ptStart.Z) / 2);
+            _Ge.Point3d ptBase = new _Ge.Point3d((ptEnd.X + ptStart.X) / 2, (ptEnd.Y + ptStart.Y) / 2, (ptEnd.Z + ptStart.Z) / 2);
 
-            PromptPointOptions pPtOpts = new PromptPointOptions("");
+            _Ed.PromptPointOptions pPtOpts = new _Ed.PromptPointOptions("");
             pPtOpts.Message = prompt;
             pPtOpts.UseBasePoint = true;
             pPtOpts.BasePoint = ptBase;
 
-            PromptPointResult pPtRes;
-            pPtRes = ed.GetPoint(pPtOpts);
-            Point3d temp = pPtRes.Value;
+            _Ed.PromptPointResult pPtRes;
+            pPtRes = _c.ed.GetPoint(pPtOpts);
+            _Ge.Point3d temp = pPtRes.Value;
 
-            if (pPtRes.Status == PromptStatus.Cancel) return false;
+            if (pPtRes.Status == _Ed.PromptStatus.Cancel) return false;
 
             double dX = temp.X - ptBase.X;
             double dY = temp.Y - ptBase.Y;
@@ -175,7 +167,7 @@ namespace commands
 
                 double newX = temp.X;
                 double newY = ptStart.Y;
-                ptPos = new Point3d(newX, newY, ptStart.Z);
+                ptPos = new _Ge.Point3d(newX, newY, ptStart.Z);
             }
             else
             {
@@ -183,41 +175,41 @@ namespace commands
 
                 double newX = ptStart.X;
                 double newY = temp.Y;
-                ptPos = new Point3d(newX, newY, ptStart.Z);
+                ptPos = new _Ge.Point3d(newX, newY, ptStart.Z);
             }
 
             return true;
         }
 
 
-        private bool getPoint(string prompt, Point3d ptBase, ref Point3d pt, ref bool finish)
+        private bool getPoint(string prompt, _Ge.Point3d ptBase, ref _Ge.Point3d pt, ref bool finish)
         {
-            PromptPointOptions pPtOpts = new PromptPointOptions("");
+            _Ed.PromptPointOptions pPtOpts = new _Ed.PromptPointOptions("");
             pPtOpts.Keywords.Add("F");
             pPtOpts.Message = prompt;
             pPtOpts.UseBasePoint = true;
             pPtOpts.BasePoint = ptBase;
 
-            PromptPointResult pPtRes;
-            pPtRes = ed.GetPoint(pPtOpts);
+            _Ed.PromptPointResult pPtRes;
+            pPtRes = _c.ed.GetPoint(pPtOpts);
 
-            if (pPtRes.Status == PromptStatus.Keyword)
+            if (pPtRes.Status == _Ed.PromptStatus.Keyword)
             {
-                PromptPointOptions lastPtOpts = new PromptPointOptions("");
+                _Ed.PromptPointOptions lastPtOpts = new _Ed.PromptPointOptions("");
                 pPtOpts.Message = "Last Point";
                 pPtOpts.UseBasePoint = true;
                 pPtOpts.BasePoint = ptBase;
 
-                pPtRes = ed.GetPoint(lastPtOpts);
+                pPtRes = _c.ed.GetPoint(lastPtOpts);
                 pt = pPtRes.Value;
 
                 finish = true;
             }
-            else if (pPtRes.Status == PromptStatus.OK)
+            else if (pPtRes.Status == _Ed.PromptStatus.OK)
             {
                 pt = pPtRes.Value;
             }
-            else if (pPtRes.Status == PromptStatus.Cancel)
+            else if (pPtRes.Status == _Ed.PromptStatus.Cancel)
             {
                 return false;
             }
@@ -226,39 +218,39 @@ namespace commands
         }
 
 
-        private void insertDimLine(Point3d ptStart, Point3d ptEnd, Point3d ptPos, double rotation)
+        private void insertDimLine(_Ge.Point3d ptStart, _Ge.Point3d ptEnd, _Ge.Point3d ptPos, double rotation)
         {
-            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-            using (RotatedDimension rotDim = new RotatedDimension())
+            using (_Db.RotatedDimension rotDim = new _Db.RotatedDimension())
             {
                 rotDim.XLine1Point = ptStart;
                 rotDim.XLine2Point = ptEnd;
                 rotDim.Rotation = rotation;
                 rotDim.DimLinePoint = ptPos;
-                rotDim.DimensionStyle = db.Dimstyle;
+                rotDim.DimensionStyle = _c.db.Dimstyle;
 
                 btr.AppendEntity(rotDim);
-                trans.AddNewlyCreatedDBObject(rotDim, true);
+                _c.trans.AddNewlyCreatedDBObject(rotDim, true);
             }
         }
 
 
-        private void insertCircle(Point3d center, double radius)
+        private void insertCircle(_Ge.Point3d center, double radius)
         {
-            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-            using (Circle circle = new Circle())
+            using (_Db.Circle circle = new _Db.Circle())
             {
                 circle.Center = center;
                 circle.Radius = radius;
                 btr.AppendEntity(circle);
-                trans.AddNewlyCreatedDBObject(circle, true);
+                _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
         }
 
 
-        private double getDirectionVector(Point3d ptStart, Point3d ptEnd, double rotation)
+        private double getDirectionVector(_Ge.Point3d ptStart, _Ge.Point3d ptEnd, double rotation)
         {
             double dir = 0.0;
 
@@ -277,81 +269,81 @@ namespace commands
         }
 
 
-        private Point3d getBigCirclePoint(Point3d ptPos, double dir, double rotation)
+        private _Ge.Point3d getBigCirclePoint(_Ge.Point3d ptPos, double dir, double rotation)
         {
-            Point3d ptNew = new Point3d();
+            _Ge.Point3d ptNew = new _Ge.Point3d();
             if (rotation == 0.0)
             {
                 double newX = ptPos.X - bigCircleOffset * dir;
                 double newY = ptPos.Y;
-                ptNew = new Point3d(newX, newY, ptPos.Z);
+                ptNew = new _Ge.Point3d(newX, newY, ptPos.Z);
             }
             else
             {
                 double newX = ptPos.X;
                 double newY = ptPos.Y - bigCircleOffset * dir;
-                ptNew = new Point3d(newX, newY, ptPos.Z);
+                ptNew = new _Ge.Point3d(newX, newY, ptPos.Z);
             }
 
             return ptNew;
         }
 
 
-        private void insertLine(Point3d ptPos, double dir, double rotation)
+        private void insertLine(_Ge.Point3d ptPos, double dir, double rotation)
         {
-            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-            Point3d ptEnd = new Point3d();
+            _Ge.Point3d ptEnd = new _Ge.Point3d();
 
             if (rotation == 0.0)
             {
                 double newX = ptPos.X - (bigCircleOffset - bigCircleRadius) * dir;
                 double newY = ptPos.Y;
-                ptEnd = new Point3d(newX, newY, ptPos.Z);
+                ptEnd = new _Ge.Point3d(newX, newY, ptPos.Z);
             }
             else
             {
                 double newX = ptPos.X;
                 double newY = ptPos.Y - (bigCircleOffset - bigCircleRadius) * dir;
-                ptEnd = new Point3d(newX, newY, ptPos.Z);
+                ptEnd = new _Ge.Point3d(newX, newY, ptPos.Z);
             }
 
-            using (Line line = new Line(ptPos, ptEnd))
+            using (_Db.Line line = new _Db.Line(ptPos, ptEnd))
             {
                 btr.AppendEntity(line);
-                trans.AddNewlyCreatedDBObject(line, true);
+                _c.trans.AddNewlyCreatedDBObject(line, true);
             }
         }
 
 
-        private bool insertNumber(Point3d center, double rotation)
+        private bool insertNumber(_Ge.Point3d center, double rotation)
         {
-            PromptStringOptions pStrOpts = new PromptStringOptions("\nNumber: ");
+            _Ed.PromptStringOptions pStrOpts = new _Ed.PromptStringOptions("\nNumber: ");
             pStrOpts.AllowSpaces = false;
-            PromptResult pStrRes = ed.GetString(pStrOpts);
+            _Ed.PromptResult pStrRes = _c.ed.GetString(pStrOpts);
             string result = pStrRes.StringResult;
 
-            if (pStrRes.Status == PromptStatus.Cancel) return false;
+            if (pStrRes.Status == _Ed.PromptStatus.Cancel) return false;
 
-            AttachmentPoint a = AttachmentPoint.MiddleCenter;
+            _Db.AttachmentPoint a = _Db.AttachmentPoint.MiddleCenter;
             if (result.Length > 2)
             {
-                Point3d insert = center;
+                _Ge.Point3d insert = center;
 
-                a = AttachmentPoint.BottomRight;
+                a = _Db.AttachmentPoint.BottomRight;
                 if (rotation == 0.0)
                 {
                     double newX = center.X;
                     double newY = center.Y + textOffset;
 
-                    insert = new Point3d(newX, newY, center.Z);
+                    insert = new _Ge.Point3d(newX, newY, center.Z);
                 }
                 else
                 {
                     double newX = center.X - textOffset;
                     double newY = center.Y;
 
-                    insert = new Point3d(newX, newY, center.Z);
+                    insert = new _Ge.Point3d(newX, newY, center.Z);
                 }
 
                 insertText(insert, a, result, rotation);
@@ -359,18 +351,18 @@ namespace commands
             }
             else
             {
-                a = AttachmentPoint.MiddleCenter;
+                a = _Db.AttachmentPoint.MiddleCenter;
                 insertText(center, a, result, 0.0);
                 return true;
             }
         }
 
 
-        private void insertText(Point3d ptInsert, AttachmentPoint a, string txt, double rotation)
+        private void insertText(_Ge.Point3d ptInsert, _Db.AttachmentPoint a, string txt, double rotation)
         {
-            BlockTableRecord btr = trans.GetObject(SymbolUtilityServices.GetBlockModelSpaceId(db), OpenMode.ForWrite) as BlockTableRecord;
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-            using (MText acMText = new MText())
+            using (_Db.MText acMText = new _Db.MText())
             {
                 acMText.Attachment = a;
                 acMText.Location = ptInsert;
@@ -379,36 +371,36 @@ namespace commands
                 acMText.Rotation = rotation;
 
                 btr.AppendEntity(acMText);
-                trans.AddNewlyCreatedDBObject(acMText, true);
+                _c.trans.AddNewlyCreatedDBObject(acMText, true);
             }
         }
 
 
-        private bool insertFormSide(Point3d ptPos, double dir, double rotation)
+        private bool insertFormSide(_Ge.Point3d ptPos, double dir, double rotation)
         {
-            PromptStringOptions pStrOpts = new PromptStringOptions("\nFormSide: ");
+            _Ed.PromptStringOptions pStrOpts = new _Ed.PromptStringOptions("\nFormSide: ");
             pStrOpts.AllowSpaces = false;
-            PromptResult pStrRes = ed.GetString(pStrOpts);
+            _Ed.PromptResult pStrRes = _c.ed.GetString(pStrOpts);
             string result = pStrRes.StringResult;
 
-            if (pStrRes.Status == PromptStatus.Cancel) return false;
+            if (pStrRes.Status == _Ed.PromptStatus.Cancel) return false;
 
-            Point3d insert = ptPos;
-            AttachmentPoint a = AttachmentPoint.BottomCenter;
+            _Ge.Point3d insert = ptPos;
+            _Db.AttachmentPoint a = _Db.AttachmentPoint.BottomCenter;
 
             if (rotation == 0.0)
             {
-                a = AttachmentPoint.BottomCenter;
+                a = _Db.AttachmentPoint.BottomCenter;
                 double newX = ptPos.X - (bigCircleOffset - bigCircleRadius) * dir / 2;
                 double newY = ptPos.Y + textOffset;
-                insert = new Point3d(newX, newY, ptPos.Z);
+                insert = new _Ge.Point3d(newX, newY, ptPos.Z);
             }
             else
             {
-                a = AttachmentPoint.MiddleRight;
+                a = _Db.AttachmentPoint.MiddleRight;
                 double newX = ptPos.X - textOffset;
                 double newY = ptPos.Y - (bigCircleOffset - bigCircleRadius) * dir / 2;
-                insert = new Point3d(newX, newY, ptPos.Z);
+                insert = new _Ge.Point3d(newX, newY, ptPos.Z);
             }
 
             insertText(insert, a, result, 0);
@@ -416,9 +408,9 @@ namespace commands
         }
 
 
-        private void writeCadMessage(string errorMessage)
+        private void write(string message)
         {
-            ed.WriteMessage(errorMessage + "\n");
+            _c.ed.WriteMessage("\n" + message);
         }
 
     }

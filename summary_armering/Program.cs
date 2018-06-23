@@ -300,7 +300,7 @@ namespace summary_armering
             }
 
             File.Create(xml_lock_full).Dispose();
-            Console.WriteLine("LOCK ON");
+            Console.WriteLine("[XML] LOCK ON");
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(xml_full);
@@ -323,7 +323,7 @@ namespace summary_armering
             finally
             {
                 File.Delete(xml_lock_full);
-                Console.WriteLine("LOCK OFF");
+                Console.WriteLine("[XML] LOCK OFF");
             }                      
 
         }

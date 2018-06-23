@@ -1,35 +1,53 @@
-﻿using System;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
 using System.Collections;
 using System.Linq;
 using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
 
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
 
 
 namespace commands
 {
-    class _Mark : IEquatable<_Mark>
+    class _Mark_K : IEquatable<_Mark_K>
     {
         string original;
-        Point3d insert;
+        _Ge.Point3d insert;
 
         int number = 0;
         int diameter = -99;
@@ -39,7 +57,7 @@ namespace commands
         int position_nr = -99;
 
         public string Original { get { return original; } }
-        public Point3d IP { get { return insert; } }
+        public _Ge.Point3d IP { get { return insert; } }
 
         public int Number { get { return number; } set { number = value; } }
         public int Diameter { get { return diameter; } }
@@ -49,14 +67,14 @@ namespace commands
         public int Position_Nr { get { return position_nr; } }
 
 
-        public _Mark(string original_text, Point3d insp)
+        public _Mark_K(string original_text, _Ge.Point3d insp)
         {
             original = original_text;
             insert = insp;
         }
 
 
-        public _Mark(int num, int diam, string pos, string shp, int nr)
+        public _Mark_K(int num, int diam, string pos, string shp, int nr)
         {
             number = num;
             diameter = diam;
@@ -334,7 +352,7 @@ namespace commands
         }
 
 
-        public bool Equals(_Mark other)
+        public bool Equals(_Mark_K other)
         {
             if (other == null) return false;
             double dX = this.insert.X - other.insert.X;
@@ -352,17 +370,17 @@ namespace commands
             if (ReferenceEquals(null, obj)) return false;
             if (ReferenceEquals(this, obj)) return true;
             if (obj.GetType() != GetType()) return false;
-            return Equals(obj as _Mark);
+            return Equals(obj as _Mark_K);
         }
 
 
-        public static bool operator ==(_Mark a, _Mark b)
+        public static bool operator ==(_Mark_K a, _Mark_K b)
         {
             return object.Equals(a, b);
         }
 
 
-        public static bool operator !=(_Mark a, _Mark b)
+        public static bool operator !=(_Mark_K a, _Mark_K b)
         {
             return !object.Equals(a, b);
         }

@@ -1,53 +1,73 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
+using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
 
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
 
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
 
 
 namespace commands
 {
     class _Area_v1
     {
-        Point3d start;
-        Point3d end;
-        Point3d reinf;
-        Point3d weight;
+        _Ge.Point3d start;
+        _Ge.Point3d end;
+        _Ge.Point3d reinf;
+        _Ge.Point3d weight;
 
-        public Point3d Start { get { return start; } }
-        public Point3d End { get { return end; } }
-        public Point3d IP_reinf { get { return reinf; } }
-        public Point3d IP_weight { get { return weight; } }
+        public _Ge.Point3d Start { get { return start; } }
+        public _Ge.Point3d End { get { return end; } }
+        public _Ge.Point3d IP_reinf { get { return reinf; } }
+        public _Ge.Point3d IP_weight { get { return weight; } }
 
 
-        public _Area_v1(Point3d s, Point3d e)
+        public _Area_v1(_Ge.Point3d s, _Ge.Point3d e)
         {
             start = s;
             end = e;
 
-            reinf = new Point3d(e.X - 2180, e.Y - 1460, e.Z);
-            weight = new Point3d(e.X - 780, e.Y - 5062, e.Z);
+            reinf = new _Ge.Point3d(e.X - 2180, e.Y - 1460, e.Z);
+            weight = new _Ge.Point3d(e.X - 780, e.Y - 5062, e.Z);
         }
 
 
-        internal bool isPointInArea(Point3d point)
+        internal bool isPointInArea(_Ge.Point3d point)
         {
             if (point.X < Start.X) return false;
             if (point.X > End.X) return false;

@@ -1,36 +1,54 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
 using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
+
+
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
+
 using System.Xml;
-
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
-
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
 
 
 namespace commands
 {
     class XML_PrintKnownRebar_command
     {
-        Document doc;
-        Database db;
-        Editor ed;
+        _CONNECTION _c;
 
         static string name = "alfa";
 
@@ -39,14 +57,12 @@ namespace commands
         string xml_lock_full;
 
 
-        public XML_PrintKnownRebar_command()
+        public XML_PrintKnownRebar_command(ref _CONNECTION c)
         {
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
+            _c = c;
 
-            HostApplicationServices hs = HostApplicationServices.Current;
-            string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
+            _Db.HostApplicationServices hs = _Db.HostApplicationServices.Current;
+            string dwg_path = hs.FindFile(_c.doc.Name, _c.doc.Database, _Db.FindFileHint.Default);
 
             dwg_dir = Path.GetDirectoryName(dwg_path);
             if (!dwg_dir.EndsWith(@"\")) { dwg_dir = dwg_dir + @"\"; }
@@ -58,7 +74,8 @@ namespace commands
 
         public void unlock_after_crash()
         {
-            writeCadMessage("LOCK OFF");
+            write("[XML] LOCK OFF");
+
             if (File.Exists(xml_lock_full))
             {
                 File.Delete(xml_lock_full);
@@ -68,20 +85,11 @@ namespace commands
 
         public void run()
         {
-            if (!File.Exists(xml_full))
-            {
-                writeCadMessage("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
-                return;
-            }
-
-            if (File.Exists(xml_lock_full))
-            {
-                writeCadMessage("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
-                return;
-            }
+            if (!File.Exists(xml_full)) throw new DMTException("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
+            if (File.Exists(xml_lock_full)) throw new DMTException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
 
             File.Create(xml_lock_full).Dispose();
-            writeCadMessage("LOCK ON");
+            write("[XML] LOCK ON");
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(xml_full);
@@ -96,26 +104,20 @@ namespace commands
                 XmlNode rebar = row["B2aBar"];
                 if (rebar == null)
                 {
-                    writeCadMessage("error reading");
+                    write("error reading");
                     continue;
                 }
 
                 string rebarString = XML_Handle.getXMLRebarString(rebar);
-                writeCadMessage(rebarString);
+                write(rebarString);
             }
           
         }
 
 
-        private void writeCadMessage(string errorMessage)
-        {
-            ed.WriteMessage("\n" + errorMessage);
-        }
-
-
         private string promptFilter()
         {
-            PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
+            _Ed.PromptKeywordOptions promptOptions = new _Ed.PromptKeywordOptions("");
             promptOptions.Message = "\nWhat to print: ";
             promptOptions.Keywords.Add("A");
             promptOptions.Keywords.Add("B");
@@ -155,9 +157,10 @@ namespace commands
             promptOptions.Keywords.Add("SPEC");
             promptOptions.Keywords.Add("LAST");
             promptOptions.AllowNone = true;
-            PromptResult promptResult = ed.GetKeywords(promptOptions);
 
-            if (promptResult.Status == PromptStatus.OK)
+            _Ed.PromptResult promptResult = _c.ed.GetKeywords(promptOptions);
+
+            if (promptResult.Status == _Ed.PromptStatus.OK)
             {
                 if (promptResult.StringResult == "") return "LAST";
                 else
@@ -167,6 +170,12 @@ namespace commands
             }
 
             return "LAST";
+        }
+
+
+        private void write(string message)
+        {
+            _c.ed.WriteMessage("\n" + message);
         }
 
     }

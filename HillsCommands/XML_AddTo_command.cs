@@ -1,38 +1,54 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿#define BRX_APP
+//#define ARX_APP
+
+using System;
 using System.Text;
-using System.Threading.Tasks;
+using System.Collections;
+using System.Linq;
 using System.IO;
+using System.Diagnostics;
+using System.Collections.Generic;
+using _SWF = System.Windows.Forms;
+
+
+#if BRX_APP
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
+#elif ARX_APP
+    using _Ap = Autodesk.AutoCAD.ApplicationServices;
+    //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
+    using _Cm = Autodesk.AutoCAD.Colors;
+    using _Db = Autodesk.AutoCAD.DatabaseServices;
+    using _Ed = Autodesk.AutoCAD.EditorInput;
+    using _Ge = Autodesk.AutoCAD.Geometry;
+    using _Gi = Autodesk.AutoCAD.GraphicsInterface;
+    using _Gs = Autodesk.AutoCAD.GraphicsSystem;
+    using _Pl = Autodesk.AutoCAD.PlottingServices;
+    using _Brx = Autodesk.AutoCAD.Runtime;
+    using _Trx = Autodesk.AutoCAD.Runtime;
+    using _Wnd = Autodesk.AutoCAD.Windows;
+#endif
+
 using System.Xml;
-
-////Autocad
-//using Autodesk.AutoCAD.Runtime;
-//using Autodesk.AutoCAD.ApplicationServices;
-//using Autodesk.AutoCAD.DatabaseServices;
-//using Autodesk.AutoCAD.Geometry;
-//using Autodesk.AutoCAD.EditorInput;
-//using Autodesk.AutoCAD.PlottingServices;
-
-//Bricsys
-using Teigha.Runtime;
-using Teigha.DatabaseServices;
-using Teigha.Geometry;
-using Bricscad.ApplicationServices;
-using Bricscad.Runtime;
-using Bricscad.EditorInput;
-using Bricscad.PlottingServices;
 
 
 namespace commands
 {
     class XML_AddTo_command
     {
-        Document doc;
-        Database db;
-        Editor ed;
-
-        Transaction trans;
+        _CONNECTION _c;
 
         static string name = "alfa";
 
@@ -42,16 +58,12 @@ namespace commands
         string xml_output_full;
 
 
-        public XML_AddTo_command()
+        public XML_AddTo_command(ref _CONNECTION c)
         {
-            doc = Application.DocumentManager.MdiActiveDocument;
-            db = doc.Database;
-            ed = doc.Editor;
+            _c = c;
 
-            trans = doc.TransactionManager.StartTransaction();
-
-            HostApplicationServices hs = HostApplicationServices.Current;
-            string dwg_path = hs.FindFile(doc.Name, doc.Database, FindFileHint.Default);
+            _Db.HostApplicationServices hs = _Db.HostApplicationServices.Current;
+            string dwg_path = hs.FindFile(_c.doc.Name, _c.doc.Database, _Db.FindFileHint.Default);
 
             dwg_dir = Path.GetDirectoryName(dwg_path);
             if (!dwg_dir.EndsWith(@"\")) { dwg_dir = dwg_dir + @"\"; }
@@ -64,10 +76,10 @@ namespace commands
 
         public void unlock_after_crash()
         {
-            writeCadMessage("LOCK OFF");
-
             if (File.Exists(xml_lock_full))
             {
+                write("[XML] LOCK OFF");
+
                 File.Delete(xml_lock_full);
             }
         }
@@ -75,20 +87,12 @@ namespace commands
 
         public void run()
         {
-            if (!File.Exists(xml_full))
-            {
-                writeCadMessage("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
-                return;
-            }
+            if (!File.Exists(xml_full)) throw new DMTException("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");            
+            if (File.Exists(xml_lock_full)) throw new DMTException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
 
-            if (File.Exists(xml_lock_full))
-            {
-                writeCadMessage("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
-                return;
-            }
 
             File.Create(xml_lock_full).Dispose();
-            writeCadMessage("LOCK ON");
+            write("[XML] LOCK ON");
 
             XmlDocument xmlDoc = new XmlDocument();
             xmlDoc.Load(xml_full);
@@ -109,25 +113,17 @@ namespace commands
                 rebars.AddRange(newRebars);
                 filtreeri(pages, rebars, xmlDoc);
                 xmlDoc.Save(xml_output_full);
-
             }
+
+            write("[XML] LOCK OFF");
 
             foreach (_Mark m in warning.Keys)
             {
-                writeCadMessage("--- WARINING: " + m.ToString());
+                write("--- WARINING: " + m.ToString());
                 string rebarString = XML_Handle.getXMLRebarString(warning[m]);
-                writeCadMessage("--- WARINING: " + rebarString);
-                writeCadMessage("");
+                write("--- WARINING: " + rebarString);
+                write("");
             }
-        }
-
-
-        internal void close()
-        {
-            trans.Commit();
-            trans.Dispose();
-
-            ed.Regen();
         }
 
 
@@ -318,10 +314,10 @@ namespace commands
         {
             List<XmlNode> newRebar = new List<XmlNode>();
 
-            writeCadMessage(" ");
+            write(" ");
             foreach (_Mark u in undefined)
             {
-                writeCadMessage("--- Not found: " + u.ToString());
+                write("--- Not found: " + u.ToString());
             }
 
             string materjal = promptGetMaterial();
@@ -331,7 +327,7 @@ namespace commands
                 bool add = promptAddRebarToXml(u);
                 if (add)
                 {
-                    XmlNode newNode = XML_Handle.newNodeHandle(u, materjal, xmlDoc, ed);
+                    XmlNode newNode = XML_Handle.newNodeHandle(u, materjal, xmlDoc, _c.ed);
                     XmlNode dublicate = checkIfRebarExists(newNode, rebars);
                     if (dublicate == null)
                     {
@@ -339,15 +335,15 @@ namespace commands
                     }
                     else
                     {
-                        writeCadMessage("Sama kujuga raud on juba olemas!");
+                        write("Sama kujuga raud on juba olemas!");
                         XmlNode rebar = dublicate["B2aBar"];
                         string rebarString = XML_Handle.getXMLRebarString(rebar);
-                        writeCadMessage(rebarString);
+                        write(rebarString);
                     }
                 }
                 else
                 {
-                    writeCadMessage("Skip: " + u.ToString());
+                    write("Skip: " + u.ToString());
                 }
             }
 
@@ -372,14 +368,14 @@ namespace commands
 
         private bool promptAddRebarToXml(_Mark u)
         {
-            PromptKeywordOptions promptOptions = new PromptKeywordOptions("");
+            _Ed.PromptKeywordOptions promptOptions = new _Ed.PromptKeywordOptions("");
             promptOptions.Message = "\nAdd to XML: " + u.ToString();
             promptOptions.Keywords.Add("Yes");
             promptOptions.Keywords.Add("No");
             promptOptions.AllowNone = false;
-            PromptResult promptResult = ed.GetKeywords(promptOptions);
+            _Ed.PromptResult promptResult = _c.ed.GetKeywords(promptOptions);
 
-            if (promptResult.Status == PromptStatus.OK)
+            if (promptResult.Status == _Ed.PromptStatus.OK)
             {
                 if (promptResult.StringResult == "Yes")
                 {
@@ -395,12 +391,12 @@ namespace commands
         {
             string materjal = "K500C-T";
 
-            PromptStringOptions promptOptions2 = new PromptStringOptions("");
+            _Ed.PromptStringOptions promptOptions2 = new _Ed.PromptStringOptions("");
             promptOptions2.Message = "\nArmatuuri teras: ";
             promptOptions2.DefaultValue = "K500C-T";
-            PromptResult promptResult2 = ed.GetString(promptOptions2);
+            _Ed.PromptResult promptResult2 = _c.ed.GetString(promptOptions2);
 
-            if (promptResult2.Status == PromptStatus.OK)
+            if (promptResult2.Status == _Ed.PromptStatus.OK)
             {
                 materjal = promptResult2.StringResult;
             }
@@ -413,9 +409,9 @@ namespace commands
         {
             List<_Mark> parse = new List<_Mark>();
 
-            List<MText> selected = getSelectedText(doc);
+            List<_Db.MText> selected = getSelectedText();
 
-            foreach (MText txt in selected)
+            foreach (_Db.MText txt in selected)
             {
                 _Mark current = new _Mark(txt.Contents, txt.Location);
                 bool valid = current.validate();
@@ -459,43 +455,43 @@ namespace commands
         }
 
 
-        private List<MText> getSelectedText(Document doc)
+        private List<_Db.MText> getSelectedText()
         {
-            List<MText> txt = new List<MText>();
+            List<_Db.MText> txt = new List<_Db.MText>();
 
-            PromptSelectionResult selection = ed.GetSelection();
-            if (selection.Status == PromptStatus.OK)
+            _Ed.PromptSelectionResult selection = _c.ed.GetSelection();
+            if (selection.Status == _Ed.PromptStatus.OK)
             {
-                ObjectId[] objIds = selection.Value.GetObjectIds();
+                _Db.ObjectId[] objIds = selection.Value.GetObjectIds();
 
-                foreach (ObjectId objId in objIds)
+                foreach (_Db.ObjectId objId in objIds)
                 {
-                    Entity currentEntity = trans.GetObject(objId, OpenMode.ForRead) as Entity;
+                    _Db.Entity currentEntity = _c.trans.GetObject(objId, _Db.OpenMode.ForRead) as _Db.Entity;
 
                     if (currentEntity != null)
                     {
-                        if (currentEntity is MText)
+                        if (currentEntity is _Db.MText)
                         {
-                            MText br = currentEntity as MText;
+                            _Db.MText br = currentEntity as _Db.MText;
                             txt.Add(br);
                         }
 
-                        if (currentEntity is DBText)
+                        if (currentEntity is _Db.DBText)
                         {
-                            DBText br = currentEntity as DBText;
-                            MText myMtext = new MText();
+                            _Db.DBText br = currentEntity as _Db.DBText;
+                            _Db.MText myMtext = new _Db.MText();
                             myMtext.Contents = br.TextString;
                             myMtext.Location = br.Position;
                             txt.Add(myMtext);
                         }
 
-                        if (currentEntity is MLeader)
+                        if (currentEntity is _Db.MLeader)
                         {
-                            MLeader br = currentEntity as MLeader;
+                            _Db.MLeader br = currentEntity as _Db.MLeader;
 
-                            if (br.ContentType == ContentType.MTextContent)
+                            if (br.ContentType == _Db.ContentType.MTextContent)
                             {
-                                MText leaderText = br.MText;
+                                _Db.MText leaderText = br.MText;
                                 txt.Add(leaderText);
                             }
                         }
@@ -537,10 +533,10 @@ namespace commands
                 {
                     if (m.Position_Shape == type && m.Position_Nr.ToString() == pos_nr && m.Diameter.ToString() == diam)
                     {
-                        writeCadMessage("Found in XML: " + m.ToString());
+                        write("Found in XML: " + m.ToString());
                         string rebarString = XML_Handle.getXMLRebarString(rebar);
-                        writeCadMessage(rebarString);
-                        writeCadMessage("");
+                        write(rebarString);
+                        write("");
                         return true;
                     }
                 }
@@ -557,10 +553,10 @@ namespace commands
                             warning[m] = rebar;
                         }
 
-                        writeCadMessage("Found in XML: " + m.ToString());
+                        write("Found in XML: " + m.ToString());
                         string rebarString = XML_Handle.getXMLRebarString(rebar);
-                        writeCadMessage(rebarString);
-                        writeCadMessage("");
+                        write(rebarString);
+                        write("");
                         return true;
                     }
                 }
@@ -570,9 +566,9 @@ namespace commands
         }
 
 
-        private void writeCadMessage(string errorMessage)
+        private void write(string message)
         {
-            ed.WriteMessage("\n" + errorMessage);
+            _c.ed.WriteMessage("\n" + message);
         }
 
     }
