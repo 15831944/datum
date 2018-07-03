@@ -506,78 +506,78 @@ namespace commands
         }
 
 
-        //[_Trx.CommandMethod("pppp")]
-        //public void print_all()
-        //{
-        //    try
-        //    {
-        //        _CONNECTION c = new _CONNECTION();
+        [_Trx.CommandMethod("pppp")]
+        public void print_all()
+        {
+            try
+            {
+                _CONNECTION c = new _CONNECTION();
 
-        //        PRINT_command_v2 program = new PRINT_command_v2(ref c);
+                PRINT_command_v2 program = new PRINT_command_v2(ref c);
 
-        //        try
-        //        {
-        //            program.run(true);
+                try
+                {
+                    program.run(true);
 
-        //            c.ed.WriteMessage("\n[DONE]");
-        //        }                
-        //catch (DMTException de)
-        //        {
-        //            c.ed.WriteMessage("\n" + de.Message);
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            c.ed.WriteMessage("\n[ERROR] Unknown Exception");
-        //            c.ed.WriteMessage("\n[ERROR] " + ex.Message);
-        //            c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
-        //        }
-        //        finally
-        //        {
-        //            c.close();
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
-        //    }
-        //}
+                    c.ed.WriteMessage("\n[DONE]");
+                }
+                catch (DMTException de)
+                {
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
+                catch (Exception ex)
+                {
+                    c.ed.WriteMessage("\n[ERROR] Unknown Exception");
+                    c.ed.WriteMessage("\n[ERROR] " + ex.Message);
+                    c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
+                }
+                finally
+                {
+                    c.close();
+                }
+            }
+            catch
+            {
+                _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
+            }
+        }
 
 
-        //[_Trx.CommandMethod("HILLS_PRINT_SELECTED")]
-        //public void print_selected()
-        //{
-        //    try
-        //    {
-        //        _CONNECTION c = new _CONNECTION();
+        [_Trx.CommandMethod("HILLS_PRINT_SELECTED")]
+        public void print_selected()
+        {
+            try
+            {
+                _CONNECTION c = new _CONNECTION();
 
-        //        PRINT_command_v2 program = new PRINT_command_v2(ref c);
+                PRINT_command_v2 program = new PRINT_command_v2(ref c);
 
-        //        try
-        //        {
-        //            program.run(false);
+                try
+                {
+                    program.run(false);
 
-        //            c.ed.WriteMessage("\n[DONE]");
-        //        }
-        //    catch (DMTException de)
-        //{
-        //    c.ed.WriteMessage("\n" + de.Message);
-        //}
-        //        catch (Exception ex)
-        //        {
-        //            c.ed.WriteMessage("\n[ERROR] Unknown Exception");
-        //            c.ed.WriteMessage("\n[ERROR] " + ex.Message);
-        //            c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
-        //        }
-        //        finally
-        //        {
-        //            c.close();
-        //        }
-        //    }
-        //    catch
-        //    {
-        //        _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
-        //    }
-        //}
+                    c.ed.WriteMessage("\n[DONE]");
+                }
+                catch (DMTException de)
+                {
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
+                catch (Exception ex)
+                {
+                    c.ed.WriteMessage("\n[ERROR] Unknown Exception");
+                    c.ed.WriteMessage("\n[ERROR] " + ex.Message);
+                    c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
+                }
+                finally
+                {
+                    c.close();
+                }
+            }
+            catch
+            {
+                _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
+            }
+        }
 
     }
 }

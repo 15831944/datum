@@ -118,6 +118,7 @@ namespace commands
                 if (txt.Contents.StartsWith("HFV")) continue;
                 if (txt.Contents.StartsWith("6300S")) continue;
                 if (txt.Contents.StartsWith("DUBBURSPARING")) continue;
+                if (txt.Contents.Length < 3) continue;
                 
                 if (txt.Contents.Contains("-"))
                 {

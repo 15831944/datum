@@ -88,17 +88,21 @@ namespace commands
 
                     if (pp1 == false)
                     {
-                        createCircle(50, 1, p1, dims[dim]);
-                        createCircle(150, 1, p1, dims[dim]);
-                        createCircle(200, 2, rdim.TextPosition, dims[dim]);
+                        createCircle(100, 1, p1, dims[dim]);
+                        createCircle(750, 1, p1, dims[dim]);
+                        //createCircle(200, 2, rdim.TextPosition, dims[dim]);
                         wrongs.Add(dim);
+
+                        changeFillColor(dim, 1);
                     }
                     if (pp2 == false)
                     {
-                        createCircle(50, 1, p2, dims[dim]);
-                        createCircle(150, 1, p2, dims[dim]);
-                        createCircle(200, 2, rdim.TextPosition, dims[dim]);
+                        createCircle(100, 1, p2, dims[dim]);
+                        createCircle(750, 1, p2, dims[dim]);
+                        //createCircle(200, 2, rdim.TextPosition, dims[dim]);
                         wrongs.Add(dim);
+
+                        changeFillColor(dim, 1);
                     }
                 }
             }
@@ -347,6 +351,13 @@ namespace commands
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
+        }
+
+
+        private void changeFillColor(_Db.Dimension dim, short index)
+        {
+            dim.Dimtfill = 2;
+            dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
         }
 
 

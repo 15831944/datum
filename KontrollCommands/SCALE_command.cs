@@ -61,11 +61,11 @@ namespace commands
         internal void run()
         {
             getAllDims();
-            setColorToDims();
+            logic();
         }
 
 
-        private void setColorToDims()
+        private void logic()
         {
             List<_Db.Dimension> scale_05 = new List<_Db.Dimension>();
             List<_Db.Dimension> scale_other = new List<_Db.Dimension>();
@@ -81,12 +81,16 @@ namespace commands
                     createCircle(2000, 2, dim.TextPosition, dims[dim]);
                     createCircle(200, 2, dim.TextPosition, dims[dim]);
                     scale_05.Add(dim);
+
+                    changeFillColor(dim, 2);
                 }
                 else
                 {
                     createCircle(2000, 1, dim.TextPosition, dims[dim]);
                     createCircle(200, 1, dim.TextPosition, dims[dim]);
                     scale_other.Add(dim);
+
+                    changeFillColor(dim, 1);
                 }                                
             }
 
@@ -133,6 +137,13 @@ namespace commands
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
+        }
+
+
+        private void changeFillColor(_Db.Dimension dim, short index)
+        {
+            dim.Dimtfill = 2;
+            dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
         }
 
 

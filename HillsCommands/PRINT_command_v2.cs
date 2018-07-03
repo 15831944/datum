@@ -306,7 +306,7 @@ namespace commands
         }
 
 
-        private _Db.Layout createLayoutandSetActive(string name)
+        private _Db.Layout createLayoutandSetActive(string name) //EH?
         {
             string randomName = generateRandomString(20);
 

@@ -61,11 +61,11 @@ namespace commands
         internal void run()
         {
             getAllDims();
-            setColorToDims();
+            logic();
         }
 
 
-        private void setColorToDims()
+        private void logic()
         {
             List<_Db.Dimension> overrides = new List<_Db.Dimension>();
 
@@ -88,6 +88,7 @@ namespace commands
             {
                 createCircle(2000, 1, dim.TextPosition, dims[dim]);
                 createCircle(200, 1, dim.TextPosition, dims[dim]);
+                changeFillColor(dim, 1);
             }
 
             write("Text override count: " + overrides.Count.ToString());
@@ -132,6 +133,13 @@ namespace commands
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
+        }
+
+
+        private void changeFillColor(_Db.Dimension dim, short index)
+        {
+            dim.Dimtfill = 2;
+            dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
         }
 
 

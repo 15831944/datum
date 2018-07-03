@@ -504,6 +504,7 @@ namespace commands
                 acText.Position = position;
                 acText.Height = txtHeight;
                 acText.TextString = value;
+                acText.ColorIndex = 256;
 
                 btr.AppendEntity(acText);
                 _c.trans.AddNewlyCreatedDBObject(acText, true);
