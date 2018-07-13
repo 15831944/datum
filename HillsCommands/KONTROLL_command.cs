@@ -48,8 +48,6 @@ namespace commands
     {
         _CONNECTION _c;
         
-        static string markLayerName = "K60";
-
 
         public KONTROLL_command(ref _CONNECTION c)
         {
@@ -59,16 +57,16 @@ namespace commands
 
         public void run()
         {
-            List<_Mark_K> wrongMarks = getAllWrongMarks();
+            List<_Mark> wrongMarks = getAllWrongMarks();
             drawWrongMarks(wrongMarks);
         }
 
         
-        private void drawWrongMarks(List<_Mark_K> marks)
+        private void drawWrongMarks(List<_Mark> marks)
         {
             write("Vigade arv: " + marks.Count().ToString());
 
-            foreach (_Mark_K mark in marks)
+            foreach (_Mark mark in marks)
             {
                 createCircle(2000, 1, mark.IP);
                 createCircle(200, 1, mark.IP);
@@ -91,9 +89,9 @@ namespace commands
         }
 
 
-        private List<_Mark_K> getAllWrongMarks()
+        private List<_Mark> getAllWrongMarks()
         {
-            List<_Mark_K> wrongMarks = new List<_Mark_K>();
+            List<_Mark> wrongMarks = new List<_Mark>();
 
             List<_Db.MText> allTexts = getAllText();
             wrongMarks = filterWrongMarks(allTexts);
@@ -102,10 +100,12 @@ namespace commands
         }
 
 
-        private List<_Mark_K> filterWrongMarks(List<_Db.MText> txts)
+        private List<_Mark> filterWrongMarks(List<_Db.MText> txts)
         {
-            List<_Mark_K> good = new List<_Mark_K>();
-            List<_Mark_K> bad = new List<_Mark_K>();
+            List<_Mark> good = new List<_Mark>();
+            List<_Mark> bad = new List<_Mark>();
+
+            write("----- VIGADE LOETELU ALGUS -----");
 
             foreach (_Db.MText txt in txts)
             {
@@ -118,37 +118,47 @@ namespace commands
                 if (txt.Contents.StartsWith("HFV")) continue;
                 if (txt.Contents.StartsWith("6300S")) continue;
                 if (txt.Contents.StartsWith("DUBBURSPARING")) continue;
-                if (txt.Contents.Length < 3) continue;
-                
+                if (txt.Contents.Length < 6) continue;
+                if (txt.Contents.Length > 19) continue;
+
                 if (txt.Contents.Contains("-"))
                 {
-                    _Mark_K current = new _Mark_K(txt.Contents, txt.Location);
-                    bool valid = current.validate_original();
+                    _Mark current = new _Mark(txt.Contents, txt.Location, txt.Layer);
+                    bool valid = current.validate();
 
                     if (valid == false)
                     {
-                        bad.Add(current);
-                    }
-                    else
-                    {
-                        if (good.Contains(current))
+                        if (txt.Layer != _Mark.markLayerName)
                         {
                             bad.Add(current);
+                            write("[VIGA] - VALE LAYER - " + current.Original);
                         }
                         else
                         {
-                            if (txt.Layer != markLayerName)
+                            bad.Add(current);
+                            write("[VIGA] - VALE VIIDE - " + current.Original);
+                        }
+                    }
+                    else
+                    {
+                        if (current.containsLocation(good))
+                        {
+                            if (!current.containsLocation(bad))
                             {
                                 bad.Add(current);
+                                write("[VIGA] - TOPELT - " + current.Original);
                             }
-                            else
-                            {
-                                good.Add(current);
-                            }                            
                         }
+                        else
+                        {
+                            good.Add(current);
+                        }
+
                     }
                 }
             }
+
+            write("----- VIGADE LOETELU LÕPP -----");
 
             return bad;
         }
@@ -169,32 +179,29 @@ namespace commands
                     if (currentEntity is _Db.MText)
                     {
                         _Db.MText br = currentEntity as _Db.MText;
-
                         txt.Add(br);
                     }
-
-                    if (currentEntity is _Db.DBText)
+                    else if (currentEntity is _Db.DBText)
                     {
                         _Db.DBText br = currentEntity as _Db.DBText;
-
                         _Db.MText myMtext = new _Db.MText();
+
                         myMtext.Contents = br.TextString;
-                        myMtext.Location = br.Position;
                         myMtext.Layer = br.Layer;
+
+                        myMtext.Location = br.Position;
                         txt.Add(myMtext);
-
                     }
-
-                    if (currentEntity is _Db.MLeader)
+                    else if (currentEntity is _Db.MLeader)
                     {
                         _Db.MLeader br = currentEntity as _Db.MLeader;
+
                         if (br.ContentType == _Db.ContentType.MTextContent)
                         {
                             _Db.MText leaderText = br.MText;
                             leaderText.Layer = br.Layer;
                             txt.Add(leaderText);
                         }
-
                     }
                 }
             }

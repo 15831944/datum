@@ -46,6 +46,7 @@ namespace commands
 {
     public class __KontrollCommands
     {
+
         [_Trx.CommandMethod("KONTROLL_INFO")]
         public void info()
         {
@@ -163,6 +164,43 @@ namespace commands
                 _CONNECTION c = new _CONNECTION();
 
                 SCALE_command program = new SCALE_command(ref c);
+
+                try
+                {
+                    program.run();
+
+                    c.ed.WriteMessage("\n[DONE]");
+                }
+                catch (DMTException de)
+                {
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
+                catch (Exception ex)
+                {
+                    c.ed.WriteMessage("\n[ERROR] Unknown Exception");
+                    c.ed.WriteMessage("\n[ERROR] " + ex.Message);
+                    c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
+                }
+                finally
+                {
+                    c.close();
+                }
+            }
+            catch
+            {
+                _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
+            }
+        }
+
+
+        [_Trx.CommandMethod("KONTROLL_NOPRINT")]
+        public void kontroll_noprint()
+        {
+            try
+            {
+                _CONNECTION c = new _CONNECTION();
+
+                NOPRINT_command program = new NOPRINT_command(ref c);
 
                 try
                 {

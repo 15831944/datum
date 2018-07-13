@@ -8,7 +8,7 @@
 // </auto-generated>
 //------------------------------------------------------------------------------
 
-namespace HillsCommands.Properties {
+namespace commands.Properties {
     
     
     [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]

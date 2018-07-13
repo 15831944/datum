@@ -25,7 +25,7 @@ using _SWF = System.Windows.Forms;
     using _Brx = Bricscad.Runtime;
     using _Trx = Teigha.Runtime;
     using _Wnd = Bricscad.Windows;
-    //using _Int = Bricscad.Internal;
+//using _Int = Bricscad.Internal;
 #elif ARX_APP
     using _Ap = Autodesk.AutoCAD.ApplicationServices;
     //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
@@ -46,7 +46,7 @@ using System.Xml;
 
 namespace commands
 {
-    class XML_PrintKnownRebar_command
+    class XML_Filter_command
     {
         _CONNECTION _c;
 
@@ -57,7 +57,7 @@ namespace commands
         string xml_lock_full;
 
 
-        public XML_PrintKnownRebar_command(ref _CONNECTION c)
+        public XML_Filter_command(ref _CONNECTION c)
         {
             _c = c;
 
@@ -70,14 +70,16 @@ namespace commands
             xml_full = dwg_dir + name + ".xml";
             xml_lock_full = dwg_dir + name + ".LCK";
         }
-        
 
-        public void unlock_after_crash()
+
+        public void unlock_after_crash(bool pre_locked)
         {
-            write("[XML] LOCK OFF");
+            if (pre_locked == true) return;
 
             if (File.Exists(xml_lock_full))
             {
+                write("[XML] LOCK OFF");
+
                 File.Delete(xml_lock_full);
             }
         }
@@ -86,8 +88,21 @@ namespace commands
         public void run()
         {
             if (!File.Exists(xml_full)) throw new DMTException("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
-            if (File.Exists(xml_lock_full)) throw new DMTException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
+            if (File.Exists(xml_lock_full)) throw new DMTLockedException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
 
+
+            string userFilter = promptFilter();
+            if (userFilter == null)
+            {
+                return;
+            }
+
+            string userDiameter = promptDiameter();
+            if (userDiameter == null || userDiameter == "")
+            {
+                userDiameter = "???";
+            }
+            
             File.Create(xml_lock_full).Dispose();
             write("[XML] LOCK ON");
 
@@ -96,30 +111,16 @@ namespace commands
 
             List<XmlNode> rows = XML_Handle.getAllRebar(xmlDoc);
 
-            string userFilter = promptFilter();
             List<XmlNode> filteredRows = XML_Handle.filter(rows, userFilter);
-
-            foreach (XmlNode row in filteredRows)
-            {
-                XmlNode rebar = row["B2aBar"];
-                if (rebar == null)
-                {
-                    write("error reading");
-                    continue;
-                }
-
-                string rebarString = XML_Handle.getXMLRebarString(rebar);
-                write(rebarString);
-            }
-          
+            List<XmlNode> similar = findSimilar(userFilter, userDiameter, filteredRows, xmlDoc);
+            printSimilar(similar);
         }
 
 
         private string promptFilter()
         {
             _Ed.PromptKeywordOptions promptOptions = new _Ed.PromptKeywordOptions("");
-            promptOptions.Message = "\nWhat to print: ";
-            promptOptions.Keywords.Add("A");
+            promptOptions.Message = "\nWhat to search: ";
             promptOptions.Keywords.Add("B");
             promptOptions.Keywords.Add("C");
             promptOptions.Keywords.Add("D");
@@ -153,23 +154,67 @@ namespace commands
             promptOptions.Keywords.Add("XX");
             promptOptions.Keywords.Add("Z");
 
-            promptOptions.Keywords.Add("ALL");
-            promptOptions.Keywords.Add("SPEC");
-            promptOptions.Keywords.Add("LAST");
-            promptOptions.AllowNone = true;
-
+            promptOptions.AllowNone = false;
             _Ed.PromptResult promptResult = _c.ed.GetKeywords(promptOptions);
 
             if (promptResult.Status == _Ed.PromptStatus.OK)
             {
-                if (promptResult.StringResult == "") return "LAST";
-                else
-                {
-                    return promptResult.StringResult;
-                }
+                return promptResult.StringResult;
             }
 
-            return "LAST";
+            return null;
+        }
+
+
+        private string promptDiameter()
+        {
+            string userDiameter = "";
+
+            _Ed.PromptIntegerOptions promptOptions = new _Ed.PromptIntegerOptions("Diameter:");
+
+            promptOptions.AllowNone = true;
+            _Ed.PromptIntegerResult promptResult = _c.ed.GetInteger(promptOptions);
+
+            if (promptResult.Status == _Ed.PromptStatus.OK)
+            {
+                userDiameter = promptResult.Value.ToString();
+            }
+
+            return userDiameter;
+        }
+
+
+        private List<XmlNode> findSimilar(string filter, string diam, List<XmlNode> rebars, XmlDocument xmlDoc)
+        {
+            List<XmlNode> similar = new List<XmlNode>();
+
+            _Mark u = new _Mark(0, 10, "", filter, 0);
+            XmlNode newNode = XML_Handle.newNodeHandle(u, "", xmlDoc, _c.ed);
+            
+            newNode["B2aBar"]["Dim"].InnerText = diam;
+
+            similar = XML_Handle.findSimilar(newNode, rebars);
+
+            return similar;
+        }
+
+
+        private void printSimilar(List<XmlNode> rebars)
+        {
+            foreach (XmlNode row in rebars)
+            {
+                XmlNode rebar = row["B2aBar"];
+                if (rebar == null)
+                {
+                    write("error reading");
+                    continue;
+                }
+
+                string rebarString = XML_Handle.getXMLRebarString(rebar);
+                write(rebarString);
+            }
+
+            write("[NB! Sümeetrilisust kontrollitakse B, C, D, F, N - tüüpi raudadel]");
         }
 
 

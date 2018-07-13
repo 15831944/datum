@@ -396,7 +396,8 @@ namespace commands
             {
                 _CONNECTION c = new _CONNECTION();
 
-                XML_AddTo_command program = new XML_AddTo_command(ref c);
+                bool pre_locked = false;
+                XML_Add_command program = new XML_Add_command(ref c);
 
                 try
                 {
@@ -408,6 +409,11 @@ namespace commands
                 {
                     c.ed.WriteMessage("\n" + de.Message);
                 }
+                catch (DMTLockedException de)
+                {
+                    pre_locked = true;
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
                 catch (Exception ex)
                 {
                     c.ed.WriteMessage("\n[ERROR] Unknown Exception");
@@ -416,7 +422,7 @@ namespace commands
                 }
                 finally
                 {
-                    program.unlock_after_crash();
+                    program.unlock_after_crash(pre_locked);
 
                     c.close();
                 }
@@ -435,7 +441,8 @@ namespace commands
             {
                 _CONNECTION c = new _CONNECTION();
 
-                XML_PrintKnownRebar_command program = new XML_PrintKnownRebar_command(ref c);
+                bool pre_locked = false;
+                XML_Print_command program = new XML_Print_command(ref c);
 
                 try
                 {
@@ -447,6 +454,11 @@ namespace commands
                 {
                     c.ed.WriteMessage("\n" + de.Message);
                 }
+                catch (DMTLockedException de)
+                {
+                    pre_locked = true;
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
                 catch (Exception ex)
                 {
                     c.ed.WriteMessage("\n[ERROR] Unknown Exception");
@@ -455,7 +467,7 @@ namespace commands
                 }
                 finally
                 {
-                    program.unlock_after_crash();
+                    program.unlock_after_crash(pre_locked);
 
                     c.close();
                 }
@@ -474,7 +486,8 @@ namespace commands
             {
                 _CONNECTION c = new _CONNECTION();
 
-                XML_FindRebar_command program = new XML_FindRebar_command(ref c);
+                bool pre_locked = false;
+                XML_Filter_command program = new XML_Filter_command(ref c);
 
                 try
                 {
@@ -486,43 +499,9 @@ namespace commands
                 {
                     c.ed.WriteMessage("\n" + de.Message);
                 }
-                catch (Exception ex)
+                catch (DMTLockedException de)
                 {
-                    c.ed.WriteMessage("\n[ERROR] Unknown Exception");
-                    c.ed.WriteMessage("\n[ERROR] " + ex.Message);
-                    c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
-                }
-                finally
-                {
-                    program.unlock_after_crash();
-
-                    c.close();
-                }
-            }
-            catch
-            {
-                _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
-            }
-        }
-
-
-        [_Trx.CommandMethod("pppp")]
-        public void print_all()
-        {
-            try
-            {
-                _CONNECTION c = new _CONNECTION();
-
-                PRINT_command_v2 program = new PRINT_command_v2(ref c);
-
-                try
-                {
-                    program.run(true);
-
-                    c.ed.WriteMessage("\n[DONE]");
-                }
-                catch (DMTException de)
-                {
+                    pre_locked = true;
                     c.ed.WriteMessage("\n" + de.Message);
                 }
                 catch (Exception ex)
@@ -533,6 +512,8 @@ namespace commands
                 }
                 finally
                 {
+                    program.unlock_after_crash(pre_locked);
+
                     c.close();
                 }
             }
@@ -543,23 +524,29 @@ namespace commands
         }
 
 
-        [_Trx.CommandMethod("HILLS_PRINT_SELECTED")]
-        public void print_selected()
+        [_Trx.CommandMethod("XMLS")]
+        public void sort_XML()
         {
             try
             {
                 _CONNECTION c = new _CONNECTION();
 
-                PRINT_command_v2 program = new PRINT_command_v2(ref c);
+                bool pre_locked = false;
+                XML_Sort_command program = new XML_Sort_command(ref c);
 
                 try
                 {
-                    program.run(false);
+                    program.run();
 
                     c.ed.WriteMessage("\n[DONE]");
                 }
                 catch (DMTException de)
                 {
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
+                catch (DMTLockedException de)
+                {
+                    pre_locked = true;
                     c.ed.WriteMessage("\n" + de.Message);
                 }
                 catch (Exception ex)
@@ -570,6 +557,8 @@ namespace commands
                 }
                 finally
                 {
+                    program.unlock_after_crash(pre_locked);
+
                     c.close();
                 }
             }
@@ -578,6 +567,80 @@ namespace commands
                 _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
             }
         }
+
+
+        //[_Trx.CommandMethod("pppp")]
+        //public void print_all()
+        //{
+        //    try
+        //    {
+        //        _CONNECTION c = new _CONNECTION();
+
+        //        PRINT_command_v2 program = new PRINT_command_v2(ref c);
+
+        //        try
+        //        {
+        //            program.run(true);
+
+        //            c.ed.WriteMessage("\n[DONE]");
+        //        }
+        //        catch (DMTException de)
+        //        {
+        //            c.ed.WriteMessage("\n" + de.Message);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            c.ed.WriteMessage("\n[ERROR] Unknown Exception");
+        //            c.ed.WriteMessage("\n[ERROR] " + ex.Message);
+        //            c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
+        //        }
+        //        finally
+        //        {
+        //            c.close();
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
+        //    }
+        //}
+
+
+        //[_Trx.CommandMethod("HILLS_PRINT_SELECTED")]
+        //public void print_selected()
+        //{
+        //    try
+        //    {
+        //        _CONNECTION c = new _CONNECTION();
+
+        //        PRINT_command_v2 program = new PRINT_command_v2(ref c);
+
+        //        try
+        //        {
+        //            program.run(false);
+
+        //            c.ed.WriteMessage("\n[DONE]");
+        //        }
+        //        catch (DMTException de)
+        //        {
+        //            c.ed.WriteMessage("\n" + de.Message);
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            c.ed.WriteMessage("\n[ERROR] Unknown Exception");
+        //            c.ed.WriteMessage("\n[ERROR] " + ex.Message);
+        //            c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
+        //        }
+        //        finally
+        //        {
+        //            c.close();
+        //        }
+        //    }
+        //    catch
+        //    {
+        //        _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
+        //    }
+        //}
 
     }
 }

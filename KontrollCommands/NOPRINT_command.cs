@@ -39,22 +39,50 @@ using _SWF = System.Windows.Forms;
     using _Trx = Autodesk.AutoCAD.Runtime;
     using _Wnd = Autodesk.AutoCAD.Windows;
 #endif
-    
+
 
 namespace commands
 {
-    public class DMTException : Exception
+    class NOPRINT_command
     {
-        public DMTException() { }
-        public DMTException(string message) : base(message) { }
-        public DMTException(string message, Exception inner) : base(message, inner) { }
-    }
+        _CONNECTION _c;
 
 
-    public class DMTLockedException : Exception
-    {
-        public DMTLockedException() { }
-        public DMTLockedException(string message) : base(message) { }
-        public DMTLockedException(string message, Exception inner) : base(message, inner) { }
+        public NOPRINT_command(ref _CONNECTION c)
+        {
+            _c = c;            
+        }
+
+
+        internal void run()
+        {
+            logic();
+        }
+
+
+        private void logic()
+        {
+            _Db.LayerTable lt = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForRead) as _Db.LayerTable;
+
+            foreach (_Db.ObjectId layerId in lt)
+            {
+                _Db.LayerTableRecord layer = _c.trans.GetObject(layerId, _Db.OpenMode.ForWrite) as _Db.LayerTableRecord;
+
+                if (!layer.IsPlottable)
+                {
+                    if (layer.Name == "Defpoints") continue;
+
+                    write("[VIGA] - NOPRINT - " + layer.Name);
+                }
+                
+            }            
+        }
+
+
+        private void write(string message)
+        {
+            _c.ed.WriteMessage("\n" + message);
+        }
+
     }
 }

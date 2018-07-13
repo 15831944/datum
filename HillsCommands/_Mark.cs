@@ -46,8 +46,13 @@ namespace commands
 {
     class _Mark : IEquatable<_Mark>
     {
+        public static double EQUALS_TOLERANCE = 0.15; //Same point detection and tests
+        public static List<string> DEFINED_SHAPES = new List<string>() { "A", "B", "C", "D", "E", "EX", "F", "G", "H", "J", "K", "L", "LX", "M", "N", "NX", "O", "Q", "R", "S", "SH", "SX", "T", "U", "V", "W", "X", "XX", "Z" };
+        public static string markLayerName = "K60";
+
         string original;
         _Ge.Point3d insert;
+        string layer;
 
         int number = 0;
         int diameter = -99;
@@ -67,10 +72,11 @@ namespace commands
         public int Position_Nr { get { return position_nr; } }
 
 
-        public _Mark(string original_text, _Ge.Point3d insp)
+        public _Mark(string original_text, _Ge.Point3d insp, string ly)
         {
             original = original_text;
             insert = insp;
+            layer = ly;
         }
 
 
@@ -86,27 +92,29 @@ namespace commands
 
         internal bool validate()
         {
+            if (layer != markLayerName) return false; // CHECK 1
+
             string nospaces = original.Replace(@"\P", "");
             nospaces = nospaces.Replace(" FS", "");
             nospaces = nospaces.Replace(" HS", "");
             nospaces = nospaces.Replace(" ", "");
 
-            if (nospaces.Contains("=")) return false; // CHECK 1
-            if (!nospaces.Contains("-")) return false; // CHECK 2
-            if (!nospaces.Contains("Ø")) return false; // CHECK 3
+            if (nospaces.Contains("=")) return false; // CHECK 2
+            if (!nospaces.Contains("-")) return false; // CHECK 3
+            if (!nospaces.Contains("Ø")) return false; // CHECK 4
 
             string[] split1 = nospaces.Split('Ø');
-            if (split1.Count() > 2) return false; // CHECK 4
+            if (split1.Count() > 2) return false; // CHECK 5
 
             string[] split2 = split1[1].Split('-');
-            if (split2.Count() > 2) return false; // CHECK 5
+            if (split2.Count() > 2) return false; // CHECK 6
 
             string numb = split1[0];
             string diam = split2[0];
             string pos = split2[1];
 
-            if (diam.Length == 0) return false; // CHECK 6
-            if (pos.Length < 2) return false; // CHECK 7
+            if (diam.Length == 0) return false; // CHECK 7
+            if (pos.Length < 2) return false; // CHECK 8
 
             if (numb.Length == 0)
             {
@@ -123,7 +131,7 @@ namespace commands
                     int currentNumber = -99;
                     Int32.TryParse(n, out currentNumber);
 
-                    if (currentNumber < 0) return false; // CHECK 8
+                    if (currentNumber < 0) return false; // CHECK 9
 
                     i = i + currentNumber;
                 }
@@ -139,12 +147,12 @@ namespace commands
 
             int temp = 0;
             Int32.TryParse(numb, out temp);
-            if (temp == 0) return false; // CHECK 9
+            if (temp == 0) return false; // CHECK 10
             number = temp;
 
             temp = 0;
             Int32.TryParse(diam, out temp);
-            if (temp == 0) return false; // CHECK 10
+            if (temp == 0) return false; // CHECK 11
             diameter = temp;
 
             temp = 0;
@@ -174,7 +182,8 @@ namespace commands
 
                 Int32.TryParse(pos.Substring(numShape, pos.Length - numShape), out position_nr);
 
-                if (position_nr == 0) return false; // CHECK 11
+                if (position_nr == 0) return false; // CHECK 12
+                if (!DEFINED_SHAPES.Contains(position_shape)) return false; // CHECK 13
             }
 
             position = pos;
@@ -182,6 +191,26 @@ namespace commands
             return true;
         }
 
+
+        public bool sameLocation(_Mark other)
+        {
+            if (this.IP.DistanceTo(other.IP) < EQUALS_TOLERANCE) return true;
+            else return false;
+        }
+
+
+        public bool containsLocation(List<_Mark> others)
+        {
+            foreach (_Mark m in others)
+            {
+                if (m.sameLocation(this))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
 
         public bool Equals(_Mark other)
         {

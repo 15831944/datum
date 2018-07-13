@@ -448,7 +448,7 @@ namespace commands
             XmlNode group = xmlDoc.CreateElement("NoGrps");
             group.InnerText = "1";
             XmlNode count = xmlDoc.CreateElement("NoStpGrp");
-            count.InnerText = "999";
+            count.InnerText = "9999";
             XmlNode bar = xmlDoc.CreateElement("B2aBar");
 
             XmlNode type_node = xmlDoc.CreateElement("Type");
@@ -1795,13 +1795,683 @@ namespace commands
             return similar;
         }
 
-       
+
+        public static List<XmlNode> findSimilarTolerance(XmlNode newReb, List<XmlNode> rebars, double TOLERANCE)
+        {
+            List<XmlNode> similar = new List<XmlNode>();
+
+            XmlNode dummy = newReb["B2aBar"];
+            XmlNode dummy_geometry = dummy["B2aGeometry"];
+
+            string dummy_dim = emptyNodehandle(dummy, "Dim");
+            string dummy_type = dummy["Type"].InnerText;
+
+            foreach (XmlNode rebar in rebars)
+            {
+                bool found = true;
+
+                XmlNode existing = rebar["B2aBar"];
+                if (existing == null) continue;
+
+                string dim = emptyNodehandle(existing, "Dim");
+                if (dummy_dim != "???" && dim != "???" && dummy_dim != dim) continue;
+
+                XmlNode existing_geometry = existing["B2aGeometry"];
+
+                if (existing_geometry == null)
+                {
+                    similar.Add(rebar);
+                    continue;
+                }
+
+                if (dummy_type == "B")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+
+                    if (found == false)
+                    {
+                        found = true;
+                        if (new_a != "???" && old_b != "???" && new_a != old_b) found = false;
+                        if (new_b != "???" && old_a != "???" && new_b != old_a) found = false;
+                    }
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "C")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+
+                    if (found == false)
+                    {
+                        found = true;
+                        if (new_a != "???" && old_c != "???" && new_a != old_c) found = false;
+                        if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                        if (new_c != "???" && old_a != "???" && new_c != old_a) found = false;
+                    }
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "D")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found == false)
+                    {
+                        found = true;
+                        if (new_a != "???" && old_b != "???" && new_a != old_b) found = false;
+                        if (new_b != "???" && old_a != "???" && new_b != old_a) found = false;
+                        if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    }
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "E")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+                    string old_u = emptyNodehandle(existing_geometry, "U");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+                    string new_u = emptyNodehandle(dummy_geometry, "U");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    if (new_u != "???" && old_u != "???" && new_u != old_u) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "EX")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "F")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found == false)
+                    {
+                        found = true;
+                        if (new_a != "???" && old_b != "???" && new_a != old_b) found = false;
+                        if (new_b != "???" && old_a != "???" && new_b != old_a) found = false;
+                        if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    }
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "G")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+                    string old_s = emptyNodehandle(existing_geometry, "S");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+                    string new_s = emptyNodehandle(dummy_geometry, "S");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    if (new_s != "???" && old_s != "???" && new_s != old_s) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "H")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+                    string old_s = emptyNodehandle(existing_geometry, "S");
+                    string old_u = emptyNodehandle(existing_geometry, "U");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+                    string new_s = emptyNodehandle(dummy_geometry, "S");
+                    string new_u = emptyNodehandle(dummy_geometry, "U");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    if (new_s != "???" && old_s != "???" && new_s != old_s) found = false;
+                    if (new_u != "???" && old_u != "???" && new_u != old_u) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "J")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+                    string old_s = emptyNodehandle(existing_geometry, "S");
+                    string old_t = emptyNodehandle(existing_geometry, "T");
+                    string old_u = emptyNodehandle(existing_geometry, "U");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+                    string new_s = emptyNodehandle(dummy_geometry, "S");
+                    string new_t = emptyNodehandle(dummy_geometry, "T");
+                    string new_u = emptyNodehandle(dummy_geometry, "U");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    if (new_s != "???" && old_s != "???" && new_s != old_s) found = false;
+                    if (new_t != "???" && old_t != "???" && new_t != old_t) found = false;
+                    if (new_u != "???" && old_u != "???" && new_u != old_u) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "K")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "L")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_f = emptyNodehandle(existing_geometry, "F");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_f = emptyNodehandle(dummy_geometry, "F");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_f != "???" && old_f != "???" && new_f != old_f) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "LX")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+                    string old_s = emptyNodehandle(existing_geometry, "S");
+                    string old_u = emptyNodehandle(existing_geometry, "U");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+                    string new_s = emptyNodehandle(dummy_geometry, "S");
+                    string new_u = emptyNodehandle(dummy_geometry, "U");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    if (new_s != "???" && old_s != "???" && new_s != old_s) found = false;
+                    if (new_u != "???" && old_u != "???" && new_u != old_u) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "M")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_f = emptyNodehandle(existing_geometry, "F");
+                    string old_g = emptyNodehandle(existing_geometry, "G");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+                    string old_s = emptyNodehandle(existing_geometry, "S");
+                    string old_t = emptyNodehandle(existing_geometry, "T");
+                    string old_u = emptyNodehandle(existing_geometry, "U");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_f = emptyNodehandle(dummy_geometry, "F");
+                    string new_g = emptyNodehandle(dummy_geometry, "G");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+                    string new_s = emptyNodehandle(dummy_geometry, "S");
+                    string new_t = emptyNodehandle(dummy_geometry, "T");
+                    string new_u = emptyNodehandle(dummy_geometry, "U");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_f != "???" && old_f != "???" && new_f != old_f) found = false;
+                    if (new_g != "???" && old_g != "???" && new_g != old_g) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+                    if (new_s != "???" && old_s != "???" && new_s != old_s) found = false;
+                    if (new_t != "???" && old_t != "???" && new_t != old_t) found = false;
+                    if (new_u != "???" && old_u != "???" && new_u != old_u) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "N")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+
+                    if (found == false)
+                    {
+                        found = true;
+                        if (new_a != "???" && old_b != "???" && new_a != old_b) found = false;
+                        if (new_b != "???" && old_a != "???" && new_b != old_a) found = false;
+                    }
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "NX")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "O")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "Q")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "R")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "S")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "SH")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "SX")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "T")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "U")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "V")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_y = emptyNodehandle(existing_geometry, "Y");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_y = emptyNodehandle(dummy_geometry, "Y");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_y != "???" && old_y != "???" && new_y != old_y) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "W")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_x = emptyNodehandle(existing_geometry, "X");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_x = emptyNodehandle(dummy_geometry, "X");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_x != "???" && old_x != "???" && new_x != old_x) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "X")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "XX")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_e = emptyNodehandle(existing_geometry, "E");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_e = emptyNodehandle(dummy_geometry, "E");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_e != "???" && old_e != "???" && new_e != old_e) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+                else if (dummy_type == "Z")
+                {
+                    string old_a = emptyNodehandle(existing_geometry, "A");
+                    string old_b = emptyNodehandle(existing_geometry, "B");
+                    string old_c = emptyNodehandle(existing_geometry, "C");
+                    string old_d = emptyNodehandle(existing_geometry, "D");
+                    string old_v = emptyNodehandle(existing_geometry, "V");
+
+                    string new_a = emptyNodehandle(dummy_geometry, "A");
+                    string new_b = emptyNodehandle(dummy_geometry, "B");
+                    string new_c = emptyNodehandle(dummy_geometry, "C");
+                    string new_d = emptyNodehandle(dummy_geometry, "D");
+                    string new_v = emptyNodehandle(dummy_geometry, "V");
+
+                    if (new_a != "???" && old_a != "???" && new_a != old_a) found = false;
+                    if (new_b != "???" && old_b != "???" && new_b != old_b) found = false;
+                    if (new_c != "???" && old_c != "???" && new_c != old_c) found = false;
+                    if (new_d != "???" && old_d != "???" && new_d != old_d) found = false;
+                    if (new_v != "???" && old_v != "???" && new_v != old_v) found = false;
+
+                    if (found) similar.Add(rebar);
+                }
+            }
+
+            return similar;
+        }
+
+
         //NOT THIS!
         public static XmlNode compare(XmlNode newReb, XmlNode rebar)
         {
             XmlNode old_bar = rebar["B2aBar"];
             XmlNode new_bar = newReb["B2aBar"];
-
+       
             if (old_bar == null) return null;
             if (new_bar == null) return null;
 

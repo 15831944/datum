@@ -49,7 +49,6 @@ namespace commands
         _CONNECTION _c;
 
         static string[] newBoxNames = { "KN-C", "KN-V27" };
-        static string markLayerName = "K60";
 
         List<_Mark> total_stats;
         Dictionary<_Area_v2, List<_Mark>> local_stats;
@@ -83,7 +82,7 @@ namespace commands
                 throw new DMTException("[ERROR] - (" + names + ") not found");
             }
 
-            List<_Mark> allMarks = getAllMarks(markLayerName);
+            List<_Mark> allMarks = getAllMarks();
             if (allMarks.Count < 1) throw new DMTException("[ERROR] - " + "Reinforcement marks" + " not found");
             
             local_stats = matchMarkToArea(areas, allMarks);
@@ -156,9 +155,9 @@ namespace commands
                         _Ge.Point3d diameter_IP = new _Ge.Point3d(currentPoint.X + (0.75 * scale) + (6.1 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
                         _Ge.Point3d number_IP = new _Ge.Point3d(currentPoint.X + (1.5 * scale) + (9.75 * scale), currentPoint.Y + (1.125 * scale), currentPoint.Z);
 
-                        insertText(r.Position, position_IP, markLayerName, txtHeight);
-                        insertText(r.Diameter.ToString(), diameter_IP, markLayerName, txtHeight);
-                        insertText(r.Number.ToString(), number_IP, markLayerName, txtHeight);
+                        insertText(r.Position, position_IP, _Mark.markLayerName, txtHeight);
+                        insertText(r.Diameter.ToString(), diameter_IP, _Mark.markLayerName, txtHeight);
+                        insertText(r.Number.ToString(), number_IP, _Mark.markLayerName, txtHeight);
                     }
 
                     if (counter == 19)
@@ -255,11 +254,11 @@ namespace commands
         }
 
 
-        private List<_Mark> getAllMarks(string layer)
+        private List<_Mark> getAllMarks()
         {
             List<_Mark> marks = new List<_Mark>();
 
-            List<_Db.MText> allTexts = getAllText(layer);
+            List<_Db.MText> allTexts = getAllText();
             marks = getMarkData(allTexts);
 
             return marks;
@@ -290,7 +289,7 @@ namespace commands
 
             foreach (_Db.MText txt in txts)
             {
-                _Mark current = new _Mark(txt.Contents, txt.Location);
+                _Mark current = new _Mark(txt.Contents, txt.Location, txt.Layer);
                 parse.Add(current);
             }
 
@@ -441,7 +440,7 @@ namespace commands
         }
 
 
-        private List<_Db.MText> getAllText(string layer)
+        private List<_Db.MText> getAllText()
         {
             List<_Db.MText> txt = new List<_Db.MText>();
 
@@ -456,34 +455,28 @@ namespace commands
                     if (currentEntity is _Db.MText)
                     {
                         _Db.MText br = currentEntity as _Db.MText;
-                        if (br.Layer == layer)
-                        {
-                            txt.Add(br);
-                        }
+                        txt.Add(br);
                     }
-
-                    if (currentEntity is _Db.DBText)
+                    else if (currentEntity is _Db.DBText)
                     {
                         _Db.DBText br = currentEntity as _Db.DBText;
-                        if (br.Layer == layer)
-                        {
-                            _Db.MText myMtext = new _Db.MText();
-                            myMtext.Contents = br.TextString;
-                            myMtext.Location = br.Position;
-                            txt.Add(myMtext);
-                        }
-                    }
+                        _Db.MText myMtext = new _Db.MText();
 
-                    if (currentEntity is _Db.MLeader)
+                        myMtext.Contents = br.TextString;
+                        myMtext.Layer = br.Layer;
+
+                        myMtext.Location = br.Position;
+                        txt.Add(myMtext);
+                    }
+                    else if (currentEntity is _Db.MLeader)
                     {
                         _Db.MLeader br = currentEntity as _Db.MLeader;
-                        if (br.Layer == layer)
+
+                        if (br.ContentType == _Db.ContentType.MTextContent)
                         {
-                            if (br.ContentType == _Db.ContentType.MTextContent)
-                            {
-                                _Db.MText leaderText = br.MText;
-                                txt.Add(leaderText);
-                            }
+                            _Db.MText leaderText = br.MText;
+                            leaderText.Layer = br.Layer;
+                            txt.Add(leaderText);
                         }
                     }
                 }

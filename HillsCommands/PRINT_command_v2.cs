@@ -56,8 +56,7 @@ namespace commands
 
         _Pl.PlotEngine engine;
 
-        _Db.LayoutManager layerManager;
-
+        _Db.LayoutManager layoutManager;
 
 
         public PRINT_command_v2(ref _CONNECTION c)
@@ -68,7 +67,7 @@ namespace commands
 
             engine = _Pl.PlotFactory.CreatePublishEngine();
             
-            layerManager = _Db.LayoutManager.Current;
+            layoutManager = _Db.LayoutManager.Current;
         }
 
 
@@ -301,8 +300,8 @@ namespace commands
 
         private void removeLayout(_Db.Layout lay)
         {
-            layerManager.DeleteLayout(lay.LayoutName);
-            layerManager.CurrentLayout = "Model";
+            layoutManager.DeleteLayout(lay.LayoutName);
+            layoutManager.CurrentLayout = "Model";
         }
 
 
@@ -310,11 +309,11 @@ namespace commands
         {
             string randomName = generateRandomString(20);
 
-            _Db.ObjectId id = layerManager.GetLayoutId(randomName);
+            _Db.ObjectId id = layoutManager.GetLayoutId(randomName);
 
             if (!id.IsValid)
             {
-                id = layerManager.CreateLayout(randomName);
+                id = layoutManager.CreateLayout(randomName);
             }
             else
             {
@@ -324,7 +323,7 @@ namespace commands
             _Db.Layout layout = _c.trans.GetObject(id, _Db.OpenMode.ForWrite) as _Db.Layout;
             if (layout.TabSelected == false)
             {
-                layerManager.CurrentLayout = randomName;
+                layoutManager.CurrentLayout = randomName;
             }
 
             return layout;

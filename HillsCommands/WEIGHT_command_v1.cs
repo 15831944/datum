@@ -381,7 +381,7 @@ namespace commands
 
             foreach (_Db.MText txt in txts)
             {
-                _Mark current = new _Mark(txt.Contents, txt.Location);
+                _Mark current = new _Mark(txt.Contents, txt.Location, txt.Layer);
                 parse.Add(current);
             }
 

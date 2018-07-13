@@ -53,7 +53,6 @@ namespace commands
         static string name = "alfa";
 
         static string[] boxNames = { "KN-C", "KN-V27" };
-        static string markLayerName = "K60";
 
         Dictionary<_Area_v2, int> local_stats;
 
@@ -106,7 +105,7 @@ namespace commands
                 throw new DMTException("[ERROR] - (" + names + ") not found");
             }
 
-            List<_Mark> allMarks = getAllMarks(markLayerName);
+            List<_Mark> allMarks = getAllMarks();
             if (allMarks.Count < 1) throw new DMTException("[ERROR] - " + "Reinforcement marks" + " not found");
             if (!File.Exists(xml_full)) throw new DMTException("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");
             if (File.Exists(xml_lock_full)) throw new DMTException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
@@ -141,11 +140,6 @@ namespace commands
 
         private void outputWeight(_Area_v2 a, int weight)
         {
-            if (weight == 0)
-            {
-                write("[SKIP]");
-            }
-
             _Db.DBObject currentEntity = _c.trans.GetObject(a.ID, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
             if (currentEntity is _Db.BlockReference)
@@ -156,9 +150,21 @@ namespace commands
                 {
                     _Db.DBObject obj = _c.trans.GetObject(arId, _Db.OpenMode.ForWrite);
                     _Db.AttributeReference ar = obj as _Db.AttributeReference;
+
                     if (ar != null)
                     {
-                        if (ar.Tag == "SUMMA_OVRIG_ARMERING") ar.TextString = weight.ToString();
+                        if (ar.Tag == "SUMMA_OVRIG_ARMERING")
+                        {
+                            if (weight == 0)
+                            {
+                                write("[WARINING] Weight set to 'YYY'");
+                                ar.TextString = "YYY";
+                            }
+                            else
+                            {
+                                ar.TextString = weight.ToString();
+                            }
+                        }
                     }
                 }
             }
@@ -353,11 +359,11 @@ namespace commands
         }
 
 
-        private List<_Mark> getAllMarks(string layer)
+        private List<_Mark> getAllMarks()
         {
             List<_Mark> marks = new List<_Mark>();
 
-            List<_Db.MText> allTexts = getAllText(layer);
+            List<_Db.MText> allTexts = getAllText();
             marks = getMarkData(allTexts);
 
             return marks;
@@ -388,7 +394,7 @@ namespace commands
 
             foreach (_Db.MText txt in txts)
             {
-                _Mark current = new _Mark(txt.Contents, txt.Location);
+                _Mark current = new _Mark(txt.Contents, txt.Location, txt.Layer);
                 parse.Add(current);
             }
 
@@ -539,7 +545,7 @@ namespace commands
         }
 
 
-        private List<_Db.MText> getAllText(string layer)
+        private List<_Db.MText> getAllText()
         {
             List<_Db.MText> txt = new List<_Db.MText>();
 
@@ -554,34 +560,28 @@ namespace commands
                     if (currentEntity is _Db.MText)
                     {
                         _Db.MText br = currentEntity as _Db.MText;
-                        if (br.Layer == layer)
-                        {
-                            txt.Add(br);
-                        }
+                        txt.Add(br);
                     }
-
-                    if (currentEntity is _Db.DBText)
+                    else if (currentEntity is _Db.DBText)
                     {
                         _Db.DBText br = currentEntity as _Db.DBText;
-                        if (br.Layer == layer)
-                        {
-                            _Db.MText myMtext = new _Db.MText();
-                            myMtext.Contents = br.TextString;
-                            myMtext.Location = br.Position;
-                            txt.Add(myMtext);
-                        }
-                    }
+                        _Db.MText myMtext = new _Db.MText();
 
-                    if (currentEntity is _Db.MLeader)
+                        myMtext.Contents = br.TextString;
+                        myMtext.Layer = br.Layer;
+
+                        myMtext.Location = br.Position;
+                        txt.Add(myMtext);
+                    }
+                    else if (currentEntity is _Db.MLeader)
                     {
                         _Db.MLeader br = currentEntity as _Db.MLeader;
-                        if (br.Layer == layer) 
+
+                        if (br.ContentType == _Db.ContentType.MTextContent)
                         {
-                            if (br.ContentType == _Db.ContentType.MTextContent)
-                            {
-                                _Db.MText leaderText = br.MText;
-                                txt.Add(leaderText);
-                            }
+                            _Db.MText leaderText = br.MText;
+                            leaderText.Layer = br.Layer;
+                            txt.Add(leaderText);
                         }
                     }
                 }

@@ -46,7 +46,7 @@ using System.Xml;
 
 namespace commands
 {
-    class XML_AddTo_command
+    class XML_Add_command
     {
         _CONNECTION _c;
 
@@ -58,7 +58,7 @@ namespace commands
         string xml_output_full;
 
 
-        public XML_AddTo_command(ref _CONNECTION c)
+        public XML_Add_command(ref _CONNECTION c)
         {
             _c = c;
 
@@ -74,8 +74,10 @@ namespace commands
         }
 
 
-        public void unlock_after_crash()
+        public void unlock_after_crash(bool pre_locked)
         {
+            if (pre_locked == true) return;
+
             if (File.Exists(xml_lock_full))
             {
                 write("[XML] LOCK OFF");
@@ -88,7 +90,7 @@ namespace commands
         public void run()
         {
             if (!File.Exists(xml_full)) throw new DMTException("[ERROR] Joonise kaustas ei ole XML faili nimega: " + name + ".xml");            
-            if (File.Exists(xml_lock_full)) throw new DMTException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
+            if (File.Exists(xml_lock_full)) throw new DMTLockedException("[ERROR] XML fail nimega: " + name + ".xml" + " on lukkus!");
 
 
             File.Create(xml_lock_full).Dispose();
@@ -114,8 +116,6 @@ namespace commands
                 filtreeri(pages, rebars, xmlDoc);
                 xmlDoc.Save(xml_output_full);
             }
-
-            write("[XML] LOCK OFF");
 
             foreach (_Mark m in warning.Keys)
             {
@@ -413,11 +413,12 @@ namespace commands
 
             foreach (_Db.MText txt in selected)
             {
-                _Mark current = new _Mark(txt.Contents, txt.Location);
+                _Mark current = new _Mark(txt.Contents, txt.Location, txt.Layer.ToString());
                 bool valid = current.validate();
-                if (valid) parse.Add(current);
-            }
 
+                if (valid) parse.Add(current);
+                else write("[WARNING] - VALE VIIDE - " + txt.Contents);
+            }
 
             return parse;
         }
@@ -475,23 +476,25 @@ namespace commands
                             _Db.MText br = currentEntity as _Db.MText;
                             txt.Add(br);
                         }
-
-                        if (currentEntity is _Db.DBText)
+                        else if (currentEntity is _Db.DBText)
                         {
                             _Db.DBText br = currentEntity as _Db.DBText;
                             _Db.MText myMtext = new _Db.MText();
+
                             myMtext.Contents = br.TextString;
+                            myMtext.Layer = br.Layer;
+
                             myMtext.Location = br.Position;
                             txt.Add(myMtext);
                         }
-
-                        if (currentEntity is _Db.MLeader)
+                        else if (currentEntity is _Db.MLeader)
                         {
                             _Db.MLeader br = currentEntity as _Db.MLeader;
 
                             if (br.ContentType == _Db.ContentType.MTextContent)
                             {
                                 _Db.MText leaderText = br.MText;
+                                leaderText.Layer = br.Layer;
                                 txt.Add(leaderText);
                             }
                         }
