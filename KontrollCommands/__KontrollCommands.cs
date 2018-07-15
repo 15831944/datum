@@ -1,5 +1,5 @@
-﻿#define BRX_APP
-//#define ARX_APP
+﻿//#define BRX_APP
+#define ARX_APP
 
 using System;
 using System.Text;
@@ -9,6 +9,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using _SWF = System.Windows.Forms;
+
 
 #if BRX_APP
     using _Ap = Bricscad.ApplicationServices;
@@ -58,6 +59,43 @@ namespace commands
                 {
                     string version = String.Format("{0}", System.IO.File.GetLastWriteTime(System.Reflection.Assembly.GetExecutingAssembly().Location).ToShortDateString());
                     c.ed.WriteMessage("\nKontroll programmi versioon: " + version + "\n");
+                    c.ed.WriteMessage("\n[DONE]");
+                }
+                catch (DMTException de)
+                {
+                    c.ed.WriteMessage("\n" + de.Message);
+                }
+                catch (Exception ex)
+                {
+                    c.ed.WriteMessage("\n[ERROR] Unknown Exception");
+                    c.ed.WriteMessage("\n[ERROR] " + ex.Message);
+                    c.ed.WriteMessage("\n[ERROR] " + ex.TargetSite);
+                }
+                finally
+                {
+                    c.close();
+                }
+            }
+            catch
+            {
+                _SWF.MessageBox.Show("\n[ERROR] Connection to BricsCad/AutoCad failed.");
+            }
+        }
+
+
+        [_Trx.CommandMethod("KONTROLL_NOPRINT")]
+        public void kontroll_noprint()
+        {
+            try
+            {
+                _CONNECTION c = new _CONNECTION();
+
+                NOPRINT_command program = new NOPRINT_command(ref c);
+
+                try
+                {
+                    program.run();
+
                     c.ed.WriteMessage("\n[DONE]");
                 }
                 catch (DMTException de)
@@ -193,14 +231,14 @@ namespace commands
         }
 
 
-        [_Trx.CommandMethod("KONTROLL_NOPRINT")]
-        public void kontroll_noprint()
+        [_Trx.CommandMethod("KONTROLL_SIZE")]
+        public void kontroll_size()
         {
             try
             {
                 _CONNECTION c = new _CONNECTION();
 
-                NOPRINT_command program = new NOPRINT_command(ref c);
+                SIZE_command program = new SIZE_command(ref c);
 
                 try
                 {

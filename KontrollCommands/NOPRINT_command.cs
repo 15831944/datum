@@ -1,5 +1,5 @@
-﻿#define BRX_APP
-//#define ARX_APP
+﻿//#define BRX_APP
+#define ARX_APP
 
 using System;
 using System.Text;
@@ -9,6 +9,7 @@ using System.IO;
 using System.Diagnostics;
 using System.Collections.Generic;
 using _SWF = System.Windows.Forms;
+
 
 #if BRX_APP
     using _Ap = Bricscad.ApplicationServices;
@@ -47,6 +48,8 @@ namespace commands
     {
         _CONNECTION _c;
 
+        public static string[] ingoreLayers = { "Defpoints" };
+
 
         public NOPRINT_command(ref _CONNECTION c)
         {
@@ -62,6 +65,8 @@ namespace commands
 
         private void logic()
         {
+            List<string> wrongNames = new List<string>();
+
             _Db.LayerTable lt = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForRead) as _Db.LayerTable;
 
             foreach (_Db.ObjectId layerId in lt)
@@ -70,11 +75,16 @@ namespace commands
 
                 if (!layer.IsPlottable)
                 {
-                    if (layer.Name == "Defpoints") continue;
+                    if (ingoreLayers.Contains(layer.Name)) continue;
 
-                    write("[VIGA] - NOPRINT - " + layer.Name);
-                }
-                
+                    wrongNames.Add(layer.Name);
+                }                
+            }
+
+            write("No print layer count: " + wrongNames.Count.ToString());
+            foreach (string name in wrongNames)
+            {
+                write(" - NOPRINT - " + name);
             }            
         }
 

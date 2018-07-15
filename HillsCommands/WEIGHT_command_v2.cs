@@ -1,5 +1,5 @@
-﻿#define BRX_APP
-//#define ARX_APP
+﻿//#define BRX_APP
+#define ARX_APP
 
 using System;
 using System.Text;
@@ -25,7 +25,7 @@ using _SWF = System.Windows.Forms;
     using _Brx = Bricscad.Runtime;
     using _Trx = Teigha.Runtime;
     using _Wnd = Bricscad.Windows;
-//using _Int = Bricscad.Internal;
+    //using _Int = Bricscad.Internal;
 #elif ARX_APP
     using _Ap = Autodesk.AutoCAD.ApplicationServices;
     //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;

@@ -1,5 +1,5 @@
-﻿#define BRX_APP
-//#define ARX_APP
+﻿//#define BRX_APP
+#define ARX_APP
 
 using System;
 using System.Text;
@@ -10,21 +10,22 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using _SWF = System.Windows.Forms;
 
+
 #if BRX_APP
-using _Ap = Bricscad.ApplicationServices;
-//using _Br = Teigha.BoundaryRepresentation;
-using _Cm = Teigha.Colors;
-using _Db = Teigha.DatabaseServices;
-using _Ed = Bricscad.EditorInput;
-using _Ge = Teigha.Geometry;
-using _Gi = Teigha.GraphicsInterface;
-using _Gs = Teigha.GraphicsSystem;
-using _Gsk = Bricscad.GraphicsSystem;
-using _Pl = Bricscad.PlottingServices;
-using _Brx = Bricscad.Runtime;
-using _Trx = Teigha.Runtime;
-using _Wnd = Bricscad.Windows;
-//using _Int = Bricscad.Internal;
+    using _Ap = Bricscad.ApplicationServices;
+    //using _Br = Teigha.BoundaryRepresentation;
+    using _Cm = Teigha.Colors;
+    using _Db = Teigha.DatabaseServices;
+    using _Ed = Bricscad.EditorInput;
+    using _Ge = Teigha.Geometry;
+    using _Gi = Teigha.GraphicsInterface;
+    using _Gs = Teigha.GraphicsSystem;
+    using _Gsk = Bricscad.GraphicsSystem;
+    using _Pl = Bricscad.PlottingServices;
+    using _Brx = Bricscad.Runtime;
+    using _Trx = Teigha.Runtime;
+    using _Wnd = Bricscad.Windows;
+    //using _Int = Bricscad.Internal;
 #elif ARX_APP
     using _Ap = Autodesk.AutoCAD.ApplicationServices;
     //using _Br = Autodesk.AutoCAD.BoundaryRepresentation;
@@ -47,83 +48,237 @@ namespace commands
     {
         _CONNECTION _c;
 
-        Dictionary<_Db.Dimension, _Db.BlockTableRecord> dims;
+        public static double _DEFAULT_TEXT_SIZE = 2.5;
+        //public static double _DEFAULT_TEXT_SIZE_SMALL = 2.2;
+        //public static double _DEFAULT_TEXT_SIZE_LARGE = 3.0;
+
+        //static string[] ignoreBlocks = { "Katkestus_nelinurk", "Armatuurvarras_rib", "#s150" };
+        static string[] ignoreBlocks = { };
+
+
+        public static double _TOLERANCE = 0.1;
 
 
         public SIZE_command(ref _CONNECTION c)
         {
             _c = c;
-
-            dims = new Dictionary<_Db.Dimension, _Db.BlockTableRecord>();
         }
 
 
         internal void run()
         {
-            getAllDims();
-            logic();
+            double scale = getScale();
+
+            write("Scale: " + scale.ToString());
+
+            List<_Db.Dimension> dims = getAllDims();
+            List <_Db.BlockReference> blocks = getAllBlockReferences(ignoreBlocks);
+            List<_Db.MText> txts = getAllText();
+
+            logic(scale, dims, blocks, txts);
         }
 
 
-        private void logic()
+        private double getScale()
         {
-            List<_Db.Dimension> scale_05 = new List<_Db.Dimension>();
-            List<_Db.Dimension> scale_other = new List<_Db.Dimension>();
+            _Ed.PromptDoubleOptions pDoubleOpts = new _Ed.PromptDoubleOptions("\nEnter scale: ");
+            _Ed.PromptDoubleResult pDoubleRes = _c.ed.GetDouble(pDoubleOpts);
 
-            foreach (_Db.Dimension dim in dims.Keys)
+            if (pDoubleRes.Status != _Ed.PromptStatus.OK) throw new DMTException("no scale");
+
+            return pDoubleRes.Value;
+        }
+
+
+        private void logic(double scale, List<_Db.Dimension> dims, List<_Db.BlockReference> blocks, List<_Db.MText> txts)
+        {
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+
+            double txtHeight = scale * _DEFAULT_TEXT_SIZE;
+            write("TextHeight: " + txtHeight.ToString());
+
+            //checkText(txtHeight, txts, btr);
+            //checkDims(scale, dims, btr);
+            checkBlocks(scale, blocks, btr);
+        }
+
+
+        private void checkText(double txtHeight, List<_Db.MText> txts, _Db.BlockTableRecord btr)
+        {
+            List<_Db.MText> wrongTxts = new List<_Db.MText>();
+            foreach (_Db.MText txt in txts)
             {
-                if (dim.Dimlfac == 1.0)
+                if (Math.Abs(txt.TextHeight - txtHeight) > _TOLERANCE)
                 {
-
-                }
-                else if (dim.Dimlfac == 0.5)
-                {
-                    createCircle(2000, 2, dim.TextPosition, dims[dim]);
-                    createCircle(200, 2, dim.TextPosition, dims[dim]);
-                    scale_05.Add(dim);
-
-                    changeFillColor(dim, 2);
-                }
-                else
-                {
-                    createCircle(2000, 1, dim.TextPosition, dims[dim]);
-                    createCircle(200, 1, dim.TextPosition, dims[dim]);
-                    scale_other.Add(dim);
-
-                    changeFillColor(dim, 1);
+                    wrongTxts.Add(txt);
                 }
             }
 
-            write("Scale 0.5: " + scale_05.Count.ToString());
-            write("Scale other: " + scale_other.Count.ToString());
+            write("Wrong text count:" + wrongTxts.Count.ToString());
+            foreach (_Db.MText txt in wrongTxts)
+            {
+                createCircle(200, 1, txt.Location, btr);
+            }
         }
 
 
-        private void getAllDims()
+        private void checkDims(double scale, List<_Db.Dimension> dims, _Db.BlockTableRecord btr)
         {
-            foreach (_Db.ObjectId btrId in _c.blockTable)
+            double txtHeight = scale * _DEFAULT_TEXT_SIZE;
+
+            List<_Db.Dimension> wrongDims = new List<_Db.Dimension>();
+            foreach (_Db.Dimension dim in dims)
             {
-                _Db.BlockTableRecord btr = _c.trans.GetObject(btrId, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
-
-                if (!(btr.IsFromExternalReference))
+                if (Math.Abs(dim.Dimtxt - txtHeight) > _TOLERANCE)
                 {
-                    foreach (_Db.ObjectId bid in btr)
+                    if ((Math.Abs(dim.Dimtxt - _DEFAULT_TEXT_SIZE) > _TOLERANCE) && (Math.Abs(dim.Dimscale - scale) > _TOLERANCE))
                     {
-                        _Db.Entity currentEntity = _c.trans.GetObject(bid, _Db.OpenMode.ForWrite, false) as _Db.Entity;
+                        wrongDims.Add(dim);
+                    }
+                }
+            }
 
-                        if (currentEntity == null)
-                        {
-                            continue;
-                        }
+            write("Wrong dimentions count:" + wrongDims.Count.ToString());
+            foreach (_Db.Dimension dim in wrongDims)
+            {
+                changeFillColor(dim, 1);
+            }
+        }
 
-                        if (currentEntity is _Db.Dimension)
+
+        private void checkBlocks(double scale, List<_Db.BlockReference> blocks, _Db.BlockTableRecord btr)
+        {
+            List<_Db.BlockReference> wrongBlocks = new List<_Db.BlockReference>();
+            foreach (_Db.BlockReference block in blocks)
+            {
+                if (Math.Abs(Math.Abs(block.ScaleFactors.X) - scale) > _TOLERANCE || Math.Abs(Math.Abs(block.ScaleFactors.Y) - scale) > _TOLERANCE)
+                {
+                    if (Math.Abs(Math.Abs(block.ScaleFactors.Y) - 1) > _TOLERANCE || Math.Abs(Math.Abs(block.ScaleFactors.Y) - 1) > _TOLERANCE)
+                    {
+                        wrongBlocks.Add(block);
+                    }
+                }
+            }
+
+            write("Wrong Blocks count:" + wrongBlocks.Count.ToString());
+            foreach (_Db.BlockReference wrong in wrongBlocks)
+            {
+                createCircle(200, 1, wrong.Position, btr);
+            }
+        }
+
+
+        private List<_Db.Dimension> getAllDims()
+        {
+            List<_Db.Dimension> dims = new List<_Db.Dimension>();
+
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+
+            foreach (_Db.ObjectId bid in btr)
+            {
+                _Db.Entity currentEntity = _c.trans.GetObject(bid, _Db.OpenMode.ForWrite, false) as _Db.Entity;
+
+                if (currentEntity == null)
+                {
+                    continue;
+                }
+
+                if (currentEntity is _Db.Dimension)
+                {
+                    _Db.Dimension dim = currentEntity as _Db.Dimension;
+                    dims.Add(dim);
+                }
+            }
+
+            return dims;
+        }
+
+
+        private List<_Db.BlockReference> getAllBlockReferences(string[] ignore)
+        {
+            List<_Db.BlockReference> refs = new List<_Db.BlockReference>();
+
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+
+            foreach (_Db.ObjectId id in btr)
+            {
+                _Db.DBObject currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
+
+                if (currentEntity == null)
+                {
+                    continue;
+                }
+
+                else if (currentEntity is _Db.BlockReference)
+                {
+                    _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
+
+                    _Db.BlockTableRecord block = null;
+                    if (blockRef.IsDynamicBlock)
+                    {
+                        block = _c.trans.GetObject(blockRef.DynamicBlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
+                    }
+                    else
+                    {
+                        block = _c.trans.GetObject(blockRef.BlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
+                    }
+
+                    if (block != null)
+                    {
+                        if (ignoreBlocks.Contains(block.Name)) continue;
+
+                        refs.Add(blockRef);
+                    }
+                }
+            }
+
+            return refs;
+        }
+
+
+        private List<_Db.MText> getAllText()
+        {
+            List<_Db.MText> txt = new List<_Db.MText>();
+
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+
+            foreach (_Db.ObjectId id in btr)
+            {
+                _Db.Entity currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.Entity;
+
+                if (currentEntity != null)
+                {
+                    if (currentEntity is _Db.MText)
+                    {
+                        _Db.MText br = currentEntity as _Db.MText;
+                        txt.Add(br);
+                    }
+
+                    if (currentEntity is _Db.DBText)
+                    {
+                        _Db.DBText br = currentEntity as _Db.DBText;
+
+                        _Db.MText myMtext = new _Db.MText();
+                        myMtext.Contents = br.TextString;
+                        myMtext.Location = br.Position;
+                        myMtext.TextHeight = br.Height;
+                        txt.Add(myMtext);
+                    }
+
+                    if (currentEntity is _Db.MLeader)
+                    {
+                        _Db.MLeader br = currentEntity as _Db.MLeader;
+
+                        if (br.ContentType == _Db.ContentType.MTextContent)
                         {
-                            _Db.Dimension dim = currentEntity as _Db.Dimension;
-                            dims[dim] = btr;
+                            _Db.MText leaderText = br.MText;
+                            txt.Add(leaderText);
                         }
                     }
                 }
             }
+
+            return txt;
         }
 
 

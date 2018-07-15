@@ -27,9 +27,9 @@ namespace datum
                 createScriptFile(script, netload, dwg);
                 runAutocad(run, script);
             }
-            else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe"))
+            else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2014\acad.exe"))
             {
-                string run = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
+                string run = @"C:\Program Files\Autodesk\AutoCAD 2014\acad.exe";
                 string netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
                 if (!File.Exists(netload))
                 {
@@ -54,7 +54,7 @@ namespace datum
 
             scriptText.AppendLine("_.open \"" + dwg + "\"");
             scriptText.AppendLine("NETLOAD \"" + netload + "\"");
-            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\aleksandr.ess\Documents\GitHub\datum\KontrollCommands\bin\Release\KontrollCommands.dll" + "\"");
+            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\alex\Documents\GitHub\datum\KontrollCommands\bin\Debug\KontrollCommands.dll" + "\"");
 
             if (File.Exists(script))
             {

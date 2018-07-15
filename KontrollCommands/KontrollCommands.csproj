@@ -63,14 +63,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="NOPRINT_command.cs" />
-    <Compile Include="SIZE_command.cs" />
+    <Compile Include="SCALE_command.cs" />
     <Compile Include="_Area_v2.cs" />
     <Compile Include="CORNER_command.cs" />
     <Compile Include="_CONNECTION.cs" />
     <Compile Include="_EXCEPTIONS.cs" />
     <Compile Include="__KontrollCommands.cs" />
     <Compile Include="OVERRIDE_command.cs" />
-    <Compile Include="SCALE_command.cs" />
+    <Compile Include="SIZE_command.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
