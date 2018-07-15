@@ -27,9 +27,9 @@ namespace datum
                 createScriptFile(script, netload, dwg);
                 runAutocad(run, script);
             }
-            else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2014\acad.exe"))
+            else if (File.Exists(@"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe"))
             {
-                string run = @"C:\Program Files\Autodesk\AutoCAD 2014\acad.exe";
+                string run = @"C:\Program Files\Autodesk\AutoCAD 2013\acad.exe";
                 string netload = @"C:\Users\Alex\Documents\GitHub\datum\HillsCommands\bin\Debug\HillsCommands.dll";
                 if (!File.Exists(netload))
                 {

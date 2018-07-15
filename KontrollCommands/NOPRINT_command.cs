@@ -84,7 +84,7 @@ namespace commands
             write("No print layer count: " + wrongNames.Count.ToString());
             foreach (string name in wrongNames)
             {
-                write(" - NOPRINT - " + name);
+                write(" - " + name);
             }            
         }
 
