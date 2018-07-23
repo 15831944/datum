@@ -1,5 +1,5 @@
-﻿//#define BRX_APP
-#define ARX_APP
+﻿#define BRX_APP
+//#define ARX_APP
 
 using System;
 using System.Text;
@@ -52,11 +52,8 @@ namespace commands
         //public static double _DEFAULT_TEXT_SIZE_SMALL = 2.2;
         //public static double _DEFAULT_TEXT_SIZE_LARGE = 3.0;
 
-        //static string[] ignoreBlocks = { "Katkestus_nelinurk", "Armatuurvarras_rib", "#s150" };
-        static string[] ignoreBlocks = { };
 
-
-        public static double _TOLERANCE = 0.1;
+        public static double _TOLERANCE = 0.05;
 
 
         public SIZE_command(ref _CONNECTION c)
@@ -67,13 +64,14 @@ namespace commands
 
         internal void run()
         {
+            List<_Db.Dimension> dims = new List<_Db.Dimension>();
+            List<_Db.BlockReference> blocks = new List<_Db.BlockReference>();
+            List<_Db.MText> txts = new List<_Db.MText>();
+
+            getSelectedObjects(ref dims, ref blocks, ref txts);
+
             double scale = getScale();
-
             write("Scale: " + scale.ToString());
-
-            List<_Db.Dimension> dims = getAllDims();
-            List <_Db.BlockReference> blocks = getAllBlockReferences(ignoreBlocks);
-            List<_Db.MText> txts = getAllText();
 
             logic(scale, dims, blocks, txts);
         }
@@ -97,8 +95,8 @@ namespace commands
             double txtHeight = scale * _DEFAULT_TEXT_SIZE;
             write("TextHeight: " + txtHeight.ToString());
 
-            //checkText(txtHeight, txts, btr);
-            //checkDims(scale, dims, btr);
+            checkText(txtHeight, txts, btr);
+            checkDims(scale, dims, btr);
             checkBlocks(scale, blocks, btr);
         }
 
@@ -129,12 +127,23 @@ namespace commands
             List<_Db.Dimension> wrongDims = new List<_Db.Dimension>();
             foreach (_Db.Dimension dim in dims)
             {
-                if (Math.Abs(dim.Dimtxt - txtHeight) > _TOLERANCE)
+                if (Math.Abs(dim.Dimscale - scale) < _TOLERANCE)
                 {
-                    if ((Math.Abs(dim.Dimtxt - _DEFAULT_TEXT_SIZE) > _TOLERANCE) && (Math.Abs(dim.Dimscale - scale) > _TOLERANCE))
+                    if (Math.Abs(dim.Dimtxt - _DEFAULT_TEXT_SIZE) > _TOLERANCE)
+                    {
+                        wrongDims.Add(dim);
+                    }                    
+                }
+                else if (Math.Abs(dim.Dimscale - 1) < _TOLERANCE)
+                {
+                    if (Math.Abs(dim.Dimtxt - txtHeight) > _TOLERANCE)
                     {
                         wrongDims.Add(dim);
                     }
+                }
+                else
+                {
+                    wrongDims.Add(dim);
                 }
             }
 
@@ -163,122 +172,104 @@ namespace commands
             write("Wrong Blocks count:" + wrongBlocks.Count.ToString());
             foreach (_Db.BlockReference wrong in wrongBlocks)
             {
-                createCircle(200, 1, wrong.Position, btr);
+                _Ge.Point3d map = wrong.GeometricExtents.MinPoint;
+                _Ge.Point3d mup = wrong.GeometricExtents.MaxPoint;
+
+                _Ge.Point3d cep = new _Ge.Point3d((map.X + mup.X) / 2, (map.Y + mup.Y) / 2, (map.Z + mup.Z) / 2);
+                double size = Math.Sqrt(Math.Pow(cep.X - mup.X, 2) + Math.Pow(cep.Y - mup.Y, 2) + Math.Pow(cep.Z - mup.Z, 2)) * 1.1;
+                size = Math.Max(size, 200);
+
+                createCircle(size, 1, cep, btr);
             }
         }
 
-
-        private List<_Db.Dimension> getAllDims()
+        
+        private void getSelectedObjects(ref List<_Db.Dimension> dims, ref List<_Db.BlockReference> blocks, ref List<_Db.MText> txts)
         {
-            List<_Db.Dimension> dims = new List<_Db.Dimension>();
+            _Ed.PromptSelectionOptions opts = new _Ed.PromptSelectionOptions();
+            opts.MessageForAdding = "\nSelect area [empty select == ALL]";
 
-            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+            _Ed.PromptSelectionResult selection = _c.ed.GetSelection(opts);
 
-            foreach (_Db.ObjectId bid in btr)
+            if (selection.Status == _Ed.PromptStatus.OK)
             {
-                _Db.Entity currentEntity = _c.trans.GetObject(bid, _Db.OpenMode.ForWrite, false) as _Db.Entity;
-
-                if (currentEntity == null)
+                _Db.ObjectId[] selectionIds = selection.Value.GetObjectIds();
+                foreach (_Db.ObjectId id in selectionIds)
                 {
-                    continue;
+                    alfa(id, ref dims, ref blocks, ref txts);
                 }
+            }
+            else if (selection.Status == _Ed.PromptStatus.Error)
+            {
+                _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
 
-                if (currentEntity is _Db.Dimension)
+                foreach (_Db.ObjectId id in btr)
                 {
-                    _Db.Dimension dim = currentEntity as _Db.Dimension;
-                    dims.Add(dim);
+                    alfa(id, ref dims, ref blocks, ref txts);
                 }
             }
 
-            return dims;
         }
 
 
-        private List<_Db.BlockReference> getAllBlockReferences(string[] ignore)
+        private void alfa(_Db.ObjectId id, ref List<_Db.Dimension> dims, ref List<_Db.BlockReference> blocks, ref List<_Db.MText> txts)
         {
-            List<_Db.BlockReference> refs = new List<_Db.BlockReference>();
+            _Db.DBObject currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
 
-            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
-
-            foreach (_Db.ObjectId id in btr)
+            if (currentEntity == null)
             {
-                _Db.DBObject currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.DBObject;
-
-                if (currentEntity == null)
-                {
-                    continue;
-                }
-
-                else if (currentEntity is _Db.BlockReference)
-                {
-                    _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
-
-                    _Db.BlockTableRecord block = null;
-                    if (blockRef.IsDynamicBlock)
-                    {
-                        block = _c.trans.GetObject(blockRef.DynamicBlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
-                    }
-                    else
-                    {
-                        block = _c.trans.GetObject(blockRef.BlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
-                    }
-
-                    if (block != null)
-                    {
-                        if (ignoreBlocks.Contains(block.Name)) continue;
-
-                        refs.Add(blockRef);
-                    }
-                }
+                return;
             }
 
-            return refs;
-        }
-
-
-        private List<_Db.MText> getAllText()
-        {
-            List<_Db.MText> txt = new List<_Db.MText>();
-
-            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
-
-            foreach (_Db.ObjectId id in btr)
+            else if (currentEntity is _Db.BlockReference)
             {
-                _Db.Entity currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.Entity;
+                _Db.BlockReference blockRef = currentEntity as _Db.BlockReference;
 
-                if (currentEntity != null)
+                _Db.BlockTableRecord block = null;
+                if (blockRef.IsDynamicBlock)
                 {
-                    if (currentEntity is _Db.MText)
-                    {
-                        _Db.MText br = currentEntity as _Db.MText;
-                        txt.Add(br);
-                    }
+                    block = _c.trans.GetObject(blockRef.DynamicBlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
+                }
+                else
+                {
+                    block = _c.trans.GetObject(blockRef.BlockTableRecord, _Db.OpenMode.ForRead) as _Db.BlockTableRecord;
+                }
 
-                    if (currentEntity is _Db.DBText)
-                    {
-                        _Db.DBText br = currentEntity as _Db.DBText;
-
-                        _Db.MText myMtext = new _Db.MText();
-                        myMtext.Contents = br.TextString;
-                        myMtext.Location = br.Position;
-                        myMtext.TextHeight = br.Height;
-                        txt.Add(myMtext);
-                    }
-
-                    if (currentEntity is _Db.MLeader)
-                    {
-                        _Db.MLeader br = currentEntity as _Db.MLeader;
-
-                        if (br.ContentType == _Db.ContentType.MTextContent)
-                        {
-                            _Db.MText leaderText = br.MText;
-                            txt.Add(leaderText);
-                        }
-                    }
+                if (block != null)
+                {
+                    blocks.Add(blockRef);
                 }
             }
+            else if (currentEntity is _Db.Dimension)
+            {
+                _Db.Dimension dim = currentEntity as _Db.Dimension;
+                dims.Add(dim);
+            }
+            else if (currentEntity is _Db.MText)
+            {
+                _Db.MText br = currentEntity as _Db.MText;
+                txts.Add(br);
+            }
+            else if (currentEntity is _Db.DBText)
+            {
+                _Db.DBText br = currentEntity as _Db.DBText;
 
-            return txt;
+                _Db.MText myMtext = new _Db.MText();
+                myMtext.Contents = br.TextString;
+                myMtext.Location = br.Position;
+                myMtext.TextHeight = br.Height;
+                txts.Add(myMtext);
+            }
+            else if (currentEntity is _Db.MLeader)
+            {
+                _Db.MLeader br = currentEntity as _Db.MLeader;
+
+                if (br.ContentType == _Db.ContentType.MTextContent)
+                {
+                    _Db.MText leaderText = br.MText;
+                    txts.Add(leaderText);
+                }
+            }
         }
 
 

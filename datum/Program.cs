@@ -21,7 +21,7 @@ namespace datum
                 {
                     netload = @"C:\Users\aleksandr.ess\Documents\GitHub\datum\HillsCommands\bin\Release\HillsCommands.dll";
                 }
-                string dwg = @"C:\Users\aleksandr.ess\Dropbox\DMT\344_Grow\XML\9\training1.dwg";
+                string dwg = @"C:\Users\aleksandr.ess\Desktop\SWP-3_gg.dwg";
                 string script = "script2.scr";
 
                 createScriptFile(script, netload, dwg);
@@ -54,7 +54,7 @@ namespace datum
 
             scriptText.AppendLine("_.open \"" + dwg + "\"");
             scriptText.AppendLine("NETLOAD \"" + netload + "\"");
-            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\alex\Documents\GitHub\datum\KontrollCommands\bin\Debug\KontrollCommands.dll" + "\"");
+            scriptText.AppendLine("NETLOAD \"" + @"C:\Users\aleksandr.ess\Documents\GitHub\datum\KontrollCommands\bin\Release\KontrollCommands.dll" + "\"");
 
             if (File.Exists(script))
             {
