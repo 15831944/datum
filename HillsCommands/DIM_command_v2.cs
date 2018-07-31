@@ -48,6 +48,8 @@ namespace commands
     {
         _CONNECTION _c;
 
+        static string layerName = "K60";
+
         double smallCircleRadius = 15.0;
         double bigCircleRadius = 50.0;
         double bigCircleOffset = 180.0;
@@ -79,6 +81,8 @@ namespace commands
 
         public void run()
         {
+            layerSetup();
+
             success = getInitPoint("\nStart: ", ref ptStart);
             if (!success) { return; }
 
@@ -124,6 +128,37 @@ namespace commands
 
             success = insertFormSide(ptPos, dir, rotation);
             if (!success) { return; }
+        }
+
+
+        private void layerSetup()
+        {
+            _Db.LayerTable layerTable = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForWrite) as _Db.LayerTable;
+
+            if (!layerTable.Has(layerName))
+            {
+                createLayer(layerName, layerTable);
+            }
+        }
+
+
+        private void createLayer(string layerName, _Db.LayerTable layerTable)
+        {
+            _Db.LayerTableRecord newLayer = new _Db.LayerTableRecord();
+
+            newLayer.Name = layerName;
+            newLayer.Color = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, 62);
+            newLayer.LineWeight = _Db.LineWeight.LineWeight013;
+
+            _Db.ObjectId layerId = layerTable.Add(newLayer);
+            _c.trans.AddNewlyCreatedDBObject(newLayer, true);
+
+            newLayer.Description = "Måttsättning, text, mm";
+            _Db.LinetypeTable lineTypes = _c.trans.GetObject(_c.db.LinetypeTableId, _Db.OpenMode.ForWrite) as _Db.LinetypeTable;
+            if (lineTypes.Has("Continuous") == true)
+            {
+                newLayer.LinetypeObjectId = lineTypes["Continuous"];
+            }
         }
 
 

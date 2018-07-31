@@ -469,37 +469,36 @@ namespace commands
                 {
                     _Db.Entity currentEntity = _c.trans.GetObject(objId, _Db.OpenMode.ForRead) as _Db.Entity;
 
-                    if (currentEntity != null)
+                    if (currentEntity == null) continue;
+
+                    if (currentEntity is _Db.MText)
                     {
-                        if (currentEntity is _Db.MText)
-                        {
-                            _Db.MText br = currentEntity as _Db.MText;
-                            txt.Add(br);
-                        }
-                        else if (currentEntity is _Db.DBText)
-                        {
-                            _Db.DBText br = currentEntity as _Db.DBText;
-                            _Db.MText myMtext = new _Db.MText();
-
-                            myMtext.Contents = br.TextString;
-                            myMtext.Layer = br.Layer;
-
-                            myMtext.Location = br.Position;
-                            txt.Add(myMtext);
-                        }
-                        else if (currentEntity is _Db.MLeader)
-                        {
-                            _Db.MLeader br = currentEntity as _Db.MLeader;
-
-                            if (br.ContentType == _Db.ContentType.MTextContent)
-                            {
-                                _Db.MText leaderText = br.MText;
-                                leaderText.Layer = br.Layer;
-                                txt.Add(leaderText);
-                            }
-                        }
+                        _Db.MText br = currentEntity as _Db.MText;
+                        txt.Add(br);
                     }
+                    else if (currentEntity is _Db.DBText)
+                    {
+                        _Db.DBText br = currentEntity as _Db.DBText;
+                        _Db.MText myMtext = new _Db.MText();
+
+                        myMtext.Contents = br.TextString;
+                        myMtext.Layer = br.Layer;
+                        myMtext.Location = br.Position;
+                        txt.Add(myMtext);
+                    }
+                    else if (currentEntity is _Db.MLeader)
+                    {
+                        _Db.MLeader br = currentEntity as _Db.MLeader;
+
+                        if (br.ContentType == _Db.ContentType.MTextContent)
+                        {
+                            _Db.MText leaderText = br.MText;
+                            leaderText.Layer = br.Layer;
+                            txt.Add(leaderText);
+                        }
+                    }                    
                 }
+        
             }
 
             return txt;
