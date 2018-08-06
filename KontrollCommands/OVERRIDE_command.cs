@@ -50,6 +50,8 @@ namespace commands
 
         Dictionary<_Db.Dimension, _Db.BlockTableRecord> dims;
 
+        string kontrollLayer = "_AUTO_KONTROLL_";
+
 
         public OVERRIDE_command(ref _CONNECTION c)
         {
@@ -85,14 +87,19 @@ namespace commands
                 }
             }
 
-            foreach (_Db.Dimension dim in overrides)
+            write("Text override count: " + overrides.Count.ToString());
+
+            if (overrides.Count > 0)
             {
-                createCircle(2000, 1, dim.TextPosition, dims[dim]);
-                createCircle(200, 1, dim.TextPosition, dims[dim]);
-                changeFillColor(dim, 1);
+                initLayer(kontrollLayer);
             }
 
-            write("Text override count: " + overrides.Count.ToString());
+            foreach (_Db.Dimension dim in overrides)
+            {
+                createCircle(200, 1, dim.TextPosition, dims[dim]);
+                createCircle(2000, 1, dim.TextPosition, dims[dim]);
+                changeFillColor(dim, 1);
+            }
         }
         
 
@@ -131,6 +138,7 @@ namespace commands
                 circle.Center = ip;
                 circle.Radius = radius;
                 circle.ColorIndex = index;
+                circle.Layer = kontrollLayer;
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
@@ -141,6 +149,22 @@ namespace commands
         {
             dim.Dimtfill = 2;
             dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
+        }
+
+
+        public void initLayer(string layerName)
+        {
+            _Db.LayerTable layerTable = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForWrite) as _Db.LayerTable;
+
+            if (!layerTable.Has(layerName))
+            {
+                _Db.LayerTableRecord newLayer = new _Db.LayerTableRecord();
+                newLayer.Name = layerName;
+                newLayer.Color = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, 1);
+
+                _Db.ObjectId layerId = layerTable.Add(newLayer);
+                _c.trans.AddNewlyCreatedDBObject(newLayer, true);
+            }
         }
 
 

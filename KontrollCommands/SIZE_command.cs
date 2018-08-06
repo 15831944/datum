@@ -52,8 +52,9 @@ namespace commands
         //public static double _DEFAULT_TEXT_SIZE_SMALL = 2.2;
         //public static double _DEFAULT_TEXT_SIZE_LARGE = 3.0;
 
-
         public static double _TOLERANCE = 0.05;
+
+        string kontrollLayer = "_AUTO_KONTROLL_";
 
 
         public SIZE_command(ref _CONNECTION c)
@@ -90,18 +91,76 @@ namespace commands
 
         private void logic(double scale, List<_Db.Dimension> dims, List<_Db.BlockReference> blocks, List<_Db.MText> txts)
         {
-            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
-
             double txtHeight = scale * _DEFAULT_TEXT_SIZE;
             write("TextHeight: " + txtHeight.ToString());
 
-            checkText(txtHeight, txts, btr);
-            checkDims(scale, dims, btr);
-            checkBlocks(scale, blocks, btr);
+            List<_Db.MText> wrongTxts = checkText(txtHeight, txts);
+            List<_Db.Dimension> wrongDims = checkDims(scale, dims);
+            List<_Db.BlockReference> wrongBlocks = checkBlocks(scale, blocks);
+
+            markWrongTexts(wrongTxts);
+            markWrongDims(wrongDims);
+            markWrongBlocks(wrongBlocks);
         }
 
 
-        private void checkText(double txtHeight, List<_Db.MText> txts, _Db.BlockTableRecord btr)
+        private void markWrongTexts(List<_Db.MText> wrongTxts)
+        {
+            write("Wrong text count:" + wrongTxts.Count.ToString());
+
+            if (wrongTxts.Count > 0)
+            {
+                initLayer(kontrollLayer);
+            }
+
+            foreach (_Db.MText txt in wrongTxts)
+            {
+                createCircle(200, 1, txt.Location, _c.modelSpace);
+            }
+        }
+
+
+        private void markWrongDims(List<_Db.Dimension> wrongDims)
+        {
+            write("Wrong dimentions count:" + wrongDims.Count.ToString());
+
+            if (wrongDims.Count > 0)
+            {
+                initLayer(kontrollLayer);
+            }
+
+            foreach (_Db.Dimension dim in wrongDims)
+            {
+                changeFillColor(dim, 1);
+            }
+        }
+
+
+        private void markWrongBlocks(List<_Db.BlockReference> wrongBlocks)
+        {
+            write("Wrong Blocks count:" + wrongBlocks.Count.ToString());
+
+            if (wrongBlocks.Count > 0)
+            {
+                initLayer(kontrollLayer);
+            }
+
+            foreach (_Db.BlockReference wrong in wrongBlocks)
+            {
+                _Ge.Point3d map = wrong.GeometricExtents.MinPoint;
+                _Ge.Point3d mup = wrong.GeometricExtents.MaxPoint;
+
+                _Ge.Point3d cep = new _Ge.Point3d((map.X + mup.X) / 2, (map.Y + mup.Y) / 2, (map.Z + mup.Z) / 2);
+                double size = Math.Sqrt(Math.Pow(cep.X - mup.X, 2) + Math.Pow(cep.Y - mup.Y, 2) + Math.Pow(cep.Z - mup.Z, 2)) * 1.1;
+                size = Math.Max(size, 200);
+
+                createCircle(size, 1, cep, _c.modelSpace);
+                createCircle(size * 5, 1, cep, _c.modelSpace);
+            }
+        }
+
+
+        private List<_Db.MText> checkText(double txtHeight, List<_Db.MText> txts)
         {
             List<_Db.MText> wrongTxts = new List<_Db.MText>();
             foreach (_Db.MText txt in txts)
@@ -112,15 +171,11 @@ namespace commands
                 }
             }
 
-            write("Wrong text count:" + wrongTxts.Count.ToString());
-            foreach (_Db.MText txt in wrongTxts)
-            {
-                createCircle(200, 1, txt.Location, btr);
-            }
+            return wrongTxts;
         }
 
 
-        private void checkDims(double scale, List<_Db.Dimension> dims, _Db.BlockTableRecord btr)
+        private List<_Db.Dimension> checkDims(double scale, List<_Db.Dimension> dims)
         {
             double txtHeight = scale * _DEFAULT_TEXT_SIZE;
 
@@ -147,15 +202,11 @@ namespace commands
                 }
             }
 
-            write("Wrong dimentions count:" + wrongDims.Count.ToString());
-            foreach (_Db.Dimension dim in wrongDims)
-            {
-                changeFillColor(dim, 1);
-            }
+            return wrongDims;            
         }
 
 
-        private void checkBlocks(double scale, List<_Db.BlockReference> blocks, _Db.BlockTableRecord btr)
+        private List<_Db.BlockReference> checkBlocks(double scale, List<_Db.BlockReference> blocks)
         {
             List<_Db.BlockReference> wrongBlocks = new List<_Db.BlockReference>();
             foreach (_Db.BlockReference block in blocks)
@@ -169,18 +220,7 @@ namespace commands
                 }
             }
 
-            write("Wrong Blocks count:" + wrongBlocks.Count.ToString());
-            foreach (_Db.BlockReference wrong in wrongBlocks)
-            {
-                _Ge.Point3d map = wrong.GeometricExtents.MinPoint;
-                _Ge.Point3d mup = wrong.GeometricExtents.MaxPoint;
-
-                _Ge.Point3d cep = new _Ge.Point3d((map.X + mup.X) / 2, (map.Y + mup.Y) / 2, (map.Z + mup.Z) / 2);
-                double size = Math.Sqrt(Math.Pow(cep.X - mup.X, 2) + Math.Pow(cep.Y - mup.Y, 2) + Math.Pow(cep.Z - mup.Z, 2)) * 1.1;
-                size = Math.Max(size, 200);
-
-                createCircle(size, 1, cep, btr);
-            }
+            return wrongBlocks;
         }
 
         
@@ -280,6 +320,7 @@ namespace commands
                 circle.Center = ip;
                 circle.Radius = radius;
                 circle.ColorIndex = index;
+                circle.Layer = kontrollLayer;
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
@@ -290,6 +331,22 @@ namespace commands
         {
             dim.Dimtfill = 2;
             dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
+        }
+        
+
+        public void initLayer(string layerName)
+        {
+            _Db.LayerTable layerTable = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForWrite) as _Db.LayerTable;
+
+            if (!layerTable.Has(layerName))
+            {
+                _Db.LayerTableRecord newLayer = new _Db.LayerTableRecord();
+                newLayer.Name = layerName;
+                newLayer.Color = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, 1);
+
+                _Db.ObjectId layerId = layerTable.Add(newLayer);
+                _c.trans.AddNewlyCreatedDBObject(newLayer, true);
+            }
         }
 
 

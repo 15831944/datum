@@ -44,112 +44,113 @@ using _SWF = System.Windows.Forms;
 
 namespace commands
 {
-    class SCALE_command
+    class TXT_command
     {
         _CONNECTION _c;
 
-        Dictionary<_Db.Dimension, _Db.BlockTableRecord> dims;
+        string[] forbiddenChars = { "{", "}", "|", ";" };
 
         string kontrollLayer = "_AUTO_KONTROLL_";
 
 
-        public SCALE_command(ref _CONNECTION c)
+        public TXT_command(ref _CONNECTION c)
         {
             _c = c;
-
-            dims = new Dictionary<_Db.Dimension, _Db.BlockTableRecord>();
         }
 
 
         internal void run()
         {
-            getAllDims();
-            logic();
+            List<_Db.MText> allTexts = getAllText();
+            List<_Db.MText> wrong = checkText(allTexts);
+            drawWrongMarks(wrong);
         }
 
 
-        private void logic()
+        private List<_Db.MText> checkText(List<_Db.MText> txts)
         {
-            List<_Db.Dimension> scale_05 = new List<_Db.Dimension>();
-            List<_Db.Dimension> scale_other = new List<_Db.Dimension>();
+            List<_Db.MText> wrong = new List<_Db.MText>();
 
-            foreach (_Db.Dimension dim in dims.Keys)
+            foreach (_Db.MText txt in txts)
             {
-                if (dim.Dimlfac == 1.0)
+                foreach (string forbidden in forbiddenChars)
                 {
-
-                }
-                else if (dim.Dimlfac == 0.5)
-                {
-                    scale_05.Add(dim);
-                }
-                else
-                {
-                    scale_other.Add(dim);
-                }
-            }
-
-
-            write("Scale 0.5: " + scale_05.Count.ToString());
-
-            if (scale_05.Count > 0)
-            {
-                initLayer(kontrollLayer);
-            }
-
-            foreach (_Db.Dimension dim in scale_05)
-            {
-                createCircle(200, 2, dim.TextPosition, dims[dim]);
-                createCircle(2000, 2, dim.TextPosition, dims[dim]);
-                changeFillColor(dim, 2);
-            }
-
-            write("Scale other: " + scale_other.Count.ToString());
-
-            if (scale_other.Count > 0)
-            {
-                initLayer(kontrollLayer);
-            }
-
-            foreach (_Db.Dimension dim in scale_other)
-            {
-
-                createCircle(200, 1, dim.TextPosition, dims[dim]);
-                createCircle(2000, 1, dim.TextPosition, dims[dim]);
-                changeFillColor(dim, 1);
-            }            
-        }
-
-
-        private void getAllDims()
-        {
-            foreach (_Db.ObjectId btrId in _c.blockTable)
-            {
-                _Db.BlockTableRecord btr = _c.trans.GetObject(btrId, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
-
-                if (!(btr.IsFromExternalReference))
-                {
-                    foreach (_Db.ObjectId bid in btr)
+                    if (txt.Contents.Contains(forbidden))
                     {
-                        _Db.Entity currentEntity = _c.trans.GetObject(bid, _Db.OpenMode.ForWrite, false) as _Db.Entity;
+                        wrong.Add(txt);
+                        break;
+                    }
+                }
+            }
 
-                        if (currentEntity == null)
-                        {
-                            continue;
-                        }
+            return wrong;
+        }
 
-                        if (currentEntity is _Db.Dimension)
+
+        private void drawWrongMarks(List<_Db.MText> txts)
+        {
+            write("Vigade arv: " + txts.Count().ToString());
+
+            if (txts.Count > 0)
+            {
+                initLayer(kontrollLayer);
+            }            
+
+            foreach (_Db.MText txt in txts)
+            {
+                createCircle(2000, 1, txt.Location);
+                createCircle(200, 1, txt.Location);
+            }
+        }
+
+
+        private List<_Db.MText> getAllText()
+        {
+            List<_Db.MText> txt = new List<_Db.MText>();
+
+            _Db.BlockTableRecord btr = _c.trans.GetObject(_c.modelSpace.Id, _Db.OpenMode.ForWrite) as _Db.BlockTableRecord;
+
+            foreach (_Db.ObjectId id in btr)
+            {
+                _Db.Entity currentEntity = _c.trans.GetObject(id, _Db.OpenMode.ForWrite, false) as _Db.Entity;
+
+                if (currentEntity != null)
+                {
+                    if (currentEntity is _Db.MText)
+                    {
+                        _Db.MText br = currentEntity as _Db.MText;
+                        txt.Add(br);
+                    }
+                    else if (currentEntity is _Db.DBText)
+                    {
+                        _Db.DBText br = currentEntity as _Db.DBText;
+                        _Db.MText myMtext = new _Db.MText();
+
+                        myMtext.Contents = br.TextString;
+                        myMtext.Layer = br.Layer;
+
+                        myMtext.Location = br.Position;
+                        txt.Add(myMtext);
+                    }
+                    else if (currentEntity is _Db.MLeader)
+                    {
+                        _Db.MLeader br = currentEntity as _Db.MLeader;
+
+                        if (br.ContentType == _Db.ContentType.MTextContent)
                         {
-                            _Db.Dimension dim = currentEntity as _Db.Dimension;
-                            dims[dim] = btr;
+                            _Db.MText leaderText = br.MText;
+                            leaderText.Layer = br.Layer;
+                            txt.Add(leaderText);
                         }
                     }
                 }
             }
+
+            return txt;
         }
 
 
-        private void createCircle(double radius, int index, _Ge.Point3d ip, _Db.BlockTableRecord btr)
+        private void createCircle(double radius, int index, _Ge.Point3d ip)
         {
             using (_Db.Circle circle = new _Db.Circle())
             {
@@ -157,18 +158,11 @@ namespace commands
                 circle.Radius = radius;
                 circle.ColorIndex = index;
                 circle.Layer = kontrollLayer;
-                btr.AppendEntity(circle);
+                _c.modelSpace.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
         }
-
-
-        private void changeFillColor(_Db.Dimension dim, short index)
-        {
-            dim.Dimtfill = 2;
-            dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
-        }
-
+        
 
         public void initLayer(string layerName)
         {

@@ -47,7 +47,9 @@ namespace commands
     class KONTROLL_command
     {
         _CONNECTION _c;
-        
+
+        string kontrollLayer = "_AUTO_KONTROLL_";
+
 
         public KONTROLL_command(ref _CONNECTION c)
         {
@@ -66,10 +68,15 @@ namespace commands
         {
             write("Vigade arv: " + marks.Count().ToString());
 
+            if (marks.Count > 0)
+            {
+                initLayer(kontrollLayer);
+            }
+
             foreach (_Mark mark in marks)
             {
-                createCircle(2000, 1, mark.IP);
                 createCircle(200, 1, mark.IP);
+                createCircle(2000, 1, mark.IP);
             }
         }
 
@@ -83,6 +90,7 @@ namespace commands
                 circle.Center = ip;
                 circle.Radius = radius;
                 circle.ColorIndex = index;
+                circle.Layer = kontrollLayer;
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
@@ -207,6 +215,22 @@ namespace commands
             }
 
             return txt;
+        }
+
+
+        public void initLayer(string layerName)
+        {
+            _Db.LayerTable layerTable = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForWrite) as _Db.LayerTable;
+
+            if (!layerTable.Has(layerName))
+            {
+                _Db.LayerTableRecord newLayer = new _Db.LayerTableRecord();
+                newLayer.Name = layerName;
+                newLayer.Color = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, 1);
+
+                _Db.ObjectId layerId = layerTable.Add(newLayer);
+                _c.trans.AddNewlyCreatedDBObject(newLayer, true);
+            }
         }
 
 

@@ -51,6 +51,8 @@ namespace commands
         Dictionary<_Db.Dimension, _Db.BlockTableRecord> dims;
         Dictionary<_Db.BlockTableRecord, List<_Ge.Point3d>> memory;
 
+        string kontrollLayer = "_AUTO_KONTROLL_";
+
 
         public CORNER_command(ref _CONNECTION c)
         {
@@ -63,6 +65,7 @@ namespace commands
 
         internal void run()
         {
+            initLayer(kontrollLayer);
             getAllDims();
             logic();
         }
@@ -70,7 +73,8 @@ namespace commands
 
         private void logic()
         {
-            List<_Db.Dimension> wrongs = new List<_Db.Dimension>();
+            Dictionary<_Ge.Point3d, _Db.Dimension> wrongPoints = new Dictionary<_Ge.Point3d, _Db.Dimension>();
+            
 
             foreach (_Db.Dimension dim in dims.Keys)
             {
@@ -79,7 +83,6 @@ namespace commands
 
                 if (dim is _Db.RotatedDimension)
                 {
-
                     _Db.RotatedDimension rdim = dim as _Db.RotatedDimension;
                     _Ge.Point3d p1 = rdim.XLine1Point;
                     _Ge.Point3d p2 = rdim.XLine2Point;
@@ -89,26 +92,30 @@ namespace commands
 
                     if (pp1 == false)
                     {
-                        createCircle(100, 1, p1, dims[dim]);
-                        createCircle(750, 1, p1, dims[dim]);
-                        //createCircle(200, 2, rdim.TextPosition, dims[dim]);
-                        wrongs.Add(dim);
-
-                        changeFillColor(dim, 1);
+                        wrongPoints[p1] = dim;
                     }
                     if (pp2 == false)
                     {
-                        createCircle(100, 1, p2, dims[dim]);
-                        createCircle(750, 1, p2, dims[dim]);
-                        //createCircle(200, 2, rdim.TextPosition, dims[dim]);
-                        wrongs.Add(dim);
-
-                        changeFillColor(dim, 1);
+                        wrongPoints[p2] = dim;
                     }
                 }
             }
             
-            write("Vigade arv: " + wrongs.Count().ToString());
+            write("Vigade arv: " + wrongPoints.Keys.Count().ToString());
+
+            if (wrongPoints.Keys.Count > 0)
+            {
+                initLayer(kontrollLayer);
+            }
+
+            foreach (_Ge.Point3d pt in wrongPoints.Keys)
+            {
+                _Db.Dimension dim = wrongPoints[pt];
+
+                createCircle(100, 1, pt, dims[dim]);
+                createCircle(750, 1, pt, dims[dim]);
+                changeFillColor(dim, 1);
+            }
         }
 
 
@@ -349,6 +356,7 @@ namespace commands
                 circle.Center = ip;
                 circle.Radius = radius;
                 circle.ColorIndex = index;
+                circle.Layer = kontrollLayer;
                 btr.AppendEntity(circle);
                 _c.trans.AddNewlyCreatedDBObject(circle, true);
             }
@@ -360,6 +368,22 @@ namespace commands
             dim.Dimtfill = 2;
             dim.Dimtfillclr = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, index);
         }
+
+
+        public void initLayer(string layerName)
+        {
+            _Db.LayerTable layerTable = _c.trans.GetObject(_c.db.LayerTableId, _Db.OpenMode.ForWrite) as _Db.LayerTable;
+
+            if (!layerTable.Has(layerName))
+            {
+                _Db.LayerTableRecord newLayer = new _Db.LayerTableRecord();
+                newLayer.Name = layerName;
+                newLayer.Color = _Cm.Color.FromColorIndex(_Cm.ColorMethod.None, 1);
+
+                _Db.ObjectId layerId = layerTable.Add(newLayer);
+                _c.trans.AddNewlyCreatedDBObject(newLayer, true);
+            }
+        }       
 
 
         private void write(string message)
