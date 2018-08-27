@@ -73,8 +73,8 @@ namespace commands
 
         private void logic()
         {
-            Dictionary<_Ge.Point3d, _Db.Dimension> wrongPoints = new Dictionary<_Ge.Point3d, _Db.Dimension>();
-            
+            List<_Db.Dimension> wrongDims = new List<_Db.Dimension>();
+            Dictionary<_Ge.Point3d, _Db.Dimension> wrongPoints = new Dictionary<_Ge.Point3d, _Db.Dimension>();            
 
             foreach (_Db.Dimension dim in dims.Keys)
             {
@@ -93,19 +93,26 @@ namespace commands
                     if (pp1 == false)
                     {
                         wrongPoints[p1] = dim;
+                        if (!wrongDims.Contains(dim)) wrongDims.Add(dim);
                     }
                     if (pp2 == false)
                     {
                         wrongPoints[p2] = dim;
+                        if (!wrongDims.Contains(dim)) wrongDims.Add(dim);
                     }
                 }
             }
             
-            write("Vigade arv: " + wrongPoints.Keys.Count().ToString());
+            write("Vigade arv: " + wrongDims.Count().ToString());
 
-            if (wrongPoints.Keys.Count > 0)
+            if (wrongDims.Count > 0)
             {
                 initLayer(kontrollLayer);
+            }
+
+            foreach (_Db.Dimension dim in wrongDims)
+            {
+                changeFillColor(dim, 1);
             }
 
             foreach (_Ge.Point3d pt in wrongPoints.Keys)
@@ -114,7 +121,6 @@ namespace commands
 
                 createCircle(100, 1, pt, dims[dim]);
                 createCircle(750, 1, pt, dims[dim]);
-                changeFillColor(dim, 1);
             }
         }
 
